@@ -6,15 +6,14 @@ MeepSheep is a creator workspace concept for planning, tailoring, and managing c
 
 ## Current prototype
 
-- Premium, responsive creator dashboard
-- Workspace and navigation interactions
+- Premium, responsive creator dashboard with separate workspace navigation states
 - Content planner with status filters and search
-- Post composer that saves local draft state
-- Platform connection entry points
-- Responsive mobile navigation
-- Accessible focus states and reduced-motion support
+- Post composer with drafts persisted in browser local storage
+- Dedicated workspace entry points for channels, settings guides, Studio, analytics, discovery, and hashtags
+- Responsive mobile navigation, custom favicon, accessible focus states, and reduced-motion support
+- GitHub Actions production-build check on pushes and pull requests
 
-> Social account connections, real publishing, analytics, AI suggestions, billing, and persistent storage are not wired up yet. The prototype uses sample data and local in-memory state. Do not treat the sample metrics or platform statuses as real account data.
+> Social account connections, real publishing, real analytics, AI recommendations, media upload, billing, and server-side persistent storage are not wired up yet. Sample posts are illustrative; no demo metrics are presented as real account data. Browser-stored drafts are local to the current browser and are not synced between devices.
 
 ## Stack
 
