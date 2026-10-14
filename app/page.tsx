@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import {
-  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, AudioLines, Bell, CalendarDays,
-  Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clock3,
-  CloudUpload, Command, Compass, Ellipsis, ExternalLink, FileVideo, Filter, Hash,
-  Home, Instagram, LayoutGrid, Link2, Menu, MessageCircle, MoreHorizontal, Music2,
-  Plus, Search, Settings2, Sparkles, TrendingUp, Video, WandSparkles, X, Youtube,
-  type LucideIcon
+  ArrowRight, ArrowUpRight, AudioLines, Bell, CalendarDays, Check, CheckCircle2,
+  ChevronDown, ChevronRight, CircleHelp, Clock3, CloudUpload, Compass, Ellipsis,
+  FileVideo, Filter, Hash, Home, Instagram, LayoutGrid, Link2, Menu, MoreHorizontal,
+  Music2, Plus, Search, Settings2, Sparkles, TrendingUp, Video, WandSparkles, X,
+  Youtube, type LucideIcon
 } from "lucide-react";
 
 type Platform = "TikTok" | "Instagram" | "YouTube" | "Facebook";
