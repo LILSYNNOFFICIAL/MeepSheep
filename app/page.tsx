@@ -123,6 +123,16 @@ export default function HomePage() {
     savePosts(posts);
   }, [posts, postsLoaded]);
 
+  useEffect(() => {
+    const syncFromAnotherTab = (event: StorageEvent) => {
+      if (event.key !== "meepsheep.posts.v2" && event.key !== "meepsheep.posts.v1") return;
+      const savedPosts = loadPosts();
+      if (savedPosts) setPosts(savedPosts);
+    };
+    window.addEventListener("storage", syncFromAnotherTab);
+    return () => window.removeEventListener("storage", syncFromAnotherTab);
+  }, []);
+
   const filteredPosts = useMemo(() => posts.filter(post => {
     const matchesFilter = filter === "All content" || post.status === filter;
     const matchesPlatform = platformFilter === "All platforms" || post.platform === platformFilter;
