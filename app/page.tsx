@@ -9,8 +9,8 @@ import {
   Youtube, type LucideIcon
 } from "lucide-react";
 
-type Platform = "TikTok" | "Instagram" | "YouTube" | "Facebook";
-type Post = { id: number; title: string; platform: Platform; captions?: Partial<Record<Platform, string>>; dateISO?: string; time24?: string; status: "Scheduled" | "Draft" | "Published"; date: string; time: string; color: string; kind: string };
+import type { Platform, Post } from "./content-types";
+import { loadPosts, savePosts } from "../lib/content-storage";
 
 function localDateISO(date = new Date()) {
   const year = date.getFullYear();
@@ -113,25 +113,14 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem("meepsheep.posts.v1");
-      if (saved) {
-        const parsed: unknown = JSON.parse(saved);
-        if (Array.isArray(parsed)) setPosts(parsed as Post[]);
-      }
-    } catch {
-      // Keep the starter content if browser storage is unavailable.
-    }
+    const savedPosts = loadPosts();
+    if (savedPosts) setPosts(savedPosts);
     setPostsLoaded(true);
   }, []);
 
   useEffect(() => {
     if (!postsLoaded) return;
-    try {
-      window.localStorage.setItem("meepsheep.posts.v1", JSON.stringify(posts));
-    } catch {
-      // Drafts remain available for the current session if storage is full.
-    }
+    savePosts(posts);
   }, [posts, postsLoaded]);
 
   const filteredPosts = useMemo(() => posts.filter(post => {
