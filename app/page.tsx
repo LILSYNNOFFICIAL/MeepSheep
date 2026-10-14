@@ -94,6 +94,7 @@ export default function HomePage() {
   const [toast, setToast] = useState("");
   const [posts, setPosts] = useState(initialPosts);
   const [postsLoaded, setPostsLoaded] = useState(false);
+  const [canPersistPosts, setCanPersistPosts] = useState(false);
   const [postTitle, setPostTitle] = useState("");
   const [editingPostId, setEditingPostId] = useState<number | null>(null);
   const [postPlatform, setPostPlatform] = useState<Platform>("TikTok");
@@ -113,21 +114,24 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const savedPosts = loadPosts();
-    if (savedPosts) setPosts(savedPosts);
+    const result = loadPosts();
+    if (result.posts) setPosts(result.posts);
+    setCanPersistPosts(result.canWrite);
     setPostsLoaded(true);
   }, []);
 
   useEffect(() => {
-    if (!postsLoaded) return;
-    savePosts(posts);
-  }, [posts, postsLoaded]);
+    if (!postsLoaded || !canPersistPosts) return;
+    const saved = savePosts(posts);
+    if (!saved) setCanPersistPosts(false);
+  }, [posts, postsLoaded, canPersistPosts]);
 
   useEffect(() => {
     const syncFromAnotherTab = (event: StorageEvent) => {
       if (event.key !== "meepsheep.posts.v2" && event.key !== "meepsheep.posts.v1") return;
-      const savedPosts = loadPosts();
-      if (savedPosts) setPosts(savedPosts);
+      const result = loadPosts();
+      if (result.posts) setPosts(result.posts);
+      setCanPersistPosts(result.canWrite);
     };
     window.addEventListener("storage", syncFromAnotherTab);
     return () => window.removeEventListener("storage", syncFromAnotherTab);
