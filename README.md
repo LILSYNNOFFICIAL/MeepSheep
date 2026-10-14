@@ -9,7 +9,8 @@ MeepSheep is a creator workspace concept for planning, tailoring, and managing c
 - Premium, responsive creator dashboard with separate workspace navigation states
 - Content planner with status filters and search
 - Post composer with versioned browser-local storage, legacy draft migration, and cross-tab updates
-- Storage validation that avoids treating malformed saved data as valid planner content
+- Storage validation that avoids treating malformed or newer-version data as valid planner content
+- A safety guard that pauses writes rather than overwriting unreadable saved content
 - Dedicated workspace entry points for channels, settings guides, Studio, analytics, discovery, and hashtags
 - Responsive mobile navigation, custom favicon, accessible focus states, and reduced-motion support
 - GitHub Actions production-build check on pushes and pull requests
