@@ -93,7 +93,7 @@ export default function HomePage() {
 
   const filteredPosts = useMemo(() => posts.filter(post => {
     const matchesFilter = filter === "All content" || post.status === filter;
-    const matchesQuery = !query || (post.title + post.platform + post.kind).toLowerCase().includes(query.toLowerCase());
+    const matchesQuery = !query || (post.title + post.platform + post.kind + Object.values(post.captions ?? {}).join(" ")).toLowerCase().includes(query.toLowerCase());
     return matchesFilter && matchesQuery;
   }), [posts, filter, query]);
 
