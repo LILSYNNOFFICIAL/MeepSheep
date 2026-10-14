@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   ArrowRight, ArrowUpRight, AudioLines, Bell, CalendarDays, Check, CheckCircle2,
   ChevronDown, ChevronRight, CircleHelp, Clock3, CloudUpload, Compass, Ellipsis,
@@ -51,12 +51,35 @@ export default function HomePage() {
   const [showComposer, setShowComposer] = useState(false);
   const [toast, setToast] = useState("");
   const [posts, setPosts] = useState(initialPosts);
+  const [postsLoaded, setPostsLoaded] = useState(false);
   const [postTitle, setPostTitle] = useState("");
   const [postPlatform, setPostPlatform] = useState<Platform>("TikTok");
   const [postKind, setPostKind] = useState("Short video");
   const [postDate, setPostDate] = useState("2026-10-16");
   const [postTime, setPostTime] = useState("18:30");
   const [mobileNav, setMobileNav] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("meepsheep.posts.v1");
+      if (saved) {
+        const parsed: unknown = JSON.parse(saved);
+        if (Array.isArray(parsed)) setPosts(parsed as Post[]);
+      }
+    } catch {
+      // Keep the starter content if browser storage is unavailable.
+    }
+    setPostsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!postsLoaded) return;
+    try {
+      window.localStorage.setItem("meepsheep.posts.v1", JSON.stringify(posts));
+    } catch {
+      // Drafts remain available for the current session if storage is full.
+    }
+  }, [posts, postsLoaded]);
 
   const filteredPosts = useMemo(() => posts.filter(post => {
     const matchesFilter = filter === "All content" || post.status === filter;
