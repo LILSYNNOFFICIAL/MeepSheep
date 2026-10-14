@@ -56,6 +56,7 @@ export default function HomePage() {
   const [editingPostId, setEditingPostId] = useState<number | null>(null);
   const [postPlatform, setPostPlatform] = useState<Platform>("TikTok");
   const [postKind, setPostKind] = useState("Short video");
+  const [postStatus, setPostStatus] = useState<Post["status"]>("Draft");
   const [postCaptions, setPostCaptions] = useState<Record<Platform, string>>({ TikTok: "", Instagram: "", YouTube: "", Facebook: "" });
   const [postDate, setPostDate] = useState("2026-10-16");
   const [postTime, setPostTime] = useState("18:30");
