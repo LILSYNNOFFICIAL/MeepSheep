@@ -12,6 +12,47 @@ import {
 type Platform = "TikTok" | "Instagram" | "YouTube" | "Facebook";
 type Post = { id: number; title: string; platform: Platform; captions?: Partial<Record<Platform, string>>; dateISO?: string; time24?: string; status: "Scheduled" | "Draft" | "Published"; date: string; time: string; color: string; kind: string };
 
+function localDateISO(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function shiftLocalDate(date: Date, days: number) {
+  const shifted = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  shifted.setDate(shifted.getDate() + days);
+  return shifted;
+}
+
+function formatPlannerDate(isoDate: string) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const dateStart = date.getTime();
+  const dayOffset = Math.round((dateStart - todayStart) / 86400000);
+  if (dayOffset === 0) return "Today";
+  if (dayOffset === 1) return "Tomorrow";
+  if (dayOffset === -1) return "Yesterday";
+  return date.toLocaleDateString("en-US", {
+    weekday: dayOffset > 0 && dayOffset < 7 ? "short" : undefined,
+    month: "short",
+    day: "numeric",
+    ...(year !== today.getFullYear() ? { year: "numeric" } : {})
+  });
+}
+
+function dateForExistingPost(post: Post) {
+  if (post.dateISO && /^\\d{4}-\\d{2}-\\d{2}$/.test(post.dateISO)) return post.dateISO;
+  const today = new Date();
+  if (post.date === "Today") return localDateISO(today);
+  if (post.date === "Tomorrow") return localDateISO(shiftLocalDate(today, 1));
+  if (post.date === "Yesterday") return localDateISO(shiftLocalDate(today, -1));
+  const parsed = new Date(`${post.date}, ${today.getFullYear()}`);
+  return Number.isNaN(parsed.getTime()) ? localDateISO(today) : localDateISO(parsed);
+}
+
 const initialPosts: Post[] = [
   { id: 1, title: "Somewhere Inbetween — official visual", platform: "TikTok", status: "Scheduled", date: "Today", time: "6:30 PM", color: "lavender", kind: "Music video" },
   { id: 2, title: "Studio moment: building the drop", platform: "Instagram", status: "Draft", date: "Tomorrow", time: "11:00 AM", color: "peach", kind: "Behind the scenes" },
@@ -108,7 +149,7 @@ export default function HomePage() {
   const savePost = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!postTitle.trim()) return;
-    const formattedDate = postDate === "2026-10-16" ? "Fri, Oct 16" : new Date(postDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const formattedDate = formatPlannerDate(postDate);
     const formattedTime = new Date("2020-01-01T" + postTime + ":00").toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
     const savedPost: Post = { id: editingPostId ?? Date.now(), title: postTitle.trim(), platform: postPlatform, captions: postCaptions, dateISO: postDate, time24: postTime, status: postStatus, date: formattedDate, time: formattedTime, color: "lavender", kind: postKind };
     setPosts(current => editingPostId === null ? [savedPost, ...current] : current.map(post => post.id === editingPostId ? { ...post, ...savedPost } : post));
@@ -128,7 +169,7 @@ export default function HomePage() {
     setPostKind("Short video");
     setPostStatus("Draft");
     setPostCaptions({ TikTok: "", Instagram: "", YouTube: "", Facebook: "" });
-    setPostDate(new Date().toISOString().slice(0, 10));
+    setPostDate(localDateISO());
     setPostTime("18:30");
     setShowComposer(true);
   };
@@ -164,7 +205,7 @@ export default function HomePage() {
 
           <div className="stats-grid"><div className="stat-card"><div className="stat-top"><span>Content in your library</span><span className="stat-icon icon-lavender"><LayoutGrid size={17}/></span></div><div className="stat-value">{String(posts.length).padStart(2,"0")}<span className="stat-unit"> pieces</span></div><div className="stat-foot"><span className="stat-neutral"><FileVideo size={13}/> Your creative queue</span></div></div><div className="stat-card"><div className="stat-top"><span>Coming up next</span><span className="stat-icon icon-peach"><Clock3 size={17}/></span></div><div className="stat-value">{posts.filter(p => p.status === "Scheduled").length}<span className="stat-unit"> scheduled</span></div><div className="stat-foot"><span className="stat-neutral"><CalendarDays size={13}/> Across your channels</span></div></div><div className="stat-card"><div className="stat-top"><span>Channels connected</span><span className="stat-icon icon-sage"><Link2 size={17}/></span></div><div className="stat-value">0<span className="stat-unit"> of 4</span></div><div className="stat-foot"><button className="inline-link" onClick={() => navTo("Connected accounts")}>Set up your first <ArrowRight size={13}/></button></div></div><div className="stat-card stat-card-note"><div className="stat-top"><span>A little nudge</span><span className="stat-icon icon-yellow"><Sparkles size={17}/></span></div><div className="note-copy">Your next post is a chance to <span>show up.</span></div><button className="inline-link" onClick={startNewPost}>Let's make one <ArrowRight size={13}/></button></div></div>
 
-          <div className="content-grid"><section className="panel planner-panel"><SectionHeading eyebrow="KEEP THE GOOD STUFF MOVING" title="Your content planner" detail="A little plan goes a long way." action={<button className="icon-button" aria-label="More planner options" onClick={() => setFilterMenu(!filterMenu)}><MoreHorizontal size={20}/></button>}/><div className="planner-toolbar"><div className="filter-tabs">{["All content","Scheduled","Draft","Published"].map(option => <button key={option} className={filter === option ? "filter-tab selected" : "filter-tab"} onClick={() => setFilter(option)}>{option}</button>)}</div><div className="dropdown-anchor"><button className="filter-button" onClick={() => setFilterMenu(!filterMenu)}><Filter size={14}/><span>Filter</span><ChevronDown size={13}/></button>{filterMenu && <div className="dropdown-menu filter-dropdown"><div className="filter-group-label">STATUS</div>{["All content","Scheduled","Draft","Published"].map(option => <button key={option} onClick={() => setFilter(option)}><span>{option}</span>{filter === option && <Check size={15}/>}</button>)}<div className="filter-group-label filter-group-separated">PLATFORM</div>{["All platforms","TikTok","Instagram","YouTube","Facebook"].map(option => <button key={option} onClick={() => { setPlatformFilter(option); setFilterMenu(false); }}><span>{option}</span>{platformFilter === option && <Check size={15}/>}</button>)}</div>}</div></div><div className="post-list">{filteredPosts.length ? filteredPosts.map(post => <article className="post-row" key={post.id}><div className={"post-thumb thumb-" + post.color}>{post.kind === "Music video" ? <AudioLines size={22}/> : post.kind === "Short" ? <Video size={21}/> : post.kind === "Artist update" ? <Music2 size={21}/> : <Sparkles size={21}/>}<span className="thumb-platform"><PlatformIcon platform={post.platform} size={12}/></span></div><div className="post-details"><strong>{post.title}</strong><span>{post.kind} <i/> {post.platform}</span>{post.captions && Object.values(post.captions).some(caption => caption?.trim()) && <small className="caption-count">{Object.values(post.captions).filter(caption => caption?.trim()).length} platform caption{Object.values(post.captions).filter(caption => caption?.trim()).length === 1 ? "" : "s"} saved</small>}</div><div className="post-schedule"><span>{post.date}</span><small>{post.time}</small></div><span className={"status-pill status-" + post.status.toLowerCase()}><i/>{post.status}</span><button className="icon-button post-more" aria-label={"Options for " + post.title} onClick={() => { setEditingPostId(post.id); setPostTitle(post.title); setPostPlatform(post.platform); setPostKind(post.kind); setPostStatus(post.status); setPostCaptions({ TikTok: post.captions?.TikTok ?? "", Instagram: post.captions?.Instagram ?? "", YouTube: post.captions?.YouTube ?? "", Facebook: post.captions?.Facebook ?? "" }); setPostDate(post.dateISO ?? (post.date === "Today" ? new Date().toISOString().slice(0,10) : post.date === "Tomorrow" ? new Date(Date.now()+86400000).toISOString().slice(0,10) : "2026-10-16")); setPostTime(post.time24 ?? "18:30"); setShowComposer(true); }}><Ellipsis size={18}/></button></article>) : <div className="empty-state"><div className="empty-icon"><Search size={20}/></div><strong>Nothing here just yet</strong><span>Try another filter or create a new post.</span><button className="button button-secondary" onClick={() => { setFilter("All content"); setPlatformFilter("All platforms"); setQuery(""); }}>Show all content</button></div>}</div><div className="panel-footer"><span>Showing {filteredPosts.length} of {posts.length} items</span><button className="text-button" onClick={() => navTo("Content planner")}>Open planner <ArrowRight size={14}/></button></div></section>
+          <div className="content-grid"><section className="panel planner-panel"><SectionHeading eyebrow="KEEP THE GOOD STUFF MOVING" title="Your content planner" detail="A little plan goes a long way." action={<button className="icon-button" aria-label="More planner options" onClick={() => setFilterMenu(!filterMenu)}><MoreHorizontal size={20}/></button>}/><div className="planner-toolbar"><div className="filter-tabs">{["All content","Scheduled","Draft","Published"].map(option => <button key={option} className={filter === option ? "filter-tab selected" : "filter-tab"} onClick={() => setFilter(option)}>{option}</button>)}</div><div className="dropdown-anchor"><button className="filter-button" onClick={() => setFilterMenu(!filterMenu)}><Filter size={14}/><span>Filter</span><ChevronDown size={13}/></button>{filterMenu && <div className="dropdown-menu filter-dropdown"><div className="filter-group-label">STATUS</div>{["All content","Scheduled","Draft","Published"].map(option => <button key={option} onClick={() => setFilter(option)}><span>{option}</span>{filter === option && <Check size={15}/>}</button>)}<div className="filter-group-label filter-group-separated">PLATFORM</div>{["All platforms","TikTok","Instagram","YouTube","Facebook"].map(option => <button key={option} onClick={() => { setPlatformFilter(option); setFilterMenu(false); }}><span>{option}</span>{platformFilter === option && <Check size={15}/>}</button>)}</div>}</div></div><div className="post-list">{filteredPosts.length ? filteredPosts.map(post => <article className="post-row" key={post.id}><div className={"post-thumb thumb-" + post.color}>{post.kind === "Music video" ? <AudioLines size={22}/> : post.kind === "Short" ? <Video size={21}/> : post.kind === "Artist update" ? <Music2 size={21}/> : <Sparkles size={21}/>}<span className="thumb-platform"><PlatformIcon platform={post.platform} size={12}/></span></div><div className="post-details"><strong>{post.title}</strong><span>{post.kind} <i/> {post.platform}</span>{post.captions && Object.values(post.captions).some(caption => caption?.trim()) && <small className="caption-count">{Object.values(post.captions).filter(caption => caption?.trim()).length} platform caption{Object.values(post.captions).filter(caption => caption?.trim()).length === 1 ? "" : "s"} saved</small>}</div><div className="post-schedule"><span>{post.date}</span><small>{post.time}</small></div><span className={"status-pill status-" + post.status.toLowerCase()}><i/>{post.status}</span><button className="icon-button post-more" aria-label={"Options for " + post.title} onClick={() => { setEditingPostId(post.id); setPostTitle(post.title); setPostPlatform(post.platform); setPostKind(post.kind); setPostStatus(post.status); setPostCaptions({ TikTok: post.captions?.TikTok ?? "", Instagram: post.captions?.Instagram ?? "", YouTube: post.captions?.YouTube ?? "", Facebook: post.captions?.Facebook ?? "" }); setPostDate(dateForExistingPost(post)); setPostTime(post.time24 ?? "18:30"); setShowComposer(true); }}><Ellipsis size={18}/></button></article>) : <div className="empty-state"><div className="empty-icon"><Search size={20}/></div><strong>Nothing here just yet</strong><span>Try another filter or create a new post.</span><button className="button button-secondary" onClick={() => { setFilter("All content"); setPlatformFilter("All platforms"); setQuery(""); }}>Show all content</button></div>}</div><div className="panel-footer"><span>Showing {filteredPosts.length} of {posts.length} items</span><button className="text-button" onClick={() => navTo("Content planner")}>Open planner <ArrowRight size={14}/></button></div></section>
 
           <div className="right-column"><section className="panel channels-panel"><SectionHeading title="Your channels" detail="Your people are out there." action={<button className="icon-button" aria-label="Channel options" onClick={() => navTo("Connected accounts")}><ArrowUpRight size={17}/></button>}/><div className="channel-list">{([{ name: "TikTok", sub: "Short-form video", icon: PlatformIcon, className: "channel-tiktok" }, { name: "Instagram", sub: "Reels & posts", icon: PlatformIcon, className: "channel-instagram" }, { name: "YouTube", sub: "Shorts & videos", icon: PlatformIcon, className: "channel-youtube" }, { name: "Facebook", sub: "Pages & Reels", icon: PlatformIcon, className: "channel-facebook" }] as const).map(channel => <button className="channel-row" key={channel.name} onClick={() => { navTo("Connected accounts"); notify(channel.name + " connection setup selected"); }}><span className={"channel-icon " + channel.className}><PlatformIcon platform={channel.name} size={17}/></span><span className="channel-copy"><strong>{channel.name}</strong><small>{channel.sub}</small></span><span className="connect-label">Connect</span><ChevronRight size={15} className="channel-chevron"/></button>)}</div><button className="button button-secondary button-full" onClick={() => navTo("Connected accounts")}>Manage channels <ArrowRight size={15}/></button><p className="microcopy"><CheckCircle2 size={13}/> Your credentials stay private and secure.</p></section>
           <section className="tip-card"><div className="tip-icon"><Sparkles size={17}/></div><div className="tip-eyebrow">A SMALL CREATOR TIP</div><h3>Make it feel native.</h3><p>A caption that sounds right on TikTok might need a different rhythm on YouTube. We'll help you tailor it without losing your voice.</p><button onClick={() => navTo("Discover")}>Explore ideas <ArrowRight size={14}/></button><div className="tip-flower">✳</div></section></div></div>
