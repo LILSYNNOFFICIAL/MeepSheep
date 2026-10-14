@@ -60,6 +60,11 @@ function normalizePosts(value: unknown): Post[] | null {
   return normalized as Post[];
 }
 
+export function parsePostsBackup(value: unknown): Post[] | null {
+  if (!isRecord(value) || value.app !== "MeepSheep" || value.formatVersion !== 1) return null;
+  return normalizePosts(value.posts);
+}
+
 export function loadPosts(): { posts: Post[] | null; canWrite: boolean } {
   if (typeof window === "undefined") return { posts: null, canWrite: false };
 
