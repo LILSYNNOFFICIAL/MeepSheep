@@ -108,7 +108,7 @@ export default function HomePage() {
     const formattedDate = postDate === "2026-10-16" ? "Fri, Oct 16" : new Date(postDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
     const formattedTime = new Date("2020-01-01T" + postTime + ":00").toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
     const savedPost: Post = { id: editingPostId ?? Date.now(), title: postTitle.trim(), platform: postPlatform, captions: postCaptions, dateISO: postDate, time24: postTime, status: "Draft", date: formattedDate, time: formattedTime, color: "lavender", kind: postKind };
-    setPosts(current => editingPostId === null ? [savedPost, ...current] : current.map(post => post.id === editingPostId ? { ...post, ...savedPost } : post));
+    setPosts(current => editingPostId === null ? [savedPost, ...current] : current.map(post => post.id === editingPostId ? { ...post, ...savedPost, status: post.status } : post));
     setEditingPostId(null);
     setPostTitle("");
     setPostCaptions({ TikTok: "", Instagram: "", YouTube: "", Facebook: "" });
