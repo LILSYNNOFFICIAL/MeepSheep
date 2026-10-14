@@ -60,27 +60,31 @@ function normalizePosts(value: unknown): Post[] | null {
   return normalized as Post[];
 }
 
-export function loadPosts(): Post[] | null {
-  if (typeof window === "undefined") return null;
+export function loadPosts(): { posts: Post[] | null; canWrite: boolean } {
+  if (typeof window === "undefined") return { posts: null, canWrite: false };
 
   try {
     const current = window.localStorage.getItem(STORAGE_KEY);
     if (current) {
       const parsed: unknown = JSON.parse(current);
       if (isRecord(parsed) && parsed.version === STORAGE_VERSION) {
-        return normalizePosts(parsed.posts);
+        const posts = normalizePosts(parsed.posts);
+        return { posts, canWrite: posts !== null };
       }
-      // Do not overwrite a future schema written by a newer app version.
-      return null;
+      // Protect data created by a newer schema or damaged by an interrupted write.
+      return { posts: null, canWrite: false };
     }
 
     const legacy = window.localStorage.getItem(LEGACY_STORAGE_KEY);
-    if (!legacy) return null;
+    if (!legacy) return { posts: null, canWrite: true };
     const posts = normalizePosts(JSON.parse(legacy));
-    if (posts) savePosts(posts);
-    return posts;
+    if (posts) {
+      const migrated = savePosts(posts);
+      return { posts, canWrite: migrated };
+    }
+    return { posts: null, canWrite: false };
   } catch {
-    return null;
+    return { posts: null, canWrite: false };
   }
 }
 
