@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import {
   ArrowRight, ArrowUpRight, AudioLines, Bell, CalendarDays, Check, CheckCircle2,
   ChevronDown, ChevronRight, CircleHelp, Clock3, CloudUpload, Compass, Ellipsis,
@@ -69,7 +69,7 @@ export default function HomePage() {
     window.setTimeout(() => setToast(""), 3200);
   };
 
-  const savePost = (event: React.FormEvent<HTMLFormElement>) => {
+  const savePost = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!postTitle.trim()) return;
     const formattedDate = postDate === "2026-10-16" ? "Fri, Oct 16" : new Date(postDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
