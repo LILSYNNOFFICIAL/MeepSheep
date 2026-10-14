@@ -1,0 +1,130 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, AudioLines, Bell, CalendarDays,
+  Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clock3,
+  CloudUpload, Command, Compass, Ellipsis, ExternalLink, FileVideo, Filter, Hash,
+  Home, Instagram, LayoutGrid, Link2, Menu, MessageCircle, MoreHorizontal, Music2,
+  Plus, Search, Settings2, Sparkles, TrendingUp, Video, WandSparkles, X, Youtube,
+  type LucideIcon
+} from "lucide-react";
+
+type Platform = "TikTok" | "Instagram" | "YouTube" | "Facebook";
+type Post = { id: number; title: string; platform: Platform; status: "Scheduled" | "Draft" | "Published"; date: string; time: string; color: string; kind: string };
+
+const initialPosts: Post[] = [
+  { id: 1, title: "Somewhere Inbetween — official visual", platform: "TikTok", status: "Scheduled", date: "Today", time: "6:30 PM", color: "lavender", kind: "Music video" },
+  { id: 2, title: "Studio moment: building the drop", platform: "Instagram", status: "Draft", date: "Tomorrow", time: "11:00 AM", color: "peach", kind: "Behind the scenes" },
+  { id: 3, title: "Black Glass (acoustic) — chorus", platform: "YouTube", status: "Scheduled", date: "Fri, Oct 16", time: "4:00 PM", color: "blue", kind: "Short" },
+  { id: 4, title: "New music, same strange little universe", platform: "Facebook", status: "Published", date: "Yesterday", time: "7:12 PM", color: "sage", kind: "Artist update" }
+];
+
+const navGroups: { label: string; items: { label: string; icon: LucideIcon; badge?: string }[] }[] = [
+  { label: "WORKSPACE", items: [{ label: "Overview", icon: Home }, { label: "Content planner", icon: CalendarDays }, { label: "Content library", icon: LayoutGrid }, { label: "Studio", icon: WandSparkles, badge: "New" }] },
+  { label: "GROW", items: [{ label: "Analytics", icon: TrendingUp }, { label: "Discover", icon: Compass }, { label: "Hashtag lab", icon: Hash }] },
+  { label: "MANAGE", items: [{ label: "Connected accounts", icon: Link2 }, { label: "Settings guide", icon: Settings2 }] }
+];
+
+function PlatformIcon({ platform, size = 16 }: { platform: Platform; size?: number }) {
+  if (platform === "Instagram") return <Instagram size={size} />;
+  if (platform === "YouTube") return <Youtube size={size} />;
+  if (platform === "Facebook") return <span className="facebook-mark" style={{ fontSize: size + 1 }}>f</span>;
+  return <span className="tiktok-mark" style={{ fontSize: size - 1 }}>♪</span>;
+}
+
+function BrandMark() {
+  return <div className="brand-mark" aria-hidden="true"><span className="brand-ear left" /><span className="brand-ear right" /><span className="brand-face"><span /><span /></span></div>;
+}
+
+function SectionHeading({ eyebrow, title, detail, action }: { eyebrow?: string; title: string; detail?: string; action?: React.ReactNode }) {
+  return <div className="section-heading"><div>{eyebrow && <div className="eyebrow">{eyebrow}</div>}<h2>{title}</h2>{detail && <p>{detail}</p>}</div>{action}</div>;
+}
+
+export default function HomePage() {
+  const [active, setActive] = useState("Overview");
+  const [profileMenu, setProfileMenu] = useState(false);
+  const [createMenu, setCreateMenu] = useState(false);
+  const [filterMenu, setFilterMenu] = useState(false);
+  const [filter, setFilter] = useState("All content");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [showComposer, setShowComposer] = useState(false);
+  const [toast, setToast] = useState("");
+  const [posts, setPosts] = useState(initialPosts);
+  const [postTitle, setPostTitle] = useState("");
+  const [postPlatform, setPostPlatform] = useState<Platform>("TikTok");
+  const [postKind, setPostKind] = useState("Short video");
+  const [postDate, setPostDate] = useState("2026-10-16");
+  const [postTime, setPostTime] = useState("18:30");
+  const [mobileNav, setMobileNav] = useState(false);
+
+  const filteredPosts = useMemo(() => posts.filter(post => {
+    const matchesFilter = filter === "All content" || post.status === filter;
+    const matchesQuery = !query || (post.title + post.platform + post.kind).toLowerCase().includes(query.toLowerCase());
+    return matchesFilter && matchesQuery;
+  }), [posts, filter, query]);
+
+  const notify = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(""), 3200);
+  };
+
+  const savePost = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!postTitle.trim()) return;
+    const formattedDate = postDate === "2026-10-16" ? "Fri, Oct 16" : new Date(postDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const formattedTime = new Date("2020-01-01T" + postTime + ":00").toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    setPosts(current => [{ id: Date.now(), title: postTitle.trim(), platform: postPlatform, status: "Draft", date: formattedDate, time: formattedTime, color: "lavender", kind: postKind }, ...current]);
+    setPostTitle("");
+    setShowComposer(false);
+    setActive("Content planner");
+    setFilter("All content");
+    notify("Draft saved to your content planner");
+  };
+
+  const navTo = (label: string) => {
+    setActive(label);
+    setMobileNav(false);
+    if (label !== "Overview") notify(label + " workspace selected");
+  };
+
+  return (
+    <main className="app-shell">
+      <aside className={"sidebar " + (mobileNav ? "sidebar-open" : "")}>
+        <div className="brand-row"><BrandMark /><span className="brand-name">meep<span>sheep</span></span><button className="icon-button mobile-close" aria-label="Close menu" onClick={() => setMobileNav(false)}><X size={18}/></button></div>
+        <button className="workspace-switch" onClick={() => setProfileMenu(!profileMenu)} aria-expanded={profileMenu}>
+          <div className="workspace-avatar">M</div><div className="workspace-copy"><strong>My workspace</strong><span>Creator plan · Free</span></div><ChevronDown size={15} className={profileMenu ? "rotate" : ""}/>
+        </button>
+        {profileMenu && <div className="workspace-popover"><button onClick={() => { setProfileMenu(false); notify("Workspace settings are coming soon"); }}><Settings2 size={15}/> Workspace settings</button><button onClick={() => { setProfileMenu(false); notify("Plan management will be available soon"); }}><Sparkles size={15}/> Explore plans</button></div>}
+        <div className="sidebar-scroll">{navGroups.map(group => <div className="nav-group" key={group.label}><div className="nav-label">{group.label}</div>{group.items.map(item => <button key={item.label} className={"nav-item " + (active === item.label ? "active" : "")} onClick={() => navTo(item.label)}><item.icon size={17} strokeWidth={1.8}/><span>{item.label}</span>{item.badge && <span className="new-badge">{item.badge}</span>}</button>)}</div>)}</div>
+        <div className="sidebar-bottom"><div className="upgrade-card"><div className="upgrade-icon"><Sparkles size={17}/></div><strong>A little more room?</strong><p>Make space for your next big idea.</p><button onClick={() => notify("Plans and pricing are coming soon")}>Explore plans <ArrowRight size={14}/></button><div className="upgrade-sparkle sparkle-one">✳</div><div className="upgrade-sparkle sparkle-two">✳</div></div><button className="help-link" onClick={() => notify("Help center is being prepared")}><CircleHelp size={16}/> Help & getting started <ArrowUpRight size={13}/></button><div className="profile-row"><div className="profile-photo">LS</div><div className="profile-info"><strong>LIL SYNN</strong><span>Artist workspace</span></div><button className="icon-button" aria-label="Account options" onClick={() => setProfileMenu(!profileMenu)}><Ellipsis size={19}/></button></div></div>
+      </aside>
+
+      {mobileNav && <button className="mobile-scrim" aria-label="Close navigation" onClick={() => setMobileNav(false)}/>}
+
+      <section className="main-area">
+        <header className="topbar"><div className="breadcrumb"><button className="mobile-menu icon-button" aria-label="Open menu" onClick={() => setMobileNav(true)}><Menu size={20}/></button><span>Workspace</span><ChevronRight size={14}/><strong>{active}</strong></div><div className="topbar-actions">{searchOpen && <input autoFocus className="search-input" placeholder="Search your content..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if(e.key === "Escape") { setSearchOpen(false); setQuery(""); }}}/>}<button className="icon-button" aria-label="Search content" onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) setQuery(""); }}><Search size={18}/></button><button className="icon-button notification-button" aria-label="Notifications" onClick={() => notify("You're all caught up")}><Bell size={18}/><i/></button><div className="top-avatar">LS</div></div></header>
+
+        <div className="page-content">
+          <div className="welcome-row"><div><div className="date-kicker"><span className="live-dot"/> WEDNESDAY, OCTOBER 14, 2026</div><h1>{active === "Overview" ? <>Good things are <span>in motion.</span></> : active}</h1><p className="welcome-subtitle">{active === "Overview" ? "Your creative world, a little more in sync." : active === "Content planner" ? "Everything you want to share, all in one place." : "A calmer way to keep your creative work moving."}</p></div><div className="welcome-actions"><button className="button button-secondary" onClick={() => notify("Choose a video from your library to get started")}><CloudUpload size={16}/> Upload content</button><div className="dropdown-anchor"><button className="button button-primary" onClick={() => setCreateMenu(!createMenu)} aria-expanded={createMenu}><Plus size={17}/> Create new <ChevronDown size={15}/></button>{createMenu && <div className="dropdown-menu create-dropdown"><button onClick={() => { setCreateMenu(false); setShowComposer(true); }}><FileVideo size={16}/><span><strong>Social post</strong><small>Prepare a post for your channels</small></span></button><button onClick={() => { setCreateMenu(false); navTo("Studio"); notify("Studio tools are being built"); }}><WandSparkles size={16}/><span><strong>Studio project</strong><small>Make something worth sharing</small></span></button><button onClick={() => { setCreateMenu(false); navTo("Content planner"); }}><CalendarDays size={16}/><span><strong>Plan content</strong><small>Organize your publishing calendar</small></span></button></div>}</div></div></div>
+
+          <div className="integration-banner"><div className="integration-illustration"><div className="orbit orbit-a"/><div className="orbit orbit-b"/><div className="orbit-center"><BrandMark/></div><div className="orbit-dot dot-tiktok">♪</div><div className="orbit-dot dot-insta"><Instagram size={13}/></div><div className="orbit-dot dot-youtube"><Youtube size={14}/></div></div><div className="integration-copy"><div className="banner-label"><span className="banner-label-dot"/> YOUR CREATOR HOME BASE</div><h2>One place for all your <em>good stuff.</em></h2><p>Bring your channels together, shape each post for its platform, and spend less time in settings menus.</p><div className="banner-actions"><button className="button button-dark" onClick={() => navTo("Connected accounts")}>Connect your channels <ArrowRight size={15}/></button><button className="text-button" onClick={() => navTo("Settings guide")}>See how it works <ArrowUpRight size={14}/></button></div></div><div className="banner-decoration">✳</div></div>
+
+          <div className="stats-grid"><div className="stat-card"><div className="stat-top"><span>Content in your library</span><span className="stat-icon icon-lavender"><LayoutGrid size={17}/></span></div><div className="stat-value">{String(posts.length).padStart(2,"0")}<span className="stat-unit"> pieces</span></div><div className="stat-foot"><span className="stat-neutral"><FileVideo size={13}/> Your creative queue</span></div></div><div className="stat-card"><div className="stat-top"><span>Coming up next</span><span className="stat-icon icon-peach"><Clock3 size={17}/></span></div><div className="stat-value">{posts.filter(p => p.status === "Scheduled").length}<span className="stat-unit"> scheduled</span></div><div className="stat-foot"><span className="stat-neutral"><CalendarDays size={13}/> Across your channels</span></div></div><div className="stat-card"><div className="stat-top"><span>Channels connected</span><span className="stat-icon icon-sage"><Link2 size={17}/></span></div><div className="stat-value">0<span className="stat-unit"> of 4</span></div><div className="stat-foot"><button className="inline-link" onClick={() => navTo("Connected accounts")}>Set up your first <ArrowRight size={13}/></button></div></div><div className="stat-card stat-card-note"><div className="stat-top"><span>A little nudge</span><span className="stat-icon icon-yellow"><Sparkles size={17}/></span></div><div className="note-copy">Your next post is a chance to <span>show up.</span></div><button className="inline-link" onClick={() => setShowComposer(true)}>Let's make one <ArrowRight size={13}/></button></div></div>
+
+          <div className="content-grid"><section className="panel planner-panel"><SectionHeading eyebrow="KEEP THE GOOD STUFF MOVING" title="Your content planner" detail="A little plan goes a long way." action={<button className="icon-button" aria-label="More planner options" onClick={() => setFilterMenu(!filterMenu)}><MoreHorizontal size={20}/></button>}/><div className="planner-toolbar"><div className="filter-tabs">{["All content","Scheduled","Draft","Published"].map(option => <button key={option} className={filter === option ? "filter-tab selected" : "filter-tab"} onClick={() => setFilter(option)}>{option}</button>)}</div><div className="dropdown-anchor"><button className="filter-button" onClick={() => setFilterMenu(!filterMenu)}><Filter size={14}/><span>Filter</span><ChevronDown size={13}/></button>{filterMenu && <div className="dropdown-menu filter-dropdown">{["All content","Scheduled","Draft","Published"].map(option => <button key={option} onClick={() => { setFilter(option); setFilterMenu(false); }}><span>{option}</span>{filter === option && <Check size={15}/>}</button>)}</div>}</div></div><div className="post-list">{filteredPosts.length ? filteredPosts.map(post => <article className="post-row" key={post.id}><div className={"post-thumb thumb-" + post.color}>{post.kind === "Music video" ? <AudioLines size={22}/> : post.kind === "Short" ? <Video size={21}/> : post.kind === "Artist update" ? <Music2 size={21}/> : <Sparkles size={21}/>}<span className="thumb-platform"><PlatformIcon platform={post.platform} size={12}/></span></div><div className="post-details"><strong>{post.title}</strong><span>{post.kind} <i/> {post.platform}</span></div><div className="post-schedule"><span>{post.date}</span><small>{post.time}</small></div><span className={"status-pill status-" + post.status.toLowerCase()}><i/>{post.status}</span><button className="icon-button post-more" aria-label={"Options for " + post.title} onClick={() => notify("Post options for: " + post.title)}><Ellipsis size={18}/></button></article>) : <div className="empty-state"><div className="empty-icon"><Search size={20}/></div><strong>Nothing here just yet</strong><span>Try another filter or create a new post.</span><button className="button button-secondary" onClick={() => { setFilter("All content"); setQuery(""); }}>Show all content</button></div>}</div><div className="panel-footer"><span>Showing {filteredPosts.length} of {posts.length} items</span><button className="text-button" onClick={() => navTo("Content planner")}>Open planner <ArrowRight size={14}/></button></div></section>
+
+          <div className="right-column"><section className="panel channels-panel"><SectionHeading title="Your channels" detail="Your people are out there." action={<button className="icon-button" aria-label="Channel options" onClick={() => navTo("Connected accounts")}><ArrowUpRight size={17}/></button>}/><div className="channel-list">{([{ name: "TikTok", sub: "Short-form video", icon: PlatformIcon, className: "channel-tiktok" }, { name: "Instagram", sub: "Reels & posts", icon: PlatformIcon, className: "channel-instagram" }, { name: "YouTube", sub: "Shorts & videos", icon: PlatformIcon, className: "channel-youtube" }, { name: "Facebook", sub: "Pages & Reels", icon: PlatformIcon, className: "channel-facebook" }] as const).map(channel => <button className="channel-row" key={channel.name} onClick={() => { navTo("Connected accounts"); notify(channel.name + " connection setup selected"); }}><span className={"channel-icon " + channel.className}><PlatformIcon platform={channel.name} size={17}/></span><span className="channel-copy"><strong>{channel.name}</strong><small>{channel.sub}</small></span><span className="connect-label">Connect</span><ChevronRight size={15} className="channel-chevron"/></button>)}</div><button className="button button-secondary button-full" onClick={() => navTo("Connected accounts")}>Manage channels <ArrowRight size={15}/></button><p className="microcopy"><CheckCircle2 size={13}/> Your credentials stay private and secure.</p></section>
+          <section className="tip-card"><div className="tip-icon"><Sparkles size={17}/></div><div className="tip-eyebrow">A SMALL CREATOR TIP</div><h3>Make it feel native.</h3><p>A caption that sounds right on TikTok might need a different rhythm on YouTube. We'll help you tailor it without losing your voice.</p><button onClick={() => navTo("Discover")}>Explore ideas <ArrowRight size={14}/></button><div className="tip-flower">✳</div></section></div></div>
+
+          <footer className="page-footer"><span>Made for people who make things. <span className="footer-heart">♥</span></span><span><button onClick={() => notify("Privacy information will be published before launch")}>Privacy</button><button onClick={() => notify("Terms will be published before launch")}>Terms</button><button onClick={() => notify("MeepSheep is in early development")}>Early access <span className="footer-dot"/></button></span></footer>
+        </div>
+      </section>
+
+      {showComposer && <div className="modal-backdrop" role="presentation" onMouseDown={e => { if(e.target === e.currentTarget) setShowComposer(false); }}><section className="composer-modal" role="dialog" aria-modal="true" aria-labelledby="composer-title"><div className="modal-header"><div><div className="eyebrow">MAKE SOMETHING GOOD</div><h2 id="composer-title">Create a post</h2><p>Start with one idea. We'll help it find its people.</p></div><button className="icon-button" aria-label="Close composer" onClick={() => setShowComposer(false)}><X size={19}/></button></div><form onSubmit={savePost}><label className="field-label" htmlFor="post-title">What are we sharing?</label><textarea id="post-title" placeholder="Give this post a name or jot down the idea..." value={postTitle} onChange={e => setPostTitle(e.target.value)} required rows={3}/><div className="form-row"><div className="form-field"><label className="field-label" htmlFor="post-platform">First platform</label><div className="select-wrap"><select id="post-platform" value={postPlatform} onChange={e => setPostPlatform(e.target.value as Platform)}>{(["TikTok","Instagram","YouTube","Facebook"] as Platform[]).map(p => <option key={p}>{p}</option>)}</select><ChevronDown size={15}/></div></div><div className="form-field"><label className="field-label" htmlFor="post-kind">Content type</label><div className="select-wrap"><select id="post-kind" value={postKind} onChange={e => setPostKind(e.target.value)}>{["Short video","Music video","Behind the scenes","Artist update","Tutorial"].map(k => <option key={k}>{k}</option>)}</select><ChevronDown size={15}/></div></div></div><div className="form-row"><div className="form-field"><label className="field-label" htmlFor="post-date">Planned date</label><input id="post-date" type="date" value={postDate} onChange={e => setPostDate(e.target.value)} required/></div><div className="form-field"><label className="field-label" htmlFor="post-time">Planned time</label><input id="post-time" type="time" value={postTime} onChange={e => setPostTime(e.target.value)} required/></div></div><div className="modal-actions"><button type="button" className="button button-secondary" onClick={() => setShowComposer(false)}>Cancel</button><button type="submit" className="button button-primary"><Check size={16}/> Save as draft</button></div><p className="modal-note"><Clock3 size={13}/> This saves a local draft only. Platform publishing will be connected after API approvals.</p></form></section></div>}
+
+      {toast && <div className="toast" role="status"><CheckCircle2 size={17}/><span>{toast}</span><button aria-label="Dismiss notification" onClick={() => setToast("")}><X size={15}/></button></div>}
+    </main>
+  );
+}
