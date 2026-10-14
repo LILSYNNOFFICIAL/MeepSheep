@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "MeepSheep — Your creative world, in sync",
   description: "Plan, tailor, and manage your content across platforms from one beautifully simple creator workspace.",
   applicationName: "MeepSheep",
+  icons: { icon: "/favicon.svg" },
   appleWebApp: { capable: true, statusBarStyle: "default", title: "MeepSheep" }
 };
 
