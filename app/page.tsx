@@ -110,12 +110,11 @@ export default function HomePage() {
   const [hashtagPlatform, setHashtagPlatform] = useState<Platform>("TikTok");
   const [hashtagTags, setHashtagTags] = useState<string[]>([]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- Initialize the date label from the browser clock after hydration.
+  /* eslint-disable react-hooks/set-state-in-effect -- These effects synchronize browser-only clock and storage state after hydration. */
   useEffect(() => {
     setTodayLabel(new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).toUpperCase());
   }, []);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrate drafts from browser storage after the client mounts.
   useEffect(() => {
     const result = loadPosts();
     if (result.posts) setPosts(result.posts);
@@ -123,12 +122,12 @@ export default function HomePage() {
     setPostsLoaded(true);
   }, []);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- Disable persistence if the browser storage write itself fails.
   useEffect(() => {
     if (!postsLoaded || !canPersistPosts) return;
     const saved = savePosts(posts);
     if (!saved) setCanPersistPosts(false);
   }, [posts, postsLoaded, canPersistPosts]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const syncFromAnotherTab = (event: StorageEvent) => {
