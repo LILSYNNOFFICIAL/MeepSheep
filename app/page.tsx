@@ -93,6 +93,7 @@ export default function HomePage() {
   const [showComposer, setShowComposer] = useState(false);
   const [toast, setToast] = useState("");
   const [posts, setPosts] = useState(initialPosts);
+  const postsRef = useRef(posts);
   const [postsLoaded, setPostsLoaded] = useState(false);
   const [canPersistPosts, setCanPersistPosts] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -123,6 +124,8 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    // Keep the latest value available to storage-event handlers before they compare incoming data.
+    postsRef.current = posts;
     if (!postsLoaded || !canPersistPosts) return;
     const saved = savePosts(posts);
     if (!saved) setCanPersistPosts(false);
@@ -133,7 +136,11 @@ export default function HomePage() {
     const syncFromAnotherTab = (event: StorageEvent) => {
       if (event.key !== "meepsheep.posts.v2" && event.key !== "meepsheep.posts.v1") return;
       const result = loadPosts();
-      if (result.posts) setPosts(result.posts);
+      if (result.posts && JSON.stringify(result.posts) !== JSON.stringify(postsRef.current)) {
+        // Avoid re-saving identical content in response to another tab's storage event.
+        postsRef.current = result.posts;
+        setPosts(result.posts);
+      }
       setCanPersistPosts(result.canWrite);
     };
     window.addEventListener("storage", syncFromAnotherTab);
