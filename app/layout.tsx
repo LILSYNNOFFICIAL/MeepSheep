@@ -3,17 +3,17 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MeepSheep — Your creative world, in sync",
-  description: "Plan, tailor, and manage your content across platforms from one beautifully simple creator workspace.",
+  title: "MeepSheep | Secure AI Computer Control",
+  description: "A permission-based bridge between compatible AI clients and computers you choose to connect.",
   applicationName: "MeepSheep",
   icons: { icon: "/favicon.svg" },
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "MeepSheep" }
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "MeepSheep" }
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f7f7f5"
+  themeColor: "#10100f"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
