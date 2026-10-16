@@ -77,6 +77,15 @@ public static class AuthorizationTicketValidator
                 "The ticket does not match the request ID, device, and capability.");
         }
 
+        // Reject malformed targets as data instead of allowing digest computation to throw.
+        if (string.IsNullOrWhiteSpace(envelope.OperationTarget) ||
+            envelope.OperationTarget.Length > 1024)
+        {
+            return EnvelopeValidationResult.Reject(
+                "ticket_envelope_target_invalid",
+                "The envelope operation target is missing or exceeds the allowed size.");
+        }
+
         var expectedDigest = ComputeTargetDigest(envelope.OperationTarget);
         if (!CryptographicOperations.FixedTimeEquals(
                 Encoding.ASCII.GetBytes(ticket.TargetDigest.ToLowerInvariant()),
