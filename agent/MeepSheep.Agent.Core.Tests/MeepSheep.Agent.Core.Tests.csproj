@@ -17,5 +17,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../MeepSheep.Agent.Core/MeepSheep.Agent.Core.csproj" />
+    <ProjectReference Include="../MeepSheep.Agent.Host/MeepSheep.Agent.Host.csproj" />
   </ItemGroup>
 </Project>
