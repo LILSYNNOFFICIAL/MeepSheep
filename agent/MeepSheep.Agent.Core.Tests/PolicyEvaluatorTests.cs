@@ -1,0 +1,72 @@
+using MeepSheep.Agent.Core;
+
+namespace MeepSheep.Agent.Core.Tests;
+
+public sealed class PolicyEvaluatorTests
+{
+    [Fact]
+    public void DenyAllPolicyRejectsEveryCapability()
+    {
+        var decision = PolicyEvaluator.Evaluate(
+            AgentPolicy.DenyAll,
+            new PolicyRequest(AgentCapability.CaptureScreen));
+
+        Assert.False(decision.Allowed);
+        Assert.Equal("capability_not_allowed", decision.Code);
+    }
+
+    [Fact]
+    public void ExplicitlyAllowedCapabilityCanProceed()
+    {
+        var policy = new AgentPolicy(
+            new HashSet<AgentCapability> { AgentCapability.LaunchApplication },
+            new HashSet<AgentCapability>());
+
+        var decision = PolicyEvaluator.Evaluate(
+            policy,
+            new PolicyRequest(AgentCapability.LaunchApplication));
+
+        Assert.True(decision.Allowed);
+        Assert.Equal("allowed", decision.Code);
+    }
+
+    [Fact]
+    public void SensitiveCapabilityRequiresSeparateApproval()
+    {
+        var policy = new AgentPolicy(
+            new HashSet<AgentCapability> { AgentCapability.DeleteFiles },
+            new HashSet<AgentCapability> { AgentCapability.DeleteFiles });
+
+        var decision = PolicyEvaluator.Evaluate(
+            policy,
+            new PolicyRequest(AgentCapability.DeleteFiles));
+
+        Assert.False(decision.Allowed);
+        Assert.Equal("approval_required", decision.Code);
+    }
+
+    [Fact]
+    public void SensitiveCapabilityCanProceedAfterApproval()
+    {
+        var policy = new AgentPolicy(
+            new HashSet<AgentCapability> { AgentCapability.DeleteFiles },
+            new HashSet<AgentCapability> { AgentCapability.DeleteFiles });
+
+        var decision = PolicyEvaluator.Evaluate(
+            policy,
+            new PolicyRequest(AgentCapability.DeleteFiles, ApprovalGranted: true));
+
+        Assert.True(decision.Allowed);
+    }
+
+    [Fact]
+    public void ExplicitApprovalDoesNotOverrideCapabilityAllowlist()
+    {
+        var decision = PolicyEvaluator.Evaluate(
+            AgentPolicy.DenyAll,
+            new PolicyRequest(AgentCapability.ChangeFirewall, ApprovalGranted: true));
+
+        Assert.False(decision.Allowed);
+        Assert.Equal("capability_not_allowed", decision.Code);
+    }
+}
