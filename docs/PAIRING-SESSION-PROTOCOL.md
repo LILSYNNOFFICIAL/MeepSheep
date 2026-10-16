@@ -49,6 +49,8 @@ The agent must authenticate the session and verify integrity before trusting any
 
 Canonical serialization and signature or MAC details must be defined by a reviewed protocol specification. Avoid signing ambiguous JSON or relying on a client-generated identifier as proof of authenticity.
 
+The current prototype's target digest hashes the exact UTF-8 target string as supplied. This only detects a changed string; it does not canonicalize paths, resolve symbolic links/reparse points, prove filesystem identity, or prevent path traversal. Before file operations are implemented, define capability-specific target normalization and perform path/root/reparse-point checks at the operating-system boundary immediately before execution. Do not treat a matching digest as proof that a target is safe.
+
 ## Transport and reconnection
 
 - Prefer an outbound, mutually authenticated encrypted session from the agent. Do not require public inbound RDP, PowerShell, or arbitrary control ports.
