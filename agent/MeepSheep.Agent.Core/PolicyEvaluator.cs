@@ -7,6 +7,13 @@ public static class PolicyEvaluator
         ArgumentNullException.ThrowIfNull(policy);
         ArgumentNullException.ThrowIfNull(request);
 
+        if (request.RequiresAdminPrivileges)
+        {
+            return PolicyDecision.Deny(
+                "admin_privileges_not_granted",
+                "Administrator privileges are never granted by this policy.");
+        }
+
         if (!policy.AllowedCapabilities.Contains(request.Capability))
         {
             return PolicyDecision.Deny(
