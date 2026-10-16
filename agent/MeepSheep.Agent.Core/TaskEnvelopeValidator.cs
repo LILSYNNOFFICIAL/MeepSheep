@@ -61,7 +61,7 @@ public static class TaskEnvelopeValidator
                 "The requested authorization lifetime exceeds the allowed maximum.");
         }
 
-        if (envelope.IssuedAt > now + allowedClockSkew)
+        if (envelope.IssuedAt > now && envelope.IssuedAt - now > allowedClockSkew)
         {
             return EnvelopeValidationResult.Reject(
                 "issued_in_future",
