@@ -34,6 +34,7 @@ The `agent/` directory currently contains:
 - An immutable default-deny policy model and policy evaluator.
 - Approval checks for sensitive capabilities and rejection of requests requiring administrator privileges.
 - A task authorization envelope and shape/time validator with required-field, field-size, lifetime, expiry, and clock-skew checks.
+- An authorization-ticket consistency validator that binds tickets to the exact request, device, capability, target digest, lifetime, and approval-reference requirement. It does not authenticate or verify signatures.
 - A bounded, process-local replay guard that atomically consumes a device-scoped nonce and request ID, expires old entries, and fails closed when its cache is full.
 - A task lifecycle transition model that rejects invalid transitions and prevents terminal states from being reopened. It is a pure decision helper, not a durable task store or execution engine.
 - Unit tests for policy decisions, envelope validation, replay rejection, expiry, capacity, and concurrent attempts.
