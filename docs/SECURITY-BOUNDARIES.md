@@ -24,8 +24,11 @@ Status: design contract for the prototype. These requirements are not yet enforc
 4. Check the client scope and device policy.
 5. Require a fresh, explicit user approval for consequential or privacy-sensitive operations.
 6. Issue a short-lived, single-use authorization bound to the exact operation and target.
-7. Re-check authorization locally, execute only the narrow operation, and enforce a timeout/cancellation path.
-8. Record the request, policy result, approval reference, operation outcome, and error category without storing secrets or unnecessary screen/file content.
+7. On the agent, authenticate the envelope and validate its time bounds before atomically consuming the nonce and request identifier.
+8. Re-check device authorization, local policy, approval freshness, and cancellation immediately before executing only the narrow operation.
+9. Record the request, policy result, approval reference, operation outcome, and error category without storing secrets or unnecessary screen/file content.
+
+**Current implementation gap:** the .NET replay guard is a bounded, in-memory prototype only. It is not persistent, resets on process restart, is not connected to an authenticated session, and is not called by any real operation. It must not be represented as end-to-end replay protection. A production implementation needs atomic durable consumption scoped to the authenticated device/session, safe multi-instance behavior, and tests covering restart and concurrency. The current envelope DTO and its shape/time validator do not authenticate the sender or prove authorization.
 
 Approval for one operation must not become blanket approval for later operations. A tool call cannot grant itself new scopes or change the policy used to authorize that same call.
 
@@ -59,6 +62,7 @@ Approval for one operation must not become blanket approval for later operations
 A working computer-control release must not ship until the team has:
 - A documented threat model and reviewed pairing/session protocol.
 - Tests proving default-deny behavior, scope enforcement, approval freshness, expiry, replay rejection, revocation, cancellation, and audit outcomes.
+- Durable replay protection that remains correct across process restarts and concurrent agent instances.
 - Windows integration tests covering the actual operation call paths.
 - Signed build/update artifacts and a recovery path for a bad update.
 - A security review of the end-to-end request path, not just the web UI or policy library.
