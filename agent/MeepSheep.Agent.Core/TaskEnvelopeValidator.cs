@@ -22,6 +22,13 @@ public static class TaskEnvelopeValidator
             return EnvelopeValidationResult.Reject("missing_request_id", "A non-empty request ID is required.");
         }
 
+        if (!Enum.IsDefined(envelope.Capability))
+        {
+            return EnvelopeValidationResult.Reject(
+                "unknown_capability",
+                "The requested capability is not recognized.");
+        }
+
         if (string.IsNullOrWhiteSpace(envelope.DeviceId) ||
             string.IsNullOrWhiteSpace(envelope.Nonce) ||
             string.IsNullOrWhiteSpace(envelope.OperationTarget))
