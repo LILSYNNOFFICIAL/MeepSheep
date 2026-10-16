@@ -68,6 +68,21 @@ public static class AuthorizationTicketValidator
                 "The ticket is not currently valid.");
         }
 
+        if (envelope.ExpiresAt <= now)
+        {
+            return EnvelopeValidationResult.Reject(
+                "ticket_envelope_not_current",
+                "The task envelope has expired.");
+        }
+
+        if (ticket.IssuedAtUtc < envelope.IssuedAt ||
+            ticket.ExpiresAtUtc > envelope.ExpiresAt)
+        {
+            return EnvelopeValidationResult.Reject(
+                "ticket_envelope_time_mismatch",
+                "The ticket must be issued no earlier than its envelope and cannot outlive it.");
+        }
+
         if (ticket.RequestId != envelope.RequestId ||
             !string.Equals(ticket.DeviceId, envelope.DeviceId, StringComparison.Ordinal) ||
             ticket.Capability != envelope.Capability)
