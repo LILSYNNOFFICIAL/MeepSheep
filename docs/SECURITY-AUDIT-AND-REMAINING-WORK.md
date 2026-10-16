@@ -19,6 +19,7 @@ This audit made defense-in-depth changes to the current branch, listed below. Do
 - [x] **HTTP response security headers added:** CSP, frame restrictions, MIME sniffing protection, referrer policy, permissions policy, same-origin isolation headers, and HSTS are configured in Next.js. Verify these at the actual hosting edge before launch because proxies/platforms may override headers.
 - [x] **Third-party font request removed:** the Google Fonts CSS import was removed to avoid a third-party request on every page view. The browser now uses local/system fallbacks.
 - [x] **Dependency audit added to CI:** `npm audit --audit-level=high` now runs after dependency installation and will fail the build on high/critical advisories.
+- [x] **CI token permissions reduced:** workflow token permissions are explicitly limited to `contents: read`.
 - [x] **Documentation updated:** README and security boundaries link to this log and describe the new policy gates.
 
 ## Findings and current status
@@ -89,6 +90,6 @@ Until P0 work is complete, keep the agent local-only, deny all computer-control 
 ## Verification record
 
 - Source review and hardening changes were made on branch `rework/ai-computer-control-dashboard`.
-- Changes made: policy evaluator hardening, removal of caller-asserted privilege flag, regression tests, Next.js response headers, removal of third-party font import, npm audit step, and documentation updates.
+- Changes made: policy evaluator hardening, removal of caller-asserted privilege flag, regression tests, Next.js response headers, removal of third-party font import, npm audit step, least-privilege CI token permissions, and documentation updates.
 - **Verification pending:** CI must run against the final audit commit. Do not mark the changes as passing until the exact branch head and all job steps have been checked.
 - No merge or deployment is authorized by this audit.
