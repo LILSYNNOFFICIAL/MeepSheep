@@ -1,68 +1,114 @@
 # MeepSheep
 
-**Secure, permission-based computer control for AI clients.**
+**A secure bridge between AI clients and the computers their owners choose to connect.**
 
-MeepSheep is being reworked into a bridge between compatible AI clients and computers their owners choose to connect. The long-term goal is to let an AI inspect a screen, interact with approved desktop applications, and run explicitly permitted tasks through a local agent, with the human remaining in control.
+MeepSheep is being built as a local-first computer-control platform. The goal is to let compatible AI clients request approved actions on a user's Windows computer through a local agent, with clear permissions, human approval, an emergency stop, and an auditable task history.
 
-MeepSheep is not a public remote-desktop service and should not require exposing RDP, PowerShell, or other inbound control ports to the internet.
+MeepSheep is **not yet a working remote-control product**. This repository contains a web dashboard prototype, a documented security design, and an early .NET policy and task-envelope validation library. It does not currently control a computer.
 
-## Product direction
+## Why MeepSheep
 
-- **Local Windows agent:** runs on the computer the user owns and handles approved screen, mouse, keyboard, and command operations.
-- **MCP integration:** a hosted Model Context Protocol service is planned so compatible AI clients can request tools through an authenticated interface.
-- **Explicit permissions:** permissions are enforced by the agent and service, not by instructions to the AI model alone.
-- **Approval gates:** high-impact actions such as deleting files, installing software, changing firewall rules, or publishing content should require confirmation.
-- **Audit history:** record task requests, device identity, approvals, actions, and results.
-- **Emergency stop and revocation:** stop task intake and revoke device or client access.
-- **Usage and plans:** introduce transparent usage limits and optional paid tiers only after real costs and metering are understood.
+Today's AI clients can help plan computer tasks, but securely carrying out those tasks across a user's own desktop requires a separate, carefully controlled execution layer. MeepSheep is intended to provide that layer without asking users to expose public RDP, PowerShell, or other inbound control ports.
 
-## Current state
+Product principles:
 
-The repository currently contains a **front-end prototype** for the proposed control center. It is not yet a functioning remote-control product.
+- **The user owns the session.** The local agent should run as the signed-in user with least privilege.
+- **Permissions are enforced outside the model.** Natural-language instructions are never a security boundary.
+- **Default deny.** Every capability must be explicitly granted by policy.
+- **Approval is specific.** A confirmation must be tied to one operation and target, not treated as blanket permission.
+- **Outbound-first connectivity.** The agent should establish an authenticated outbound session rather than expose a public control port.
+- **Stop and revoke.** Users need local stop controls and a clear way to revoke devices and clients.
+- **Honest status.** The interface must never invent connected devices, live usage, issued credentials, or completed actions.
 
-The prototype includes:
-- Responsive black-and-gold dashboard and navigation
-- Honest empty states for devices, tasks, and activity
-- MCP client configuration example using placeholder host and token values
-- Preview settings for approval policy and emergency stop
-- Connection setup dialog that clearly explains what is not implemented
+## Current status
 
-Not implemented yet:
-- Windows local agent or installer
-- Device pairing and secure session transport
-- User authentication, server-side device registry, or credential issuance
-- Hosted MCP endpoint or live integrations with ChatGPT, Claude, Grok, or other clients
-- Screen capture, mouse/keyboard control, command execution, or approval enforcement
-- Server-side audit log, quotas, billing, or account-abuse controls
+### Web dashboard prototype
 
-Do not treat any prototype control, status, or sample configuration as a real security control or live connection.
+The Next.js app contains the proposed black-and-gold control-center experience, navigation for Overview, Devices, Connect AI, Tasks, Plan & usage, and Security, plus explicit prototype/empty states.
 
-## Security principles
+The interface is not connected to a live account system, device registry, agent, or MCP server. Sample client configuration is illustrative only.
 
-1. **No default administrator access.** Run with the least privilege required and request elevation only for a specific justified operation.
-2. **Outbound connections from the local agent.** Avoid asking users to expose public remote-access ports.
-3. **Short-lived, revocable credentials.** Separate account authentication, client tokens, and device pairing secrets.
-4. **Server and agent enforce policy.** The AI model cannot grant itself permissions or bypass an approval requirement.
-5. **Human approval for consequential actions.** Examples include permanent deletion, installing or uninstalling software, modifying firewall or security settings, and changing account permissions.
-6. **Auditable outcomes.** Record who requested an action, which device received it, the approval result, and whether it succeeded.
-7. **Clear stop and disconnect paths.** Users must be able to revoke a client or device and stop accepting new tasks.
-8. **Abuse prevention with proportional signals.** Account and usage controls should not rely on IP address alone.
+### .NET agent security foundation
 
-These are product requirements and design goals, not claims that the prototype currently enforces them.
+The `agent/` directory contains an early library that currently provides:
 
-## Suggested architecture
+- A typed list of proposed agent capabilities.
+- A default-deny policy model with immutable snapshots of capability sets.
+- A policy evaluator that rejects capabilities outside the allowlist, requires approval for capabilities marked sensitive, and rejects requests requiring administrator privileges.
+- A task authorization envelope type.
+- Validation of required envelope fields, field-size limits, issue/expiry ordering, maximum lifetime, expiry, and allowed clock skew.
+- Unit tests for the policy and envelope validation rules.
 
-1. **Web control center:** Next.js interface for account, device, permissions, task history, and usage.
-2. **Control API:** authenticated service for pairing, policy, task routing, revocation, and metering.
-3. **Local agent:** Windows process that initiates an outbound authenticated connection and executes a narrow set of policy-checked capabilities.
-4. **MCP adapter:** exposes only authorized tools to connected AI clients and forwards requests through the control service.
-5. **Persistence and operations:** durable device registry, encrypted secrets, audit records, quotas, monitoring, and incident response.
+**Important:** envelope validation checks structure and time bounds only. It does not authenticate the sender, verify a signature, prevent replay, establish device identity, or prove that approval was granted. These components are not yet wired to any operating-system action and are not, by themselves, a complete security boundary.
 
-A production implementation must define and test the threat model, authentication and pairing protocol, transport security, command allowlists, consent model, data retention, and recovery behavior before connecting to a real computer.
+### Not implemented
+
+- Windows desktop agent, installer, tray UI, or service lifecycle.
+- Screen capture, mouse/keyboard input, clipboard, file operations, application launch, or shell execution.
+- Account authentication, device pairing, credential issuance, secure transport, or revocation.
+- Control API, persistent device registry, task queue, server-side audit storage, or usage metering.
+- Hosted MCP endpoint or verified integration with ChatGPT, Claude, Grok, or another AI client.
+- Billing, production hosting, or deployment configuration.
+
+Do not install or run this repository expecting it to control a computer. Do not treat prototype controls, example credentials, or passing unit tests as proof of production security.
+
+## Planned architecture
+
+```text
+Compatible AI client
+        |
+        | authenticated MCP tool request
+        v
+MCP adapter / control API
+        |
+        | device-bound, short-lived authorized task
+        v
+Outbound authenticated session
+        |
+        v
+MeepSheep Windows agent
+        |
+        | local policy + fresh approval + cancellation check
+        v
+Narrow, user-authorized Windows operation
+```
+
+The architecture is a target design, not a deployed system.
+
+1. **Web control center:** account, paired devices, permission scopes, approval settings, task history, and usage.
+2. **Control API:** authentication, pairing, policy distribution, task routing, revocation, audit metadata, and quotas.
+3. **MCP adapter:** publishes only the tools and scopes authorized for a connected client.
+4. **Windows agent:** initiates an outbound authenticated connection, validates each task locally, executes only narrow operations, and exposes a local stop path.
+5. **Persistence and operations:** protected credentials, device registry, minimal audit records, monitoring, retention controls, and incident response.
+
+## Security model
+
+The complete security design and release requirements are documented in [docs/SECURITY-BOUNDARIES.md](docs/SECURITY-BOUNDARIES.md).
+
+Core requirements include:
+
+- No default administrator privileges or unrestricted administrator shell.
+- Explicit capability allowlists, enforced immediately before every real operation.
+- Short-lived, single-use task authorization bound to the device, operation, and target.
+- Authentication and integrity protection for transport, with replay resistance.
+- Fresh user confirmation for consequential or privacy-sensitive operations.
+- Visible session state and a local emergency stop.
+- Cancellation and timeouts, with truthful reporting when an action cannot be interrupted.
+- Revocation that fails closed when an offline agent's authorization expires.
+- Minimal logs: never store secrets, and do not retain screen or clipboard content by default.
+- Narrow file roots and defenses against path traversal and Windows reparse-point escapes.
+- Signed releases, update integrity, recovery procedures, and an end-to-end security review.
+
+A UI toggle, an AI instruction, a client-provided boolean, or an unsigned task envelope must never be sufficient to authorize a sensitive operation.
 
 ## Development
 
-Requirements: Node.js 20.9 or newer.
+### Requirements
+
+- Node.js 20.9 or newer for the web application.
+- .NET 10 SDK for the agent foundation and its tests.
+
+### Web dashboard
 
 ```bash
 npm install
@@ -71,42 +117,53 @@ npm run dev
 
 Open http://localhost:3000.
 
-Production build:
-
-```bash
-npm run build
-npm start
-```
-
-Lint:
+Run the web checks:
 
 ```bash
 npm run lint
+npm run build
 ```
 
-GitHub Actions runs a production build on pushes to `main` and pull requests targeting `main`.
+### Agent policy and envelope tests
 
-## Deployment
+From the repository root:
 
-Deployment is intentionally not configured as part of this prototype phase. Choose and configure hosting only after the UI, API boundaries, authentication design, and agent pairing approach are ready. Never commit API keys, pairing secrets, private tokens, or credentials to the repository.
+```bash
+dotnet test agent/MeepSheep.Agent.Core.Tests/MeepSheep.Agent.Core.Tests.csproj --configuration Release
+```
+
+These tests validate the current library's policy and envelope rules only. They do not test Windows input control, authentication, transport security, pairing, replay prevention, revocation, or real task execution because those systems do not yet exist.
+
+### Continuous integration
+
+GitHub Actions runs the web lint and production build, then runs the .NET agent-foundation tests on pull requests and pushes to `main`. Check the Actions result for the exact commit before claiming a revision is verified.
 
 ## Roadmap
 
-1. Replace the previous creator-workspace interface with the control-center prototype.
-2. Design and threat-model secure account authentication, device pairing, and local-agent permissions.
-3. Build and test the Windows local agent with narrowly scoped capabilities and a safe stop path.
-4. Implement the control API, device registry, revocation, audit records, and server-side usage accounting.
-5. Add an authenticated MCP service and test it with compatible clients.
-6. Complete security review, integration tests, operational monitoring, and documentation before public release.
+1. **Dashboard and architecture** - establish the product UI, README, threat boundaries, and honest prototype states.
+2. **Policy and task contract** - define typed capabilities, fail-closed policy decisions, and bounded task envelopes. (Initial library and tests now exist.)
+3. **Pairing and session protocol** - design and review device identity, client authentication, short-lived task authorization, replay resistance, and revocation before implementing transport.
+4. **Windows agent shell** - create a user-session agent with visible status, local stop control, safe lifecycle, and no default elevation.
+5. **First narrow capability** - add a read-only capability behind end-to-end authentication, policy enforcement, timeouts, and Windows integration tests before expanding to input or file changes.
+6. **Approval and audit** - implement operation-specific confirmation, cancellation, privacy-preserving audit events, and clear result reporting.
+7. **MCP integration** - expose a small, authenticated tool set to compatible AI clients and test real client connections.
+8. **Production readiness** - complete independent security review, signed distribution/update flow, abuse controls, observability, data retention, and recovery plans.
+9. **Usage and plans** - measure real operating costs before designing quotas, free allowances, or paid tiers.
+
+Do not skip from the dashboard prototype directly to unrestricted shell or desktop control.
+
+## Deployment
+
+Deployment is intentionally not configured yet. Select and configure hosting only after the authentication, pairing, transport, and API design have been reviewed. Never commit API keys, client tokens, pairing secrets, private keys, or user data.
 
 ## Technology
 
 - Next.js App Router
 - React and TypeScript
-- Custom responsive CSS
-- Lucide icons
-- GitHub Actions build workflow
+- Custom responsive CSS and Lucide icons
+- .NET 10 for the agent policy foundation
+- GitHub Actions for CI
 
 ## Project status
 
-MeepSheep is in the prototype and architecture phase. It is not ready to control a real computer, and it should not be represented as integrated with any AI provider until a working integration has been implemented and verified.
+MeepSheep is in active prototype and architecture development. The current build is a foundation for future work, not an integrated remote-control agent. Public release claims must be based on verified end-to-end behavior, not the existence of a dashboard or passing unit tests.
