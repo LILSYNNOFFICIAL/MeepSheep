@@ -76,6 +76,28 @@ public sealed class PolicyEvaluatorTests
     }
 
     [Fact]
+    public void MutatingInputSetsDoesNotChangeThePolicy()
+    {
+        var allowed = new HashSet<AgentCapability> { AgentCapability.LaunchApplication };
+        var approvalRequired = new HashSet<AgentCapability> { AgentCapability.DeleteFiles };
+        var policy = new AgentPolicy(allowed, approvalRequired);
+
+        allowed.Clear();
+        approvalRequired.Clear();
+
+        var allowedDecision = PolicyEvaluator.Evaluate(
+            policy,
+            new PolicyRequest(AgentCapability.LaunchApplication));
+        var sensitiveDecision = PolicyEvaluator.Evaluate(
+            policy,
+            new PolicyRequest(AgentCapability.DeleteFiles));
+
+        Assert.True(allowedDecision.Allowed);
+        Assert.False(sensitiveDecision.Allowed);
+        Assert.Equal("approval_required", sensitiveDecision.Code);
+    }
+
+    [Fact]
     public void ExplicitApprovalDoesNotOverrideCapabilityAllowlist()
     {
         var decision = PolicyEvaluator.Evaluate(
