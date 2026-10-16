@@ -35,6 +35,7 @@ The `agent/` directory currently contains:
 - Approval checks for sensitive capabilities and rejection of requests requiring administrator privileges.
 - A task authorization envelope and shape/time validator with required-field, field-size, lifetime, expiry, and clock-skew checks.
 - A bounded, process-local replay guard that atomically consumes a device-scoped nonce and request ID, expires old entries, and fails closed when its cache is full.
+- A task lifecycle transition model that rejects invalid transitions and prevents terminal states from being reopened. It is a pure decision helper, not a durable task store or execution engine.
 - Unit tests for policy decisions, envelope validation, replay rejection, expiry, capacity, and concurrent attempts.
 
 The replay guard is only a local building block. It must be called after authentication and envelope validation. It is in-memory only, resets when the process restarts, and does not authenticate the sender, verify signatures, establish device identity, or prove approval. It is not wired to an operating-system action and is not a complete security boundary.
