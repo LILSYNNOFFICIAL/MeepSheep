@@ -32,7 +32,7 @@ The `agent/` directory currently contains:
 
 - A typed list of proposed agent capabilities.
 - An immutable default-deny policy model and policy evaluator.
-- Approval checks for sensitive capabilities and rejection of requests requiring administrator privileges.
+- Mandatory baseline approval gates for sensitive capabilities, removal of caller-asserted privilege flags, and hard denial of unimplemented high-impact capabilities (`RunCommand`, `InstallSoftware`, `ChangeFirewall`).
 - A task authorization envelope and shape/time validator with required-field, field-size, lifetime, expiry, and clock-skew checks.
 - An authorization-ticket consistency validator that binds tickets to the exact request, device, capability, target digest, lifetime, and approval-reference requirement. It does not authenticate or verify signatures.
 - A bounded, process-local replay guard that atomically consumes a device-scoped nonce and request ID, expires old entries, and fails closed when its cache is full.
@@ -95,7 +95,7 @@ This is a target design, not a deployed system.
 
 ## Security model
 
-See [docs/SECURITY-BOUNDARIES.md](docs/SECURITY-BOUNDARIES.md) for trust boundaries, authorization flow, data handling, and release gates.
+See [docs/SECURITY-BOUNDARIES.md](docs/SECURITY-BOUNDARIES.md) for trust boundaries, authorization flow, data handling, and release gates. See [docs/SECURITY-AUDIT-AND-REMAINING-WORK.md](docs/SECURITY-AUDIT-AND-REMAINING-WORK.md) for the dated audit log, current hardening changes, open risks, and build checklist.
 
 Core requirements:
 
