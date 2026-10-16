@@ -96,7 +96,12 @@ public sealed class AuthorizationTicketValidatorTests
     public void RejectsEnvelopeWithMissingTargetWithoutThrowing()
     {
         var envelope = Envelope() with { OperationTarget = "  " };
-        var ticket = Ticket(Envelope());
+        var ticket = Ticket(Envelope()) with
+        {
+            RequestId = envelope.RequestId,
+            DeviceId = envelope.DeviceId,
+            Capability = envelope.Capability
+        };
 
         var result = AuthorizationTicketValidator.Validate(ticket, envelope,
             Now, TimeSpan.FromMinutes(1), approvalRequired: false);
