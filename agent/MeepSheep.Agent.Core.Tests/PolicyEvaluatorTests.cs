@@ -63,20 +63,6 @@ public sealed class PolicyEvaluatorTests
     }
 
     [Fact]
-    public void SensitiveCapabilityCanProceedAfterApproval()
-    {
-        var policy = new AgentPolicy(
-            new HashSet<AgentCapability> { AgentCapability.DeleteFiles },
-            new HashSet<AgentCapability> { AgentCapability.DeleteFiles });
-
-        var decision = PolicyEvaluator.Evaluate(
-            policy,
-            new PolicyRequest(AgentCapability.DeleteFiles, ApprovalGranted: true));
-
-        Assert.True(decision.Allowed);
-    }
-
-    [Fact]
     public void AdministratorPrivilegesAreAlwaysRejected()
     {
         var policy = new AgentPolicy(
@@ -118,13 +104,32 @@ public sealed class PolicyEvaluatorTests
     }
 
     [Fact]
-    public void ExplicitApprovalDoesNotOverrideCapabilityAllowlist()
+    public void ApprovalRequiredCapabilityRemainsDeniedEvenWhenExplicitlyAllowed()
     {
+        var policy = new AgentPolicy(
+            new HashSet<AgentCapability> { AgentCapability.DeleteFiles },
+            new HashSet<AgentCapability> { AgentCapability.DeleteFiles });
+
         var decision = PolicyEvaluator.Evaluate(
-            AgentPolicy.DenyAll,
-            new PolicyRequest(AgentCapability.ChangeFirewall, ApprovalGranted: true));
+            policy,
+            new PolicyRequest(AgentCapability.DeleteFiles));
 
         Assert.False(decision.Allowed);
-        Assert.Equal("capability_not_allowed", decision.Code);
+        Assert.Equal("approval_required", decision.Code);
+    }
+
+    [Fact]
+    public void ApprovalRequiredCapabilityRemainsDeniedEvenWhenAllowlisted()
+    {
+        var policy = new AgentPolicy(
+            new HashSet<AgentCapability> { AgentCapability.ChangeFirewall },
+            new HashSet<AgentCapability> { AgentCapability.ChangeFirewall });
+
+        var decision = PolicyEvaluator.Evaluate(
+            policy,
+            new PolicyRequest(AgentCapability.ChangeFirewall));
+
+        Assert.False(decision.Allowed);
+        Assert.Equal("approval_required", decision.Code);
     }
 }
