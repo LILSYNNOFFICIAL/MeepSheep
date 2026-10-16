@@ -140,6 +140,21 @@ public sealed class TaskEnvelopeValidatorTests
     }
 
     [Fact]
+    public void HandlesMaximumClockSkewWithoutDateTimeOverflow()
+    {
+        var now = DateTimeOffset.MaxValue.AddMinutes(-2);
+        var envelope = ValidEnvelope(
+            issuedAt: now.AddSeconds(-1),
+            expiresAt: now.AddSeconds(30));
+
+        var result = TaskEnvelopeValidator.Validate(
+            envelope, now, TimeSpan.FromMinutes(1), TimeSpan.MaxValue);
+
+        Assert.True(result.IsValid);
+        Assert.Equal("valid_shape_and_time", result.Code);
+    }
+
+    [Fact]
     public void RejectsExpiryThatDoesNotFollowIssueTime()
     {
         var envelope = ValidEnvelope() with
