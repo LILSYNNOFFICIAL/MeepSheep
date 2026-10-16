@@ -129,6 +129,45 @@ public sealed class AuthorizationTicketValidatorTests
     }
 
     [Fact]
+    public void RejectsExpiredEnvelope()
+    {
+        var envelope = Envelope() with { ExpiresAt = Now };
+        var ticket = Ticket(envelope) with { ExpiresAtUtc = Now.AddSeconds(10) };
+
+        var result = AuthorizationTicketValidator.Validate(ticket, envelope,
+            Now, TimeSpan.FromMinutes(1), approvalRequired: false);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("ticket_envelope_not_current", result.Code);
+    }
+
+    [Fact]
+    public void RejectsTicketExpiryAfterEnvelopeExpiry()
+    {
+        var envelope = Envelope();
+        var ticket = Ticket(envelope) with { ExpiresAtUtc = envelope.ExpiresAt.AddSeconds(1) };
+
+        var result = AuthorizationTicketValidator.Validate(ticket, envelope,
+            Now, TimeSpan.FromMinutes(1), approvalRequired: false);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("ticket_envelope_time_mismatch", result.Code);
+    }
+
+    [Fact]
+    public void RejectsTicketIssuedBeforeEnvelope()
+    {
+        var envelope = Envelope();
+        var ticket = Ticket(envelope) with { IssuedAtUtc = envelope.IssuedAt.AddSeconds(-1) };
+
+        var result = AuthorizationTicketValidator.Validate(ticket, envelope,
+            Now, TimeSpan.FromMinutes(1), approvalRequired: false);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("ticket_envelope_time_mismatch", result.Code);
+    }
+
+    [Fact]
     public void TargetDigestIsDeterministicAndCaseSensitive()
     {
         var first = AuthorizationTicketValidator.ComputeTargetDigest("File.txt");
