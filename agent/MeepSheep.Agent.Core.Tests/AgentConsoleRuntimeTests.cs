@@ -43,4 +43,18 @@ public sealed class AgentConsoleRuntimeTests
 
         Assert.Contains("Status: STOPPED", output.ToString());
     }
+
+    [Fact]
+    public async Task PreCancelledTokenStopsWithoutReadingInput()
+    {
+        using var input = new StringReader("whoami" + Environment.NewLine);
+        using var output = new StringWriter();
+        using var stop = new CancellationTokenSource();
+        stop.Cancel();
+
+        await AgentConsoleRuntime.RunAsync(input, output, stop.Token);
+
+        Assert.Contains("Status: STOPPED", output.ToString());
+        Assert.DoesNotContain("No command execution is available.", output.ToString());
+    }
 }
