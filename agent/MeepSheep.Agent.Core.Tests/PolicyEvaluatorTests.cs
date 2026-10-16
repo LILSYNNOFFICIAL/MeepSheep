@@ -17,6 +17,22 @@ public sealed class PolicyEvaluatorTests
     }
 
     [Fact]
+    public void UnknownCapabilityIsRejectedEvenIfPolicyContainsIt()
+    {
+        var unknownCapability = (AgentCapability)int.MaxValue;
+        var policy = new AgentPolicy(
+            new HashSet<AgentCapability> { unknownCapability },
+            new HashSet<AgentCapability>());
+
+        var decision = PolicyEvaluator.Evaluate(
+            policy,
+            new PolicyRequest(unknownCapability));
+
+        Assert.False(decision.Allowed);
+        Assert.Equal("unknown_capability", decision.Code);
+    }
+
+    [Fact]
     public void ExplicitlyAllowedCapabilityCanProceed()
     {
         var policy = new AgentPolicy(
