@@ -1,11 +1,22 @@
 namespace MeepSheep.Agent.Core;
 
+/// <summary>
+/// Evaluates local policy only. The caller must derive approval state from a
+/// trusted local approval mechanism; untrusted client input is not approval.
+/// </summary>
 public static class PolicyEvaluator
 {
     public static PolicyDecision Evaluate(AgentPolicy policy, PolicyRequest request)
     {
         ArgumentNullException.ThrowIfNull(policy);
         ArgumentNullException.ThrowIfNull(request);
+
+        if (!Enum.IsDefined(request.Capability))
+        {
+            return PolicyDecision.Deny(
+                "unknown_capability",
+                "The requested capability is not recognized.");
+        }
 
         if (request.RequiresAdminPrivileges)
         {
