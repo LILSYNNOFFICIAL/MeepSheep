@@ -1,183 +1,199 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useState } from "react";
 import {
-  ArrowRight, ArrowUpRight, AudioLines, Bell, CalendarDays, Check, CheckCircle2, Copy,
-  ChevronDown, ChevronRight, CircleHelp, Clock3, CloudUpload, Compass, Ellipsis,
-  FileVideo, Filter, Hash, Home, Instagram, LayoutGrid, Link2, Menu, MoreHorizontal,
-  Music2, Plus, Search, Settings2, Sparkles, TrendingUp, Video, WandSparkles, X,
-  Youtube, type LucideIcon
+  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, Bell, Check, ChevronDown,
+  CircleHelp, Clock3, Code2, Copy, Cpu, ExternalLink, FileClock, Fingerprint,
+  Gauge, Github, Laptop, LockKeyhole, Menu, Monitor, MoreHorizontal, Network,
+  Plus, Power, Radio, RefreshCw, Shield, ShieldCheck, Sparkles, Terminal,
+  Trash2, Unplug, WalletCards, X, Zap
 } from "lucide-react";
 
-type Platform = "TikTok" | "Instagram" | "YouTube" | "Facebook";
-type Post = { id: number; title: string; platform: Platform; captions?: Partial<Record<Platform, string>>; dateISO?: string; time24?: string; status: "Scheduled" | "Draft" | "Published"; date: string; time: string; color: string; kind: string };
+type Section = "Overview" | "Devices" | "Connect AI" | "Tasks" | "Plan & usage" | "Security";
 
-const initialPosts: Post[] = [
-  { id: 1, title: "Somewhere Inbetween — official visual", platform: "TikTok", status: "Scheduled", date: "Today", time: "6:30 PM", color: "lavender", kind: "Music video" },
-  { id: 2, title: "Studio moment: building the drop", platform: "Instagram", status: "Draft", date: "Tomorrow", time: "11:00 AM", color: "peach", kind: "Behind the scenes" },
-  { id: 3, title: "Black Glass (acoustic) — chorus", platform: "YouTube", status: "Scheduled", date: "Fri, Oct 16", time: "4:00 PM", color: "blue", kind: "Short" },
-  { id: 4, title: "New music, same strange little universe", platform: "Facebook", status: "Published", date: "Yesterday", time: "7:12 PM", color: "sage", kind: "Artist update" }
+const nav: { label: Section; icon: typeof Activity; note?: string }[] = [
+  { label: "Overview", icon: Gauge },
+  { label: "Devices", icon: Monitor },
+  { label: "Connect AI", icon: Network },
+  { label: "Tasks", icon: Activity },
+  { label: "Plan & usage", icon: WalletCards },
+  { label: "Security", icon: ShieldCheck }
 ];
 
-const navGroups: { label: string; items: { label: string; icon: LucideIcon; badge?: string }[] }[] = [
-  { label: "WORKSPACE", items: [{ label: "Overview", icon: Home }, { label: "Content planner", icon: CalendarDays }, { label: "Content library", icon: LayoutGrid }, { label: "Studio", icon: WandSparkles, badge: "New" }] },
-  { label: "GROW", items: [{ label: "Analytics", icon: TrendingUp }, { label: "Discover", icon: Compass }, { label: "Hashtag lab", icon: Hash }] },
-  { label: "MANAGE", items: [{ label: "Connected accounts", icon: Link2 }, { label: "Settings guide", icon: Settings2 }] }
-];
-
-function PlatformIcon({ platform, size = 16 }: { platform: Platform; size?: number }) {
-  if (platform === "Instagram") return <Instagram size={size} />;
-  if (platform === "YouTube") return <Youtube size={size} />;
-  if (platform === "Facebook") return <span className="facebook-mark" style={{ fontSize: size + 1 }}>f</span>;
-  return <span className="tiktok-mark" style={{ fontSize: size - 1 }}>♪</span>;
+function Brand() {
+  return (
+    <div className="brand-lockup">
+      <div className="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 42 42" fill="none">
+          <path d="M10 16 7 5.5c-.5-1.8 1.5-2.8 2.8-1.4L18 13M32 16l3-10.5c.5-1.8-1.5-2.8-2.8-1.4L24 13" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+          <path d="M8 21c0-7 5.4-11 13-11s13 4 13 11v8c0 5-5 8-13 8S8 34 8 29v-8Z" fill="currentColor"/>
+          <circle cx="16" cy="23" r="2" fill="#11110F"/><circle cx="26" cy="23" r="2" fill="#11110F"/>
+          <path d="M17 29q4 3 8 0" stroke="#11110F" strokeWidth="1.8" strokeLinecap="round"/>
+        </svg>
+      </div>
+      <span>meep<span className="brand-gold">sheep</span></span>
+    </div>
+  );
 }
 
-function BrandMark() {
-  return <div className="brand-mark" aria-hidden="true"><span className="brand-ear left" /><span className="brand-ear right" /><span className="brand-face"><span /><span /></span></div>;
+function Tag({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "gold" | "green" }) {
+  return <span className={"tag tag-" + tone}><i />{children}</span>;
 }
 
-function SectionHeading({ eyebrow, title, detail, action }: { eyebrow?: string; title: string; detail?: string; action?: React.ReactNode }) {
-  return <div className="section-heading"><div>{eyebrow && <div className="eyebrow">{eyebrow}</div>}<h2>{title}</h2>{detail && <p>{detail}</p>}</div>{action}</div>;
+function SectionTitle({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: React.ReactNode }) {
+  return <div className="section-title"><div><div className="eyebrow">{eyebrow}</div><h2>{title}</h2><p>{description}</p></div>{action}</div>;
 }
 
 export default function HomePage() {
-  const [active, setActive] = useState("Overview");
-  const [profileMenu, setProfileMenu] = useState(false);
-  const [createMenu, setCreateMenu] = useState(false);
-  const [filterMenu, setFilterMenu] = useState(false);
-  const [filter, setFilter] = useState("All content");
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [showComposer, setShowComposer] = useState(false);
-  const [toast, setToast] = useState("");
-  const [posts, setPosts] = useState(initialPosts);
-  const [postsLoaded, setPostsLoaded] = useState(false);
-  const [postTitle, setPostTitle] = useState("");
-  const [editingPostId, setEditingPostId] = useState<number | null>(null);
-  const [postPlatform, setPostPlatform] = useState<Platform>("TikTok");
-  const [postKind, setPostKind] = useState("Short video");
-  const [postCaptions, setPostCaptions] = useState<Record<Platform, string>>({ TikTok: "", Instagram: "", YouTube: "", Facebook: "" });
-  const [postDate, setPostDate] = useState("2026-10-16");
-  const [postTime, setPostTime] = useState("18:30");
+  const [active, setActive] = useState<Section>("Overview");
   const [mobileNav, setMobileNav] = useState(false);
-  const [todayLabel, setTodayLabel] = useState("");
-  const [hashtagTopic, setHashtagTopic] = useState("");
-  const [hashtagPlatform, setHashtagPlatform] = useState<Platform>("TikTok");
-  const [hashtagTags, setHashtagTags] = useState<string[]>([]);
-
-  useEffect(() => {
-    setTodayLabel(new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" }).toUpperCase());
-  }, []);
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem("meepsheep.posts.v1");
-      if (saved) {
-        const parsed: unknown = JSON.parse(saved);
-        if (Array.isArray(parsed)) setPosts(parsed as Post[]);
-      }
-    } catch {
-      // Keep the starter content if browser storage is unavailable.
-    }
-    setPostsLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (!postsLoaded) return;
-    try {
-      window.localStorage.setItem("meepsheep.posts.v1", JSON.stringify(posts));
-    } catch {
-      // Drafts remain available for the current session if storage is full.
-    }
-  }, [posts, postsLoaded]);
-
-  const filteredPosts = useMemo(() => posts.filter(post => {
-    const matchesFilter = filter === "All content" || post.status === filter;
-    const matchesQuery = !query || (post.title + post.platform + post.kind + Object.values(post.captions ?? {}).join(" ")).toLowerCase().includes(query.toLowerCase());
-    return matchesFilter && matchesQuery;
-  }), [posts, filter, query]);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [toast, setToast] = useState("");
+  const [approvalRequired, setApprovalRequired] = useState(true);
+  const [showSecrets, setShowSecrets] = useState(false);
+  const [emergencyStopped, setEmergencyStopped] = useState(false);
 
   const notify = (message: string) => {
     setToast(message);
-    window.setTimeout(() => setToast(""), 3200);
+    window.setTimeout(() => setToast(""), 2800);
   };
 
-  const savePost = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!postTitle.trim()) return;
-    const formattedDate = postDate === "2026-10-16" ? "Fri, Oct 16" : new Date(postDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    const formattedTime = new Date("2020-01-01T" + postTime + ":00").toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-    const savedPost: Post = { id: editingPostId ?? Date.now(), title: postTitle.trim(), platform: postPlatform, captions: postCaptions, dateISO: postDate, time24: postTime, status: "Draft", date: formattedDate, time: formattedTime, color: "lavender", kind: postKind };
-    setPosts(current => editingPostId === null ? [savedPost, ...current] : current.map(post => post.id === editingPostId ? { ...post, ...savedPost, status: post.status } : post));
-    setEditingPostId(null);
-    setPostTitle("");
-    setPostCaptions({ TikTok: "", Instagram: "", YouTube: "", Facebook: "" });
-    setShowComposer(false);
-    setActive("Content planner");
-    setFilter("All content");
-    notify(editingPostId === null ? "Draft saved to your content planner" : "Draft changes saved");
+  const copyText = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      notify(label + " copied");
+    } catch {
+      notify("Clipboard access unavailable in this browser");
+    }
   };
 
-  const startNewPost = () => {
-    setEditingPostId(null);
-    setPostTitle("");
-    setPostPlatform("TikTok");
-    setPostKind("Short video");
-    setPostCaptions({ TikTok: "", Instagram: "", YouTube: "", Facebook: "" });
-    setPostDate(new Date().toISOString().slice(0, 10));
-    setPostTime("18:30");
-    setShowComposer(true);
-  };
-
-  const navTo = (label: string) => {
-    setActive(label);
+  const go = (section: Section) => {
+    setActive(section);
     setMobileNav(false);
-    if (label !== "Overview") notify(label + " workspace selected");
   };
+
+  const mcpExample = JSON.stringify({
+    mcpServers: {
+      meepsheep: {
+        url: "https://YOUR-MEEPSHEEP-HOST/mcp",
+        headers: { Authorization: "Bearer YOUR_ACCESS_TOKEN" }
+      }
+    }
+  }, null, 2);
 
   return (
     <main className="app-shell">
       <aside className={"sidebar " + (mobileNav ? "sidebar-open" : "")}>
-        <div className="brand-row"><BrandMark /><span className="brand-name">meep<span>sheep</span></span><button className="icon-button mobile-close" aria-label="Close menu" onClick={() => setMobileNav(false)}><X size={18}/></button></div>
-        <button className="workspace-switch" onClick={() => setProfileMenu(!profileMenu)} aria-expanded={profileMenu}>
-          <div className="workspace-avatar">M</div><div className="workspace-copy"><strong>My workspace</strong><span>Creator plan · Free</span></div><ChevronDown size={15} className={profileMenu ? "rotate" : ""}/>
-        </button>
-        {profileMenu && <div className="workspace-popover"><button onClick={() => { setProfileMenu(false); notify("Workspace settings are coming soon"); }}><Settings2 size={15}/> Workspace settings</button><button onClick={() => { setProfileMenu(false); notify("Plan management will be available soon"); }}><Sparkles size={15}/> Explore plans</button></div>}
-        <div className="sidebar-scroll">{navGroups.map(group => <div className="nav-group" key={group.label}><div className="nav-label">{group.label}</div>{group.items.map(item => <button key={item.label} className={"nav-item " + (active === item.label ? "active" : "")} onClick={() => navTo(item.label)}><item.icon size={17} strokeWidth={1.8}/><span>{item.label}</span>{item.badge && <span className="new-badge">{item.badge}</span>}</button>)}</div>)}</div>
-        <div className="sidebar-bottom"><div className="upgrade-card"><div className="upgrade-icon"><Sparkles size={17}/></div><strong>A little more room?</strong><p>Make space for your next big idea.</p><button onClick={() => notify("Plans and pricing are coming soon")}>Explore plans <ArrowRight size={14}/></button><div className="upgrade-sparkle sparkle-one">✳</div><div className="upgrade-sparkle sparkle-two">✳</div></div><button className="help-link" onClick={() => notify("Help center is being prepared")}><CircleHelp size={16}/> Help & getting started <ArrowUpRight size={13}/></button><div className="profile-row"><div className="profile-photo">LS</div><div className="profile-info"><strong>LIL SYNN</strong><span>Artist workspace</span></div><button className="icon-button" aria-label="Account options" onClick={() => setProfileMenu(!profileMenu)}><Ellipsis size={19}/></button></div></div>
+        <div className="sidebar-top">
+          <Brand />
+          <div className="workspace-chip"><span className="workspace-avatar">M</span><span><strong>My workspace</strong><small>Personal control room</small></span><ChevronDown size={15}/></div>
+        </div>
+        <div className="nav-caption">CONTROL CENTER</div>
+        <nav aria-label="Main navigation">
+          {nav.map(item => {
+            const Icon = item.icon;
+            return <button key={item.label} className={"nav-item " + (active === item.label ? "nav-active" : "")} onClick={() => go(item.label)}><Icon size={17}/><span>{item.label}</span>{item.label === "Devices" && <span className="nav-count">0</span>}</button>;
+          })}
+        </nav>
+        <div className="sidebar-spacer"/>
+        <div className="security-mini"><div className="security-mini-icon"><ShieldCheck size={17}/></div><div><strong>Safety first</strong><p>Local control. Explicit permission.</p></div></div>
+        <button className="sidebar-help" onClick={() => notify("Documentation is being prepared for the first release")}><CircleHelp size={16}/> Help & documentation <ArrowUpRight size={13}/></button>
+        <div className="sidebar-bottom"><div className="profile-dot">M</div><div className="profile-copy"><strong>MeepSheep account</strong><small>Prototype workspace</small></div><MoreHorizontal size={18}/></div>
       </aside>
-
-      {mobileNav && <button className="mobile-scrim" aria-label="Close navigation" onClick={() => setMobileNav(false)}/>}
+      {mobileNav && <button className="scrim" aria-label="Close menu" onClick={() => setMobileNav(false)}/>}
 
       <section className="main-area">
-        <header className="topbar"><div className="breadcrumb"><button className="mobile-menu icon-button" aria-label="Open menu" onClick={() => setMobileNav(true)}><Menu size={20}/></button><span>Workspace</span><ChevronRight size={14}/><strong>{active}</strong></div><div className="topbar-actions">{searchOpen && <input autoFocus className="search-input" placeholder="Search your content..." value={query} onChange={e => setQuery(e.target.value)} onKeyDown={e => { if(e.key === "Escape") { setSearchOpen(false); setQuery(""); }}}/>}<button className="icon-button" aria-label="Search content" onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) setQuery(""); }}><Search size={18}/></button><button className="icon-button notification-button" aria-label="Notifications" onClick={() => notify("You're all caught up")}><Bell size={18}/><i/></button><div className="top-avatar">LS</div></div></header>
+        <header className="topbar">
+          <div className="crumbs"><button className="mobile-menu icon-btn" aria-label="Open navigation" onClick={() => setMobileNav(true)}><Menu size={19}/></button><span>MeepSheep</span><span className="crumb-slash">/</span><strong>{active}</strong></div>
+          <div className="top-actions"><span className="prototype-status"><span/> Prototype mode</span><button className="icon-btn" aria-label="Notifications" onClick={() => notify("No notifications yet")}><Bell size={17}/></button><div className="user-avatar">M</div></div>
+        </header>
 
         <div className="page-content">
-          <div className="welcome-row"><div><div className="date-kicker"><span className="live-dot"/> {todayLabel || "YOUR CREATIVE DAY"}</div><h1>{active === "Overview" ? <>Good things are <span>in motion.</span></> : active}</h1><p className="welcome-subtitle">{active === "Overview" ? "Your creative world, a little more in sync." : active === "Content planner" ? "Everything you want to share, all in one place." : "A calmer way to keep your creative work moving."}</p></div><div className="welcome-actions"><button className="button button-secondary" onClick={() => notify("Choose a video from your library to get started")}><CloudUpload size={16}/> Upload content</button><div className="dropdown-anchor"><button className="button button-primary" onClick={() => setCreateMenu(!createMenu)} aria-expanded={createMenu}><Plus size={17}/> Create new <ChevronDown size={15}/></button>{createMenu && <div className="dropdown-menu create-dropdown"><button onClick={() => { setCreateMenu(false); startNewPost(); }}><FileVideo size={16}/><span><strong>Social post</strong><small>Prepare a post for your channels</small></span></button><button onClick={() => { setCreateMenu(false); navTo("Studio"); notify("Studio tools are being built"); }}><WandSparkles size={16}/><span><strong>Studio project</strong><small>Make something worth sharing</small></span></button><button onClick={() => { setCreateMenu(false); navTo("Content planner"); }}><CalendarDays size={16}/><span><strong>Plan content</strong><small>Organize your publishing calendar</small></span></button></div>}</div></div></div>
+          {active === "Overview" && <>
+            <div className="welcome-row">
+              <div><div className="eyebrow eyebrow-line"><span/> YOUR COMPUTER, YOUR RULES</div><h1>Your AI. Your machine.<br/><span>You're in control.</span></h1><p className="welcome-copy">Connect compatible AI tools to a computer you own. Approve sensitive actions, keep an eye on every task, and stay in the driver's seat.</p></div>
+              <button className="button button-gold" onClick={() => setConnectOpen(true)}><Plus size={16}/> Connect a computer</button>
+            </div>
 
-          {(active === "Overview" || active === "Content planner") ? <>
-          <div className="integration-banner"><div className="integration-illustration"><div className="orbit orbit-a"/><div className="orbit orbit-b"/><div className="orbit-center"><BrandMark/></div><div className="orbit-dot dot-tiktok">♪</div><div className="orbit-dot dot-insta"><Instagram size={13}/></div><div className="orbit-dot dot-youtube"><Youtube size={14}/></div></div><div className="integration-copy"><div className="banner-label"><span className="banner-label-dot"/> YOUR CREATOR HOME BASE</div><h2>One place for all your <em>good stuff.</em></h2><p>Bring your channels together, shape each post for its platform, and spend less time in settings menus.</p><div className="banner-actions"><button className="button button-dark" onClick={() => navTo("Connected accounts")}>Connect your channels <ArrowRight size={15}/></button><button className="text-button" onClick={() => navTo("Settings guide")}>See how it works <ArrowUpRight size={14}/></button></div></div><div className="banner-decoration">✳</div></div>
+            <div className="hero-panel">
+              <div className="hero-copy"><Tag tone="gold">THE MEEPSHEEP APPROACH</Tag><h2>A bridge between AI<br/>and the real desktop.</h2><p>A local agent will let approved AI clients inspect your screen, interact with apps, and run permitted tasks without exposing your computer to the public internet.</p><button className="text-link" onClick={() => go("Security")}>Explore the safety model <ArrowRight size={15}/></button></div>
+              <div className="hero-visual" aria-hidden="true"><div className="visual-ring ring-one"/><div className="visual-ring ring-two"/><div className="visual-core"><Brand/><span>LOCAL AGENT</span></div><div className="visual-node node-ai"><Sparkles size={17}/><small>AI CLIENT</small></div><div className="visual-node node-pc"><Monitor size={17}/><small>YOUR PC</small></div><div className="visual-link"/></div>
+              <div className="hero-footer"><span><LockKeyhole size={14}/> Local-first by design</span><span><ShieldCheck size={14}/> Permission before action</span><span><FileClock size={14}/> Auditable activity</span></div>
+            </div>
 
-          <div className="stats-grid"><div className="stat-card"><div className="stat-top"><span>Content in your library</span><span className="stat-icon icon-lavender"><LayoutGrid size={17}/></span></div><div className="stat-value">{String(posts.length).padStart(2,"0")}<span className="stat-unit"> pieces</span></div><div className="stat-foot"><span className="stat-neutral"><FileVideo size={13}/> Your creative queue</span></div></div><div className="stat-card"><div className="stat-top"><span>Coming up next</span><span className="stat-icon icon-peach"><Clock3 size={17}/></span></div><div className="stat-value">{posts.filter(p => p.status === "Scheduled").length}<span className="stat-unit"> scheduled</span></div><div className="stat-foot"><span className="stat-neutral"><CalendarDays size={13}/> Across your channels</span></div></div><div className="stat-card"><div className="stat-top"><span>Channels connected</span><span className="stat-icon icon-sage"><Link2 size={17}/></span></div><div className="stat-value">0<span className="stat-unit"> of 4</span></div><div className="stat-foot"><button className="inline-link" onClick={() => navTo("Connected accounts")}>Set up your first <ArrowRight size={13}/></button></div></div><div className="stat-card stat-card-note"><div className="stat-top"><span>A little nudge</span><span className="stat-icon icon-yellow"><Sparkles size={17}/></span></div><div className="note-copy">Your next post is a chance to <span>show up.</span></div><button className="inline-link" onClick={startNewPost}>Let's make one <ArrowRight size={13}/></button></div></div>
+            <div className="metrics-grid">
+              <article className="metric-card"><div className="metric-label">COMPUTERS CONNECTED <Monitor size={16}/></div><div className="metric-value">0 <span>/ 0 online</span></div><div className="metric-foot">No devices paired yet</div></article>
+              <article className="metric-card"><div className="metric-label">ACTIVE TASKS <Activity size={16}/></div><div className="metric-value">0 <span>running</span></div><div className="metric-foot">Nothing is controlling your computer</div></article>
+              <article className="metric-card"><div className="metric-label">APPROVALS WAITING <Shield size={16}/></div><div className="metric-value">0 <span>to review</span></div><div className="metric-foot">Sensitive actions require your say</div></article>
+              <article className="metric-card"><div className="metric-label">USAGE THIS PERIOD <Gauge size={16}/></div><div className="metric-value">— <span>not tracked</span></div><div className="metric-foot">Usage metering is not connected yet</div></article>
+            </div>
 
-          <div className="content-grid"><section className="panel planner-panel"><SectionHeading eyebrow="KEEP THE GOOD STUFF MOVING" title="Your content planner" detail="A little plan goes a long way." action={<button className="icon-button" aria-label="More planner options" onClick={() => setFilterMenu(!filterMenu)}><MoreHorizontal size={20}/></button>}/><div className="planner-toolbar"><div className="filter-tabs">{["All content","Scheduled","Draft","Published"].map(option => <button key={option} className={filter === option ? "filter-tab selected" : "filter-tab"} onClick={() => setFilter(option)}>{option}</button>)}</div><div className="dropdown-anchor"><button className="filter-button" onClick={() => setFilterMenu(!filterMenu)}><Filter size={14}/><span>Filter</span><ChevronDown size={13}/></button>{filterMenu && <div className="dropdown-menu filter-dropdown">{["All content","Scheduled","Draft","Published"].map(option => <button key={option} onClick={() => { setFilter(option); setFilterMenu(false); }}><span>{option}</span>{filter === option && <Check size={15}/>}</button>)}</div>}</div></div><div className="post-list">{filteredPosts.length ? filteredPosts.map(post => <article className="post-row" key={post.id}><div className={"post-thumb thumb-" + post.color}>{post.kind === "Music video" ? <AudioLines size={22}/> : post.kind === "Short" ? <Video size={21}/> : post.kind === "Artist update" ? <Music2 size={21}/> : <Sparkles size={21}/>}<span className="thumb-platform"><PlatformIcon platform={post.platform} size={12}/></span></div><div className="post-details"><strong>{post.title}</strong><span>{post.kind} <i/> {post.platform}</span>{post.captions && Object.values(post.captions).some(caption => caption?.trim()) && <small className="caption-count">{Object.values(post.captions).filter(caption => caption?.trim()).length} platform caption{Object.values(post.captions).filter(caption => caption?.trim()).length === 1 ? "" : "s"} saved</small>}</div><div className="post-schedule"><span>{post.date}</span><small>{post.time}</small></div><span className={"status-pill status-" + post.status.toLowerCase()}><i/>{post.status}</span><button className="icon-button post-more" aria-label={"Options for " + post.title} onClick={() => { setEditingPostId(post.id); setPostTitle(post.title); setPostPlatform(post.platform); setPostKind(post.kind); setPostCaptions({ TikTok: post.captions?.TikTok ?? "", Instagram: post.captions?.Instagram ?? "", YouTube: post.captions?.YouTube ?? "", Facebook: post.captions?.Facebook ?? "" }); setPostDate(post.dateISO ?? (post.date === "Today" ? new Date().toISOString().slice(0,10) : post.date === "Tomorrow" ? new Date(Date.now()+86400000).toISOString().slice(0,10) : "2026-10-16")); setPostTime(post.time24 ?? "18:30"); setShowComposer(true); }}><Ellipsis size={18}/></button></article>) : <div className="empty-state"><div className="empty-icon"><Search size={20}/></div><strong>Nothing here just yet</strong><span>Try another filter or create a new post.</span><button className="button button-secondary" onClick={() => { setFilter("All content"); setQuery(""); }}>Show all content</button></div>}</div><div className="panel-footer"><span>Showing {filteredPosts.length} of {posts.length} items</span><button className="text-button" onClick={() => navTo("Content planner")}>Open planner <ArrowRight size={14}/></button></div></section>
+            <div className="overview-grid">
+              <section className="panel getting-started">
+                <SectionTitle eyebrow="START HERE" title="Bring your computer into the flock" description="The first connection will be established by a local agent that you install and control."/>
+                <div className="step-list">
+                  <div className="step-row"><span className="step-number">01</span><div><strong>Install the local agent</strong><p>A signed Windows app will run on your own computer. The installer is not available yet.</p></div><Tag>Planned</Tag></div>
+                  <div className="step-row"><span className="step-number">02</span><div><strong>Pair this workspace</strong><p>Approve a one-time pairing request instead of opening inbound remote-access ports.</p></div><Tag>Planned</Tag></div>
+                  <div className="step-row"><span className="step-number">03</span><div><strong>Connect an AI client</strong><p>Use an MCP-compatible client with a scoped token and the permissions you choose.</p></div><Tag>Planned</Tag></div>
+                </div>
+                <button className="button button-outline" onClick={() => setConnectOpen(true)}>View connection steps <ArrowRight size={15}/></button>
+              </section>
+              <section className="panel activity-panel">
+                <div className="panel-heading"><div><div className="eyebrow">LIVE ACTIVITY</div><h3>Recent activity</h3></div><button className="icon-btn" aria-label="Refresh activity" onClick={() => notify("Activity refreshed. No events recorded.")}><RefreshCw size={15}/></button></div>
+                <div className="empty-activity"><div className="empty-icon"><Activity size={20}/></div><strong>Quiet in here. Just how it should be.</strong><p>When a device is paired, task starts, approvals, and completed actions will appear here.</p></div>
+                <div className="activity-footer"><span><span className="status-dot"/> Activity log is empty</span><button onClick={() => go("Tasks")}>View tasks <ArrowRight size={13}/></button></div>
+              </section>
+            </div>
+          </>}
 
-          <div className="right-column"><section className="panel channels-panel"><SectionHeading title="Your channels" detail="Your people are out there." action={<button className="icon-button" aria-label="Channel options" onClick={() => navTo("Connected accounts")}><ArrowUpRight size={17}/></button>}/><div className="channel-list">{([{ name: "TikTok", sub: "Short-form video", icon: PlatformIcon, className: "channel-tiktok" }, { name: "Instagram", sub: "Reels & posts", icon: PlatformIcon, className: "channel-instagram" }, { name: "YouTube", sub: "Shorts & videos", icon: PlatformIcon, className: "channel-youtube" }, { name: "Facebook", sub: "Pages & Reels", icon: PlatformIcon, className: "channel-facebook" }] as const).map(channel => <button className="channel-row" key={channel.name} onClick={() => { navTo("Connected accounts"); notify(channel.name + " connection setup selected"); }}><span className={"channel-icon " + channel.className}><PlatformIcon platform={channel.name} size={17}/></span><span className="channel-copy"><strong>{channel.name}</strong><small>{channel.sub}</small></span><span className="connect-label">Connect</span><ChevronRight size={15} className="channel-chevron"/></button>)}</div><button className="button button-secondary button-full" onClick={() => navTo("Connected accounts")}>Manage channels <ArrowRight size={15}/></button><p className="microcopy"><CheckCircle2 size={13}/> Your credentials stay private and secure.</p></section>
-          <section className="tip-card"><div className="tip-icon"><Sparkles size={17}/></div><div className="tip-eyebrow">A SMALL CREATOR TIP</div><h3>Make it feel native.</h3><p>A caption that sounds right on TikTok might need a different rhythm on YouTube. We'll help you tailor it without losing your voice.</p><button onClick={() => navTo("Discover")}>Explore ideas <ArrowRight size={14}/></button><div className="tip-flower">✳</div></section></div></div>
+          {active === "Devices" && <div className="workspace-view">
+            <SectionTitle eyebrow="YOUR MACHINES" title="Devices" description="Computers you have explicitly paired with this workspace." action={<button className="button button-gold" onClick={() => setConnectOpen(true)}><Plus size={15}/> Pair a device</button>}/>
+            <div className="notice-strip"><LockKeyhole size={17}/><div><strong>No public remote desktop ports required.</strong><p>The planned local agent will initiate an encrypted outbound connection. No computer is connected in this prototype.</p></div></div>
+            <div className="empty-large"><div className="empty-icon empty-icon-large"><Laptop size={26}/></div><h3>No computers connected</h3><p>Once the local agent is ready, pair your Windows computer here. You'll be able to review permissions, connection status, and revoke access.</p><button className="button button-gold" onClick={() => setConnectOpen(true)}><Plus size={15}/> Start pairing</button><span className="muted-note">Windows agent and secure pairing service are not implemented yet.</span></div>
+          </div>}
 
-          </> : <section className="workspace-view"><div className="feature-page">
-            {active === "Connected accounts" && <><SectionHeading title="Connected accounts" detail="Connect your creator channels when official account authorization is ready."/><div className="feature-grid platform-grid">{(["TikTok","Instagram","YouTube","Facebook"] as Platform[]).map(platform => <article className="feature-card" key={platform}><span className={"channel-icon channel-"+platform.toLowerCase()}><PlatformIcon platform={platform}/></span><h3>{platform}</h3><p>Account connection is not configured yet.</p><button className="button button-secondary" onClick={()=>notify(platform+" connection setup is coming soon.")}>Connect <ArrowRight size={14}/></button></article>)}</div></>}
-            {active === "Content library" && <><SectionHeading title="Content library" detail="Browse your saved ideas, revisit drafts, and keep your content organized." action={<button className="button button-primary" onClick={startNewPost}><Plus size={15}/> New draft</button>}/><div className="library-list">{filteredPosts.length ? filteredPosts.map(post => <article className="library-row" key={post.id}><div className={"post-thumb thumb-" + post.color}>{post.kind === "Music video" ? <AudioLines size={22}/> : post.kind === "Short" ? <Video size={21}/> : post.kind === "Artist update" ? <Music2 size={21}/> : <Sparkles size={21}/>}<span className="thumb-platform"><PlatformIcon platform={post.platform} size={12}/></span></div><div className="post-details"><strong>{post.title}</strong><span>{post.kind} <i/> {post.platform}</span><small>{post.date} · {post.time} · {post.status}</small></div><button className="button button-secondary" onClick={() => { setEditingPostId(post.id); setPostTitle(post.title); setPostPlatform(post.platform); setPostKind(post.kind); setPostCaptions({ TikTok: post.captions?.TikTok ?? "", Instagram: post.captions?.Instagram ?? "", YouTube: post.captions?.YouTube ?? "", Facebook: post.captions?.Facebook ?? "" }); setPostDate(post.dateISO ?? (post.date === "Today" ? new Date().toISOString().slice(0,10) : post.date === "Tomorrow" ? new Date(Date.now()+86400000).toISOString().slice(0,10) : "2026-10-16")); setPostTime(post.time24 ?? "18:30"); setShowComposer(true); }}>Edit</button><button className="button button-secondary" onClick={() => { const duplicate: Post = { ...post, id: Date.now(), title: post.title + " (copy)", captions: { ...(post.captions ?? {}) }, status: "Draft", dateISO: new Date().toISOString().slice(0,10), date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }), time24: "18:30", time: "6:30 PM" }; setPosts(current => [duplicate, ...current]); setFilter("All content"); notify("A copy was added as a new draft"); }}>Duplicate</button><button className="button button-secondary" onClick={() => { if (window.confirm("Delete “" + post.title + "” from your local content library?")) { setPosts(current => current.filter(item => item.id !== post.id)); notify("Content removed from your library"); } }}>Delete</button></article>) : <div className="empty-state"><div className="empty-icon"><Search size={20}/></div><strong>Your library is clear</strong><span>Create a draft to start collecting your content here.</span><button className="button button-secondary" onClick={startNewPost}>Create a draft</button></div>}</div><p className="fine-print">Your library is stored in this browser on this device for now. It is not synced to an account or cloud database.</p></>}
-            {active === "Hashtag lab" && <><SectionHeading title="Hashtag lab" detail="Build a relevant hashtag set around your next post."/><form className="hashtag-form" onSubmit={e => { e.preventDefault(); const words = hashtagTopic.toLowerCase().split(/[^a-z0-9]+/).filter(word => word.length > 2); const unique = Array.from(new Set(words)).slice(0, 4); const core = unique.map(word => "#" + word); const general = hashtagPlatform === "TikTok" ? ["#CreatorTok", "#BehindTheScenes", "#NewContent"] : hashtagPlatform === "Instagram" ? ["#Reels", "#CreatorCommunity", "#BehindTheScenes"] : hashtagPlatform === "YouTube" ? ["#Shorts", "#YouTubeCreator", "#NewVideo"] : ["#CreatorCommunity", "#VideoContent", "#BehindTheScenes"]; setHashtagTags(Array.from(new Set([...core, ...general])).slice(0, 7)); }}><label className="field-label" htmlFor="hashtag-topic">What's your post about?</label><input id="hashtag-topic" value={hashtagTopic} onChange={e=>setHashtagTopic(e.target.value)} placeholder="e.g. new music, studio process, acoustic cover" required/><label className="field-label" htmlFor="hashtag-platform">Where are you posting?</label><select id="hashtag-platform" value={hashtagPlatform} onChange={e=>setHashtagPlatform(e.target.value as Platform)}>{(["TikTok","Instagram","YouTube","Facebook"] as Platform[]).map(p=><option key={p}>{p}</option>)}</select><button type="submit" className="button button-primary"><Hash size={15}/> Suggest hashtags</button></form>{hashtagTags.length > 0 && <section className="panel hashtag-results"><div className="section-heading"><div><h2>Your hashtag set</h2><p>Suggestions based on your topic and platform.</p></div><button className="button button-secondary" onClick={async()=>{try { await navigator.clipboard.writeText(hashtagTags.join(" ")); notify("Hashtags copied to clipboard"); } catch { notify("Clipboard access isn't available in this browser"); }}}><Copy size={14}/> Copy all</button></div><div className="hashtag-chips">{hashtagTags.map(tag=><button type="button" className="hashtag-chip" key={tag} onClick={async()=>{try { await navigator.clipboard.writeText(tag); notify(tag+" copied"); } catch { notify("Clipboard access isn't available in this browser"); }}}>{tag}</button>)}</div><p className="fine-print">These are idea-based suggestions, not live trend data. Check each platform's current policies and search results before posting.</p></section>}</>}
-            {active !== "Connected accounts" && active !== "Hashtag lab" && active !== "Content library" && <><SectionHeading title={active} detail="This part of your creator workspace is taking shape."/><div className="notice-card"><Sparkles size={20}/><div><strong>Built in stages, with real integrations.</strong><p>This workspace will connect to supported platform APIs rather than simulate live account data.</p></div></div><button className="button button-primary" onClick={()=>active==="Content library"?setShowComposer(true):notify(active+" tools are still being built.")}>{active==="Content library"?"Create a draft":"Explore "+active} <ArrowRight size={14}/></button></>}
-          </div></section>}
-          <footer className="page-footer"><span>Made for people who make things. <span className="footer-heart">♥</span></span><span><button onClick={() => notify("Privacy information will be published before launch")}>Privacy</button><button onClick={() => notify("Terms will be published before launch")}>Terms</button><button onClick={() => notify("MeepSheep is in early development")}>Early access <span className="footer-dot"/></button></span></footer>
+          {active === "Connect AI" && <div className="workspace-view">
+            <SectionTitle eyebrow="CLIENT INTEGRATION" title="Connect your AI" description="MeepSheep is designed around MCP, an open protocol for connecting AI clients to tools."/>
+            <div className="notice-strip"><Network size={17}/><div><strong>MCP endpoint not live yet</strong><p>This is a setup preview. There is no hosted endpoint or working authentication token to connect today.</p></div></div>
+            <div className="integration-grid">
+              <article className="integration-card"><div className="integration-icon"><Code2 size={20}/></div><Tag tone="gold">PLANNED</Tag><h3>MCP connection</h3><p>A hosted MCP service will route approved requests to your paired local agent. It will require account authentication and scoped access.</p><button className="button button-outline" onClick={() => copyText(mcpExample, "Example configuration")}><Copy size={14}/> Copy example config</button></article>
+              <article className="integration-card"><div className="integration-icon"><Terminal size={20}/></div><Tag>NOT AVAILABLE</Tag><h3>Local agent</h3><p>The Windows agent will handle screen capture, mouse and keyboard input, and explicitly allowed commands on your device.</p><button className="button button-outline" onClick={() => setConnectOpen(true)}>See setup status <ArrowRight size={14}/></button></article>
+              <article className="integration-card"><div className="integration-icon"><Fingerprint size={20}/></div><Tag>PLANNED</Tag><h3>Scoped credentials</h3><p>Separate revocable tokens and per-device permissions will help keep one client from inheriting unnecessary access.</p><button className="button button-outline" onClick={() => go("Security")}>Review safeguards <ArrowRight size={14}/></button></article>
+            </div>
+            <div className="code-panel"><div className="code-panel-head"><span><Code2 size={15}/> Example MCP client config</span><button className="icon-btn" onClick={() => copyText(mcpExample, "Example configuration")} aria-label="Copy example configuration"><Copy size={15}/></button></div><pre>{mcpExample}</pre><p><ShieldCheck size={14}/> Placeholder host and token only. Do not paste this into a client expecting it to connect.</p></div>
+          </div>}
+
+          {active === "Tasks" && <div className="workspace-view">
+            <SectionTitle eyebrow="TASK CONTROL" title="Tasks & activity" description="Review work requests, approval gates, and outcomes from connected computers." action={<button className="button button-outline" onClick={() => notify("There are no tasks to refresh")}><RefreshCw size={14}/> Refresh</button>}/>
+            <div className="task-summary"><div><span>RUNNING</span><strong>0</strong></div><div><span>AWAITING APPROVAL</span><strong>0</strong></div><div><span>COMPLETED</span><strong>0</strong></div><div><span>FAILED</span><strong>0</strong></div></div>
+            <div className="empty-large"><div className="empty-icon empty-icon-large"><Activity size={26}/></div><h3>No tasks have run</h3><p>Task history will appear after a computer is paired and an AI client submits an authorized request.</p><span className="muted-note">No actions are running in the background.</span></div>
+          </div>}
+
+          {active === "Plan & usage" && <div className="workspace-view">
+            <SectionTitle eyebrow="PLANS & METERING" title="Plan & usage" description="A transparent allowance with upgrades when you need more computer time."/>
+            <div className="plan-card"><div className="plan-top"><div><Tag tone="gold">PROTOTYPE</Tag><h3>Free workspace</h3><p>Designed to make it easy to try MeepSheep before paying.</p></div><div className="plan-price">$0 <small>/ month</small></div></div><div className="plan-divider"/><div className="plan-usage"><div><span>Usage tracked</span><strong>Not connected</strong></div><div><span>Allowance remaining</span><strong>Not available yet</strong></div><div><span>Billing status</span><strong>No billing configured</strong></div></div><button className="button button-outline" onClick={() => notify("Plans will be announced after real usage costs are measured")}>Plan details <ArrowRight size={14}/></button></div>
+            <div className="notice-strip"><WalletCards size={17}/><div><strong>No fake counters or surprise charges.</strong><p>Quotas, billing, and abuse prevention will be built against actual service costs before any paid plan is offered.</p></div></div>
+          </div>}
+
+          {active === "Security" && <div className="workspace-view">
+            <SectionTitle eyebrow="PERMISSIONS & SAFETY" title="Security center" description="The model can request actions. It must never be the authority that grants itself access."/>
+            <div className="security-banner"><div className="security-banner-icon"><ShieldCheck size={24}/></div><div><h3>Security defaults</h3><p>These controls preview the intended policy. They do not enforce permissions on a real computer until the local agent and backend exist.</p></div><Tag tone="gold">Preview</Tag></div>
+            <div className="settings-list">
+              <div className="setting-row"><div className="setting-icon"><Shield size={18}/></div><div className="setting-copy"><strong>Require approval for sensitive actions</strong><p>File deletion, software installation, firewall changes, and other high-impact actions should require explicit confirmation.</p></div><button className={"toggle " + (approvalRequired ? "toggle-on" : "")} role="switch" aria-checked={approvalRequired} aria-label="Require approval for sensitive actions" onClick={() => { setApprovalRequired(!approvalRequired); notify("Preview preference changed. Enforcement is not active."); }}><span/></button></div>
+              <div className="setting-row"><div className="setting-icon"><Terminal size={18}/></div><div className="setting-copy"><strong>Least-privilege command access</strong><p>Terminal execution should be limited by policy and never receive administrator rights by default.</p></div><Tag tone="green">Design rule</Tag></div>
+              <div className="setting-row"><div className="setting-icon"><FileClock size={18}/></div><div className="setting-copy"><strong>Auditable task history</strong><p>Record who requested each action, which device ran it, approval decisions, and the outcome.</p></div><Tag>Planned</Tag></div>
+              <div className="setting-row"><div className="setting-icon"><Unplug size={18}/></div><div className="setting-copy"><strong>Revoke a device or client</strong><p>Disconnect access from the server and local agent, with credentials that can be rotated.</p></div><Tag>Planned</Tag></div>
+              <div className="setting-row"><div className="setting-icon"><Power size={18}/></div><div className="setting-copy"><strong>Emergency stop</strong><p>Stop new commands and interrupt active sessions once the agent supports safe cancellation.</p></div><button className={"button " + (emergencyStopped ? "button-danger" : "button-outline")} onClick={() => { setEmergencyStopped(!emergencyStopped); notify("Prototype switch only. No computer sessions exist to stop."); }}>{emergencyStopped ? "Stop requested (preview)" : "Preview stop control"}</button></div>
+            </div>
+            <p className="muted-note security-note"><LockKeyhole size={14}/> Settings shown here are prototype preferences, not active device protections.</p>
+          </div>}
         </div>
+
+        <footer className="page-footer"><span>© 2026 MeepSheep <span className="footer-separator">·</span> Built for humans, with AI in the loop.</span><span><ShieldCheck size={13}/> Security-first by design <span className="footer-separator">·</span> <button onClick={() => go("Security")}>Security model</button></span></footer>
       </section>
 
-      {showComposer && <div className="modal-backdrop" role="presentation" onMouseDown={e => { if(e.target === e.currentTarget) { setShowComposer(false); setEditingPostId(null); } }}><section className="composer-modal" role="dialog" aria-modal="true" aria-labelledby="composer-title"><div className="modal-header"><div><div className="eyebrow">MAKE SOMETHING GOOD</div><h2 id="composer-title">{editingPostId === null ? "Create a post" : "Edit draft"}</h2><p>Start with one idea. We'll help it find its people.</p></div><button className="icon-button" aria-label="Close composer" onClick={() => { setShowComposer(false); setEditingPostId(null); }}><X size={19}/></button></div><form onSubmit={savePost}><label className="field-label" htmlFor="post-title">What are we sharing?</label><textarea id="post-title" placeholder="Give this post a name or jot down the idea..." value={postTitle} onChange={e => setPostTitle(e.target.value)} required rows={3}/><div className="form-row"><div className="form-field"><label className="field-label" htmlFor="post-platform">First platform</label><div className="select-wrap"><select id="post-platform" value={postPlatform} onChange={e => setPostPlatform(e.target.value as Platform)}>{(["TikTok","Instagram","YouTube","Facebook"] as Platform[]).map(p => <option key={p}>{p}</option>)}</select><ChevronDown size={15}/></div></div><div className="form-field"><label className="field-label" htmlFor="post-kind">Content type</label><div className="select-wrap"><select id="post-kind" value={postKind} onChange={e => setPostKind(e.target.value)}>{["Short video","Music video","Behind the scenes","Artist update","Tutorial"].map(k => <option key={k}>{k}</option>)}</select><ChevronDown size={15}/></div></div></div><div className="caption-customizer"><div className="caption-customizer-heading"><strong>Platform-specific captions</strong><span>Optional · tailor the wording for each channel</span></div>{(["TikTok","Instagram","YouTube","Facebook"] as Platform[]).map(platform => <div className="caption-platform-field" key={platform}><label className="field-label" htmlFor={"caption-"+platform}><PlatformIcon platform={platform} size={14}/> {platform}</label><textarea id={"caption-"+platform} value={postCaptions[platform]} onChange={e=>setPostCaptions(current=>({...current,[platform]:e.target.value}))} placeholder={"Write a caption for "+platform+"..."} rows={2}/></div>)}</div><div className="form-row"><div className="form-field"><label className="field-label" htmlFor="post-date">Planned date</label><input id="post-date" type="date" value={postDate} onChange={e => setPostDate(e.target.value)} required/></div><div className="form-field"><label className="field-label" htmlFor="post-time">Planned time</label><input id="post-time" type="time" value={postTime} onChange={e => setPostTime(e.target.value)} required/></div></div><div className="modal-actions"><button type="button" className="button button-secondary" onClick={() => { setShowComposer(false); setEditingPostId(null); }}>Cancel</button><button type="submit" className="button button-primary"><Check size={16}/> {editingPostId === null ? "Save as draft" : "Save changes"}</button></div><p className="modal-note"><Clock3 size={13}/> This saves a local draft only. Platform publishing will be connected after API approvals.</p></form></section></div>}
-
-      {toast && <div className="toast" role="status"><CheckCircle2 size={17}/><span>{toast}</span><button aria-label="Dismiss notification" onClick={() => setToast("")}><X size={15}/></button></div>}
+      {connectOpen && <div className="modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setConnectOpen(false); }}><section className="connect-modal" role="dialog" aria-modal="true" aria-labelledby="connect-title"><div className="modal-top"><div className="modal-icon"><Monitor size={20}/></div><button className="icon-btn" aria-label="Close dialog" onClick={() => setConnectOpen(false)}><X size={18}/></button></div><Tag tone="gold">EARLY BUILD</Tag><h2 id="connect-title">Your computer is next.</h2><p className="modal-intro">The connection flow is being designed around a local Windows agent and an approval-based pairing step.</p><div className="modal-checklist"><div><span>01</span><p><strong>Agent installer</strong><small>Not built yet</small></p><Tag>Pending</Tag></div><div><span>02</span><p><strong>Secure pairing service</strong><small>Not configured yet</small></p><Tag>Pending</Tag></div><div><span>03</span><p><strong>MCP endpoint and tokens</strong><small>Not hosted yet</small></p><Tag>Pending</Tag></div></div><div className="modal-warning"><LockKeyhole size={16}/><p>Nothing will be installed, executed, or connected from this screen. We'll only offer setup commands after the agent and pairing service are implemented and verified.</p></div><button className="button button-gold button-full" onClick={() => { setConnectOpen(false); go("Connect AI"); }}>Explore AI connection preview <ArrowRight size={15}/></button></section></div>}
+      {toast && <div className="toast" role="status"><Check size={16}/><span>{toast}</span><button aria-label="Dismiss message" onClick={() => setToast("")}><X size={14}/></button></div>}
     </main>
   );
 }
