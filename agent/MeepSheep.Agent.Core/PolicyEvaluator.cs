@@ -1,8 +1,8 @@
 namespace MeepSheep.Agent.Core;
 
 /// <summary>
-/// Evaluates local policy only. The caller must derive approval state from a
-/// trusted local approval mechanism; untrusted client input is not approval.
+/// Evaluates local policy only. Approval-required capabilities remain denied
+/// until a trusted, operation-bound local approval mechanism is implemented.
 /// </summary>
 public static class PolicyEvaluator
 {
@@ -32,12 +32,13 @@ public static class PolicyEvaluator
                 "The requested capability is not explicitly allowed.");
         }
 
-        if (policy.ApprovalRequiredCapabilities.Contains(request.Capability) &&
-            !request.ApprovalGranted)
+        // Deliberately fail closed. A caller-supplied bool is not trustworthy
+        // evidence that a user approved this exact operation.
+        if (policy.ApprovalRequiredCapabilities.Contains(request.Capability))
         {
             return PolicyDecision.Deny(
                 "approval_required",
-                "This capability requires a separate, explicit user approval.");
+                "This capability remains blocked until trusted local approval is implemented.");
         }
 
         return PolicyDecision.Permit();
