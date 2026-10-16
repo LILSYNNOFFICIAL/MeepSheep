@@ -114,7 +114,12 @@ public sealed class AuthorizationTicketValidatorTests
     public void RejectsEnvelopeWithOversizedTarget()
     {
         var envelope = Envelope() with { OperationTarget = new string('x', 1025) };
-        var ticket = Ticket(Envelope());
+        var ticket = Ticket(Envelope()) with
+        {
+            RequestId = envelope.RequestId,
+            DeviceId = envelope.DeviceId,
+            Capability = envelope.Capability
+        };
 
         var result = AuthorizationTicketValidator.Validate(ticket, envelope,
             Now, TimeSpan.FromMinutes(1), approvalRequired: false);
