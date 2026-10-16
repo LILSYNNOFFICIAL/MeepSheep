@@ -25,7 +25,9 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Install web dependencies
-        run: npm install --no-audit --no-fund
+        run: npm install --no-fund
+      - name: Audit npm dependencies
+        run: npm audit --audit-level=high
       - name: Lint web application
         run: npm run lint
       - name: Build web application
