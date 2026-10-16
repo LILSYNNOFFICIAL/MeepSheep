@@ -8,7 +8,7 @@ namespace MeepSheep.Agent.Core;
 public sealed class ReplayProtectionStore
 {
     private readonly object _gate = new();
-    private readonly Dictionary<(string Kind, string Value), DateTimeOffset> _seen = new();
+    private readonly Dictionary<(string Kind, string Scope, string Value), DateTimeOffset> _seen = new();
     private readonly int _maximumEntries;
 
     public ReplayProtectionStore(int maximumEntries = 10_000)
@@ -24,7 +24,7 @@ public sealed class ReplayProtectionStore
     }
 
     /// <summary>
-    /// Atomically consumes a device-scoped nonce and request ID.
+    /// Atomically consumes a device-scoped nonce and a globally unique request ID.
     /// A false result means the envelope must not be executed.
     /// </summary>
     public bool TryConsume(
@@ -41,8 +41,8 @@ public sealed class ReplayProtectionStore
             return false;
         }
 
-        var nonceKey = (Kind: "nonce", Value: deviceId + "\0" + nonce);
-        var requestKey = (Kind: "request", Value: requestId.ToString("N"));
+        var nonceKey = (Kind: "nonce", Scope: deviceId, Value: nonce);
+        var requestKey = (Kind: "request", Scope: string.Empty, Value: requestId.ToString("N"));
 
         lock (_gate)
         {
