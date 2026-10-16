@@ -4,7 +4,7 @@
 
 MeepSheep is being built as a local-first computer-control platform. The goal is to let compatible AI clients request approved actions on a user's Windows computer through a local agent, with clear permissions, human approval, an emergency stop, and an auditable task history.
 
-MeepSheep is **not yet a working remote-control product**. This repository contains a web dashboard prototype, a documented security design, and an early .NET policy and task-envelope validation library. It does not currently control a computer.
+MeepSheep is **not yet a working remote-control product**. This repository contains a web dashboard prototype, a documented security design, and an early .NET policy and task-authorization library. It does not currently control a computer.
 
 ## Why MeepSheep
 
@@ -35,11 +35,11 @@ The `agent/` directory contains an early library that currently provides:
 - A typed list of proposed agent capabilities.
 - A default-deny policy model with immutable snapshots of capability sets.
 - A policy evaluator that rejects capabilities outside the allowlist, requires approval for capabilities marked sensitive, and rejects requests requiring administrator privileges.
-- A task authorization envelope type.
-- Validation of required envelope fields, field-size limits, issue/expiry ordering, maximum lifetime, expiry, and allowed clock skew.
-- Unit tests for the policy and envelope validation rules.
+- A task authorization envelope type and validation for required fields, field-size limits, issue/expiry ordering, maximum lifetime, expiry, and allowed clock skew.
+- A bounded, process-local replay guard that atomically consumes a device-scoped nonce and request ID, expires old entries, and fails closed when its cache is full.
+- Unit tests for policy decisions, envelope validation, replay rejection, expiry, capacity behavior, and concurrent attempts.
 
-**Important:** envelope validation checks structure and time bounds only. It does not authenticate the sender, verify a signature, prevent replay, establish device identity, or prove that approval was granted. These components are not yet wired to any operating-system action and are not, by themselves, a complete security boundary.
+**Important:** the replay guard is only a local building block. It must be called after authentication and envelope validation. It is in-memory only, resets when the process restarts, and does not authenticate the sender, verify signatures, establish device identity, or prove that approval was granted. It is not yet wired to any operating-system action and is not, by itself, a complete security boundary.
 
 ### Not implemented
 
@@ -68,7 +68,7 @@ Outbound authenticated session
         v
 MeepSheep Windows agent
         |
-        | local policy + fresh approval + cancellation check
+        | local policy + fresh approval + replay guard + cancellation check
         v
 Narrow, user-authorized Windows operation
 ```
@@ -90,7 +90,7 @@ Core requirements include:
 - No default administrator privileges or unrestricted administrator shell.
 - Explicit capability allowlists, enforced immediately before every real operation.
 - Short-lived, single-use task authorization bound to the device, operation, and target.
-- Authentication and integrity protection for transport, with replay resistance.
+- Authentication and integrity protection for transport, with replay resistance that remains effective across process restarts.
 - Fresh user confirmation for consequential or privacy-sensitive operations.
 - Visible session state and a local emergency stop.
 - Cancellation and timeouts, with truthful reporting when an action cannot be interrupted.
@@ -124,7 +124,7 @@ npm run lint
 npm run build
 ```
 
-### Agent policy and envelope tests
+### Agent policy and authorization tests
 
 From the repository root:
 
@@ -132,7 +132,7 @@ From the repository root:
 dotnet test agent/MeepSheep.Agent.Core.Tests/MeepSheep.Agent.Core.Tests.csproj --configuration Release
 ```
 
-These tests validate the current library's policy and envelope rules only. They do not test Windows input control, authentication, transport security, pairing, replay prevention, revocation, or real task execution because those systems do not yet exist.
+These tests validate the current library's policy, envelope, and in-memory replay-guard behavior only. They do not test Windows input control, authentication, transport security, pairing, durable replay prevention, revocation, or real task execution because those systems do not yet exist.
 
 ### Continuous integration
 
@@ -142,7 +142,7 @@ GitHub Actions runs the web lint and production build, then runs the .NET agent-
 
 1. **Dashboard and architecture** - establish the product UI, README, threat boundaries, and honest prototype states.
 2. **Policy and task contract** - define typed capabilities, fail-closed policy decisions, and bounded task envelopes. (Initial library and tests now exist.)
-3. **Pairing and session protocol** - design and review device identity, client authentication, short-lived task authorization, replay resistance, and revocation before implementing transport.
+3. **Pairing and session protocol** - design and review device identity, client authentication, authenticated task authorization, replay resistance, and revocation before implementing transport.
 4. **Windows agent shell** - create a user-session agent with visible status, local stop control, safe lifecycle, and no default elevation.
 5. **First narrow capability** - add a read-only capability behind end-to-end authentication, policy enforcement, timeouts, and Windows integration tests before expanding to input or file changes.
 6. **Approval and audit** - implement operation-specific confirmation, cancellation, privacy-preserving audit events, and clear result reporting.
