@@ -37,7 +37,12 @@ public static class AuthorizationTicketValidator
                 "Ticket identifiers, device ID, and target digest are required.");
         }
 
-        if (ticket.DeviceId.Length > 128 || ticket.TargetDigest.Length != 64 ||
+        if (ticket.DeviceId.Length > 128 ||
+            ticket.TargetDigest.Length != 64 ||
+            ticket.TargetDigest.Any(character =>
+                !((character >= '0' && character <= '9') ||
+                  (character >= 'a' && character <= 'f') ||
+                  (character >= 'A' && character <= 'F'))) ||
             (ticket.ApprovalId is not null &&
              (string.IsNullOrWhiteSpace(ticket.ApprovalId) || ticket.ApprovalId.Length > 128)))
         {
