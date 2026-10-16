@@ -221,7 +221,7 @@ public sealed class AuthorizationTicketValidatorTests
     }
 
     [Fact]
-    public void AcceptsUppercaseHexDigestWithoutChangingTargetBinding()
+    public void AcceptsLowercaseHexDigestWithoutChangingTargetBinding()
     {
         var envelope = Envelope();
         var ticket = Ticket(envelope) with
