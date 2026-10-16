@@ -49,7 +49,6 @@ export default function HomePage() {
   const [connectOpen, setConnectOpen] = useState(false);
   const [toast, setToast] = useState("");
   const [approvalRequired, setApprovalRequired] = useState(true);
-  const [showSecrets, setShowSecrets] = useState(false);
   const [emergencyStopped, setEmergencyStopped] = useState(false);
 
   const notify = (message: string) => {
@@ -110,7 +109,7 @@ export default function HomePage() {
         <div className="page-content">
           {active === "Overview" && <>
             <div className="welcome-row">
-              <div><div className="eyebrow eyebrow-line"><span/> YOUR COMPUTER, YOUR RULES</div><h1>Your AI. Your machine.<br/><span>You're in control.</span></h1><p className="welcome-copy">Connect compatible AI tools to a computer you own. Approve sensitive actions, keep an eye on every task, and stay in the driver's seat.</p></div>
+              <div><div className="eyebrow eyebrow-line"><span/> YOUR COMPUTER, YOUR RULES</div><h1>Your AI. Your machine.<br/><span>You’re in control.</span></h1><p className="welcome-copy">Connect compatible AI tools to a computer you own. Approve sensitive actions, keep an eye on every task, and stay in the driver’s seat.</p></div>
               <button className="button button-gold" onClick={() => setConnectOpen(true)}><Plus size={16}/> Connect a computer</button>
             </div>
 
@@ -148,7 +147,7 @@ export default function HomePage() {
           {active === "Devices" && <div className="workspace-view">
             <SectionTitle eyebrow="YOUR MACHINES" title="Devices" description="Computers you have explicitly paired with this workspace." action={<button className="button button-gold" onClick={() => setConnectOpen(true)}><Plus size={15}/> Pair a device</button>}/>
             <div className="notice-strip"><LockKeyhole size={17}/><div><strong>No public remote desktop ports required.</strong><p>The planned local agent will initiate an encrypted outbound connection. No computer is connected in this prototype.</p></div></div>
-            <div className="empty-large"><div className="empty-icon empty-icon-large"><Laptop size={26}/></div><h3>No computers connected</h3><p>Once the local agent is ready, pair your Windows computer here. You'll be able to review permissions, connection status, and revoke access.</p><button className="button button-gold" onClick={() => setConnectOpen(true)}><Plus size={15}/> Start pairing</button><span className="muted-note">Windows agent and secure pairing service are not implemented yet.</span></div>
+            <div className="empty-large"><div className="empty-icon empty-icon-large"><Laptop size={26}/></div><h3>No computers connected</h3><p>Once the local agent is ready, pair your Windows computer here. You’ll be able to review permissions, connection status, and revoke access.</p><button className="button button-gold" onClick={() => setConnectOpen(true)}><Plus size={15}/> Start pairing</button><span className="muted-note">Windows agent and secure pairing service are not implemented yet.</span></div>
           </div>}
 
           {active === "Connect AI" && <div className="workspace-view">
@@ -191,7 +190,7 @@ export default function HomePage() {
         <footer className="page-footer"><span>© 2026 MeepSheep <span className="footer-separator">·</span> Built for humans, with AI in the loop.</span><span><ShieldCheck size={13}/> Security-first by design <span className="footer-separator">·</span> <button onClick={() => go("Security")}>Security model</button></span></footer>
       </section>
 
-      {connectOpen && <div className="modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setConnectOpen(false); }}><section className="connect-modal" role="dialog" aria-modal="true" aria-labelledby="connect-title"><div className="modal-top"><div className="modal-icon"><Monitor size={20}/></div><button className="icon-btn" aria-label="Close dialog" onClick={() => setConnectOpen(false)}><X size={18}/></button></div><Tag tone="gold">EARLY BUILD</Tag><h2 id="connect-title">Your computer is next.</h2><p className="modal-intro">The connection flow is being designed around a local Windows agent and an approval-based pairing step.</p><div className="modal-checklist"><div><span>01</span><p><strong>Agent installer</strong><small>Not built yet</small></p><Tag>Pending</Tag></div><div><span>02</span><p><strong>Secure pairing service</strong><small>Not configured yet</small></p><Tag>Pending</Tag></div><div><span>03</span><p><strong>MCP endpoint and tokens</strong><small>Not hosted yet</small></p><Tag>Pending</Tag></div></div><div className="modal-warning"><LockKeyhole size={16}/><p>Nothing will be installed, executed, or connected from this screen. We'll only offer setup commands after the agent and pairing service are implemented and verified.</p></div><button className="button button-gold button-full" onClick={() => { setConnectOpen(false); go("Connect AI"); }}>Explore AI connection preview <ArrowRight size={15}/></button></section></div>}
+      {connectOpen && <div className="modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setConnectOpen(false); }}><section className="connect-modal" role="dialog" aria-modal="true" aria-labelledby="connect-title"><div className="modal-top"><div className="modal-icon"><Monitor size={20}/></div><button className="icon-btn" aria-label="Close dialog" onClick={() => setConnectOpen(false)}><X size={18}/></button></div><Tag tone="gold">EARLY BUILD</Tag><h2 id="connect-title">Your computer is next.</h2><p className="modal-intro">The connection flow is being designed around a local Windows agent and an approval-based pairing step.</p><div className="modal-checklist"><div><span>01</span><p><strong>Agent installer</strong><small>Not built yet</small></p><Tag>Pending</Tag></div><div><span>02</span><p><strong>Secure pairing service</strong><small>Not configured yet</small></p><Tag>Pending</Tag></div><div><span>03</span><p><strong>MCP endpoint and tokens</strong><small>Not hosted yet</small></p><Tag>Pending</Tag></div></div><div className="modal-warning"><LockKeyhole size={16}/><p>Nothing will be installed, executed, or connected from this screen. We’ll only offer setup commands after the agent and pairing service are implemented and verified.</p></div><button className="button button-gold button-full" onClick={() => { setConnectOpen(false); go("Connect AI"); }}>Explore AI connection preview <ArrowRight size={15}/></button></section></div>}
       {toast && <div className="toast" role="status"><Check size={16}/><span>{toast}</span><button aria-label="Dismiss message" onClick={() => setToast("")}><X size={14}/></button></div>}
     </main>
   );
