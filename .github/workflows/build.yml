@@ -20,9 +20,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install dependencies
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Install web dependencies
         run: npm install --no-audit --no-fund
-      - name: Lint application
+      - name: Lint web application
         run: npm run lint
-      - name: Build application
+      - name: Build web application
         run: npm run build
+      - name: Test agent policy core
+        run: dotnet test agent/MeepSheep.Agent.Core.Tests/MeepSheep.Agent.Core.Tests.csproj --configuration Release
