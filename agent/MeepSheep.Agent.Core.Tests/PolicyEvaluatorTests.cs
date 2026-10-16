@@ -78,7 +78,11 @@ public sealed class PolicyEvaluatorTests
     [Fact]
     public void MutatingInputSetsDoesNotChangeThePolicy()
     {
-        var allowed = new HashSet<AgentCapability> { AgentCapability.LaunchApplication };
+        var allowed = new HashSet<AgentCapability>
+        {
+            AgentCapability.LaunchApplication,
+            AgentCapability.DeleteFiles
+        };
         var approvalRequired = new HashSet<AgentCapability> { AgentCapability.DeleteFiles };
         var policy = new AgentPolicy(allowed, approvalRequired);
 
