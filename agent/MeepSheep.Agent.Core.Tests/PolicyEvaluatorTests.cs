@@ -1,4 +1,5 @@
 using MeepSheep.Agent.Core;
+using Xunit;
 
 namespace MeepSheep.Agent.Core.Tests;
 
@@ -57,6 +58,21 @@ public sealed class PolicyEvaluatorTests
             new PolicyRequest(AgentCapability.DeleteFiles, ApprovalGranted: true));
 
         Assert.True(decision.Allowed);
+    }
+
+    [Fact]
+    public void AdministratorPrivilegesAreAlwaysRejected()
+    {
+        var policy = new AgentPolicy(
+            new HashSet<AgentCapability> { AgentCapability.RunCommand },
+            new HashSet<AgentCapability>());
+
+        var decision = PolicyEvaluator.Evaluate(
+            policy,
+            new PolicyRequest(AgentCapability.RunCommand, RequiresAdminPrivileges: true));
+
+        Assert.False(decision.Allowed);
+        Assert.Equal("admin_privileges_not_granted", decision.Code);
     }
 
     [Fact]
