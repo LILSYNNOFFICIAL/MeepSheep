@@ -2,6 +2,8 @@
 
 Status: design contract for the prototype. These requirements are not yet enforced by a complete running product.
 
+See [PAIRING-SESSION-PROTOCOL.md](PAIRING-SESSION-PROTOCOL.md) for the proposed pairing, authenticated session, task authorization, replay, and reconnection contract. That protocol is not implemented or security-reviewed.
+
 ## Assets to protect
 
 - The user's desktop session, files, clipboard, applications, credentials, and network settings.
