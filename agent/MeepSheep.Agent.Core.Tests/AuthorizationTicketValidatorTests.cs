@@ -93,6 +93,32 @@ public sealed class AuthorizationTicketValidatorTests
     }
 
     [Fact]
+    public void RejectsEnvelopeWithMissingTargetWithoutThrowing()
+    {
+        var envelope = Envelope() with { OperationTarget = "  " };
+        var ticket = Ticket(Envelope());
+
+        var result = AuthorizationTicketValidator.Validate(ticket, envelope,
+            Now, TimeSpan.FromMinutes(1), approvalRequired: false);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("ticket_envelope_target_invalid", result.Code);
+    }
+
+    [Fact]
+    public void RejectsEnvelopeWithOversizedTarget()
+    {
+        var envelope = Envelope() with { OperationTarget = new string('x', 1025) };
+        var ticket = Ticket(Envelope());
+
+        var result = AuthorizationTicketValidator.Validate(ticket, envelope,
+            Now, TimeSpan.FromMinutes(1), approvalRequired: false);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("ticket_envelope_target_invalid", result.Code);
+    }
+
+    [Fact]
     public void TargetDigestIsDeterministicAndCaseSensitive()
     {
         var first = AuthorizationTicketValidator.ComputeTargetDigest("File.txt");
