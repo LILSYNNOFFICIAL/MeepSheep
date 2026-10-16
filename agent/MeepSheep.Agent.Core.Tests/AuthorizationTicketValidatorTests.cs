@@ -181,6 +181,63 @@ public sealed class AuthorizationTicketValidatorTests
     }
 
     [Fact]
+    public void RejectsUnknownCapabilityAndInvalidValidatorConfiguration()
+    {
+        var envelope = Envelope();
+        var ticket = Ticket(envelope) with { Capability = (AgentCapability)int.MaxValue };
+
+        var unknownCapability = AuthorizationTicketValidator.Validate(
+            ticket, envelope, Now, TimeSpan.FromMinutes(1), approvalRequired: false);
+        var invalidLifetime = AuthorizationTicketValidator.Validate(
+            Ticket(envelope), envelope, Now, TimeSpan.Zero, approvalRequired: false);
+
+        Assert.False(unknownCapability.IsValid);
+        Assert.Equal("ticket_unknown_capability", unknownCapability.Code);
+        Assert.False(invalidLifetime.IsValid);
+        Assert.Equal("invalid_ticket_validator_configuration", invalidLifetime.Code);
+    }
+
+    [Fact]
+    public void RejectsMalformedTicketIdentifiersAndApprovalReferences()
+    {
+        var envelope = Envelope();
+        var valid = Ticket(envelope);
+        var cases = new[]
+        {
+            (Ticket: valid with { TicketId = Guid.Empty }, ExpectedCode: "ticket_missing_required_field"),
+            (Ticket: valid with { DeviceId = new string('d', 129) }, ExpectedCode: "ticket_field_invalid"),
+            (Ticket: valid with { ApprovalId = " " }, ExpectedCode: "ticket_field_invalid"),
+            (Ticket: valid with { ApprovalId = new string('a', 129) }, ExpectedCode: "ticket_field_invalid")
+        };
+
+        foreach (var item in cases)
+        {
+            var result = AuthorizationTicketValidator.Validate(
+                item.Ticket, envelope, Now, TimeSpan.FromMinutes(1), approvalRequired: false);
+
+            Assert.False(result.IsValid);
+            Assert.Equal(item.ExpectedCode, result.Code);
+        }
+    }
+
+    [Fact]
+    public void AcceptsUppercaseHexDigestWithoutChangingTargetBinding()
+    {
+        var envelope = Envelope();
+        var ticket = Ticket(envelope) with
+        {
+            TargetDigest = AuthorizationTicketValidator
+                .ComputeTargetDigest(envelope.OperationTarget)
+                .ToLowerInvariant()
+        };
+
+        var result = AuthorizationTicketValidator.Validate(
+            ticket, envelope, Now, TimeSpan.FromMinutes(1), approvalRequired: false);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
     public void TargetDigestIsDeterministicAndCaseSensitive()
     {
         var first = AuthorizationTicketValidator.ComputeTargetDigest("File.txt");
