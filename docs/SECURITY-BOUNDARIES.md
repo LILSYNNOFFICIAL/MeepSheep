@@ -34,7 +34,7 @@ See [PAIRING-SESSION-PROTOCOL.md](PAIRING-SESSION-PROTOCOL.md) for the proposed 
 
 Approval for one operation must not become blanket approval for later operations. A tool call cannot grant itself new scopes or change the policy used to authorize that same call.
 
-**Current approval behavior:** the policy core intentionally has no caller-supplied `ApprovalGranted` boolean. Capabilities marked approval-required are denied even when allowlisted, because no trusted, operation-bound local approval issuer/verifier exists yet. Do not work around this by adding an approval flag to a request DTO. Implement and test a trusted approval record bound to the request ID, capability, exact target, and short expiry before enabling such capabilities.
+**Current approval behavior:** the policy core intentionally has no caller-supplied `ApprovalGranted` boolean. Capabilities marked approval-required are denied even when allowlisted, because no trusted, operation-bound local approval issuer/verifier exists yet. Do not work around this by adding an approval flag to a request DTO. Implement and test a trusted approval record bound to the request ID, capability, exact target, and short expiry before enabling such capabilities. The new authorization-ticket validator checks ticket shape, lifetime, request/device/capability binding, exact-target SHA-256 digest, and presence of an approval reference when required. This is consistency validation only, not signature verification, issuer authentication, or proof that approval was actually granted.
 
 ## Initial capability posture
 
