@@ -168,6 +168,19 @@ public sealed class AuthorizationTicketValidatorTests
     }
 
     [Fact]
+    public void RejectsTargetDigestContainingNonHexCharacters()
+    {
+        var envelope = Envelope();
+        var ticket = Ticket(envelope) with { TargetDigest = new string('g', 64) };
+
+        var result = AuthorizationTicketValidator.Validate(ticket, envelope,
+            Now, TimeSpan.FromMinutes(1), approvalRequired: false);
+
+        Assert.False(result.IsValid);
+        Assert.Equal("ticket_field_invalid", result.Code);
+    }
+
+    [Fact]
     public void TargetDigestIsDeterministicAndCaseSensitive()
     {
         var first = AuthorizationTicketValidator.ComputeTargetDigest("File.txt");
