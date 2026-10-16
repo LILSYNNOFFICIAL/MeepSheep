@@ -9,7 +9,7 @@ MeepSheep is a creator workspace concept for planning, tailoring, and managing c
 - Premium, responsive creator dashboard with separate workspace navigation states
 - Content planner with status filters and search
 - Post composer with versioned browser-local storage, legacy draft migration, and cross-tab updates
-- One-click JSON backup export and validated backup import from the content library
+- One-click JSON backup export, validated backup import, and spreadsheet-friendly CSV export from the content library
 - Platform-specific caption fields with live character counts, per-platform copy, and a combined copy action for all non-empty captions
 - Hashtag suggestions can be copied individually or as a set, then inserted into a new draft
 - Storage validation that avoids treating malformed or newer-version data as valid planner content
