@@ -1,15 +1,25 @@
-# MeepSheep Windows agent foundation
+# MeepSheep agent foundation
 
-**Status: early security library only. This is not a Windows desktop-control agent.**
+**Status: local lifecycle shell plus early security library. This is not a Windows desktop-control agent.**
 
-## Current components
+## Components
 
 - `MeepSheep.Agent.Core`: capability enum, immutable default-deny policy, policy decision model, policy evaluator, task authorization envelope, envelope shape/time validator, and a bounded process-local replay guard.
-- `MeepSheep.Agent.Core.Tests`: unit tests for capability allowlisting, approval gates, administrator-privilege rejection, policy immutability, required envelope fields, field bounds, expiry, maximum lifetime, clock skew, replay attempts, cache capacity, expiry cleanup, and concurrent replay attempts.
+- `MeepSheep.Agent.Core.Tests`: tests for policy allowlisting, approval gates, administrator-privilege rejection, immutability, envelope validation, replay attempts, capacity, expiry cleanup, and concurrency.
+- `MeepSheep.Agent.Host`: a cross-platform console shell that displays local-only status and supports stopping with `STOP` or Ctrl+C. It opens no network listener, accepts no remote tasks, and cannot execute commands or control the desktop.
 
-## Run tests
+## Build and run the local shell
 
 From the repository root:
+
+```bash
+dotnet build agent/MeepSheep.Agent.Host/MeepSheep.Agent.Host.csproj --configuration Release
+dotnet run --project agent/MeepSheep.Agent.Host/MeepSheep.Agent.Host.csproj
+```
+
+The shell reports that remote sessions are not configured and all computer-control capabilities are disabled. It is a lifecycle/stop-control prototype only.
+
+## Run tests
 
 ```bash
 dotnet test agent/MeepSheep.Agent.Core.Tests/MeepSheep.Agent.Core.Tests.csproj --configuration Release
@@ -25,15 +35,15 @@ The store is **process-local and memory-only**. A process restart clears its sta
 
 The policy evaluator is useful only when every real operation invokes it at the point of execution and cannot bypass its decision. The envelope validator checks shape and time bounds only. The replay guard does not authenticate envelopes, verify signatures, establish device identity, persist consumed identifiers, or prove that a user approved an operation. None of these pieces currently controls an operating-system action.
 
-No Windows service, tray application, screen capture, mouse/keyboard injection, clipboard access, file access, process launch, shell execution, network listener, pairing, authentication, remote task transport, installer, or update system is implemented.
+No Windows tray app/service, screen capture, mouse/keyboard injection, clipboard access, file access, process launch, shell execution, pairing, authentication, remote task transport, installer, or update system is implemented.
 
-Do not run this library as a remote-control agent or present it as production security.
+Do not run this as a remote-control agent or present it as production security.
 
 ## Next engineering gates
 
 1. Threat-model and review the device pairing and authenticated session protocol.
 2. Choose and review a standard authenticated protocol and key lifecycle. Bind task authorization to the authenticated device, capability, target, expiry, and request identifier.
-3. Replace process-local replay tracking with atomic, durable consumption scoped to the device/session, and define safe behavior across restarts and concurrent agent instances.
+3. Replace process-local replay tracking with atomic, durable consumption scoped to the device/session, including safe restart and multi-instance behavior.
 4. Add user-visible consent, local emergency stop, cancellation, and credential revocation.
 5. Wire every operation through authentication, replay checks, policy, approval, and cancellation immediately before execution.
 6. Start with a narrow read-only Windows capability and test the actual call path on a Windows runner.
