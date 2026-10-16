@@ -69,6 +69,6 @@ public sealed class ReplayProtectionStoreTests
 
         var results = await Task.WhenAll(attempts);
 
-        Assert.Single(results.Where(result => result));
+        Assert.Single(results, result => result);
     }
 }
