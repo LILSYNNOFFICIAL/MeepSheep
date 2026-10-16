@@ -63,18 +63,47 @@ public sealed class PolicyEvaluatorTests
     }
 
     [Fact]
-    public void AdministratorPrivilegesAreAlwaysRejected()
+    public void HighImpactCapabilitiesRemainDisabledEvenWhenAllowlisted()
     {
-        var policy = new AgentPolicy(
-            new HashSet<AgentCapability> { AgentCapability.RunCommand },
-            new HashSet<AgentCapability>());
+        var highImpactCapabilities = new[]
+        {
+            AgentCapability.RunCommand,
+            AgentCapability.InstallSoftware,
+            AgentCapability.ChangeFirewall
+        };
+        var policy = new AgentPolicy(highImpactCapabilities, Array.Empty<AgentCapability>());
 
-        var decision = PolicyEvaluator.Evaluate(
-            policy,
-            new PolicyRequest(AgentCapability.RunCommand, RequiresAdminPrivileges: true));
+        foreach (var capability in highImpactCapabilities)
+        {
+            var decision = PolicyEvaluator.Evaluate(policy, new PolicyRequest(capability));
 
-        Assert.False(decision.Allowed);
-        Assert.Equal("admin_privileges_not_granted", decision.Code);
+            Assert.False(decision.Allowed);
+            Assert.Equal("capability_not_implemented", decision.Code);
+        }
+    }
+
+    [Fact]
+    public void SensitiveCapabilitiesCannotBypassApprovalByOmittingPolicyFlag()
+    {
+        var sensitiveCapabilities = new[]
+        {
+            AgentCapability.CaptureScreen,
+            AgentCapability.ControlMouse,
+            AgentCapability.ControlKeyboard,
+            AgentCapability.ReadClipboard,
+            AgentCapability.ReadFiles,
+            AgentCapability.WriteFiles,
+            AgentCapability.DeleteFiles
+        };
+        var policy = new AgentPolicy(sensitiveCapabilities, Array.Empty<AgentCapability>());
+
+        foreach (var capability in sensitiveCapabilities)
+        {
+            var decision = PolicyEvaluator.Evaluate(policy, new PolicyRequest(capability));
+
+            Assert.False(decision.Allowed);
+            Assert.Equal("approval_required", decision.Code);
+        }
     }
 
     [Fact]
