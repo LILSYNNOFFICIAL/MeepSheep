@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import {
-  Activity, ArrowDownRight, ArrowRight, ArrowUpRight, Bell, Check, ChevronDown,
-  CircleHelp, Clock3, Code2, Copy, Cpu, ExternalLink, FileClock, Fingerprint,
-  Gauge, Github, Laptop, LockKeyhole, Menu, Monitor, MoreHorizontal, Network,
-  Plus, Power, Radio, RefreshCw, Shield, ShieldCheck, Sparkles, Terminal,
-  Trash2, Unplug, WalletCards, X, Zap
+  Activity, ArrowRight, ArrowUpRight, Bell, Check, ChevronDown, CircleHelp,
+  Code2, Copy, FileClock, Fingerprint, Gauge, Laptop, LockKeyhole, Menu,
+  Monitor, MoreHorizontal, Network, Plus, Power, RefreshCw, Shield,
+  ShieldCheck, Sparkles, Terminal, Unplug, WalletCards, X
 } from "lucide-react";
 
 type Section = "Overview" | "Devices" | "Connect AI" | "Tasks" | "Plan & usage" | "Security";
