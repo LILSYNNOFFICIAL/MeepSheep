@@ -80,7 +80,7 @@ public static class AuthorizationTicketValidator
         var expectedDigest = ComputeTargetDigest(envelope.OperationTarget);
         if (!CryptographicOperations.FixedTimeEquals(
                 Encoding.ASCII.GetBytes(ticket.TargetDigest.ToLowerInvariant()),
-                Encoding.ASCII.GetBytes(expectedDigest)))
+                Encoding.ASCII.GetBytes(expectedDigest.ToLowerInvariant())))
         {
             return EnvelopeValidationResult.Reject(
                 "ticket_target_mismatch",
