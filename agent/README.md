@@ -5,7 +5,7 @@
 ## Components
 
 - `MeepSheep.Agent.Core`: capability enum, immutable default-deny policy, policy decision model, policy evaluator, task authorization envelope, envelope shape/time validator, and a bounded process-local replay guard.
-- `MeepSheep.Agent.Core.Tests`: tests for policy allowlisting, approval gates, administrator-privilege rejection, immutability, envelope validation, replay attempts, capacity, expiry cleanup, and concurrency.
+- `MeepSheep.Agent.Core.Tests`: tests for policy allowlisting, fail-closed approval gates, administrator-privilege rejection, immutability, envelope validation, replay attempts, capacity, expiry cleanup, and concurrency.
 - `MeepSheep.Agent.Host`: a cross-platform console shell that displays local-only status and supports stopping with `STOP` or Ctrl+C. It opens no network listener, accepts no remote tasks, and cannot execute commands or control the desktop.
 
 ## Build and run the local shell
@@ -29,7 +29,7 @@ dotnet test agent/MeepSheep.Agent.Core.Tests/MeepSheep.Agent.Core.Tests.csproj -
 
 `ReplayProtectionStore.TryConsume` atomically records a device-scoped nonce and a request ID until the supplied expiry. It rejects duplicate values, invalid inputs, expired requests, and new requests when the bounded cache cannot safely accept them. It prunes expired records before checking capacity and does not evict unexpired records to make room.
 
-The store is **process-local and memory-only**. A process restart clears its state, so it cannot by itself provide replay resistance across restarts or multiple agent instances. The caller must first authenticate the sender and validate the envelope, then consume the nonce/request ID, and only then proceed through policy and approval checks. All checks must be performed in the actual operation path, immediately before execution.
+The store is **process-local and memory-only**. A process restart clears its state, so it cannot by itself provide replay resistance across restarts or multiple agent instances. The caller must first authenticate the sender and validate the envelope, then consume the nonce/request ID, and only then proceed through policy and approval checks. All checks must be performed in the actual operation path, immediately before execution. The current policy core intentionally denies every capability marked approval-required, even if allowlisted: there is no trusted, operation-bound local approval issuer/verifier yet. Do not reintroduce a caller-supplied approval boolean as a shortcut.
 
 ## Security limitations
 
