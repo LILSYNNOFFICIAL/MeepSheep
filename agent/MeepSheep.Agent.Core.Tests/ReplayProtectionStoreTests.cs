@@ -29,6 +29,16 @@ public sealed class ReplayProtectionStoreTests
     }
 
     [Fact]
+    public void RequestIdIsGlobalAcrossDevices()
+    {
+        var store = new ReplayProtectionStore();
+        var requestId = Guid.NewGuid();
+
+        Assert.True(store.TryConsume("device-a", "nonce-a", requestId, Now.AddMinutes(1), Now));
+        Assert.False(store.TryConsume("device-b", "nonce-b", requestId, Now.AddMinutes(1), Now));
+    }
+
+    [Fact]
     public void RejectsExpiredAndMalformedInputs()
     {
         var store = new ReplayProtectionStore();
