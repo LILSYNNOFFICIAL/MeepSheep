@@ -225,14 +225,14 @@ export default function HomePage() {
     const escapeCsv = (value: unknown) => {
       let text = String(value ?? "");
       // Prevent spreadsheet formulas from running when exported content is opened in spreadsheet apps.
-      if (/^[=+@\\t\\r]/.test(text) || /^-[^0-9]/.test(text)) text = "'" + text;
+      if (/^[=+@\t\r]/.test(text) || /^-[^0-9]/.test(text)) text = "'" + text;
       return '"' + text.replace(/"/g, '""') + '"';
     };
     const rows = posts.map(post => [
       post.id, post.title, post.platform, post.status, post.dateISO ?? post.date,
       post.time24 ?? post.time, post.kind, ...platforms.map(platform => post.captions?.[platform] ?? "")
     ]);
-    const csv = "\\uFEFF" + [headers, ...rows].map(row => row.map(escapeCsv).join(",")).join("\\r\\n");
+    const csv = "\uFEFF" + [headers, ...rows].map(row => row.map(escapeCsv).join(",")).join("\r\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
