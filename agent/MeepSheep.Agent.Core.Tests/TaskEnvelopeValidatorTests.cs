@@ -31,6 +31,19 @@ public sealed class TaskEnvelopeValidatorTests
     }
 
     [Fact]
+    public void RejectsUnknownCapability()
+    {
+        var result = TaskEnvelopeValidator.Validate(
+            ValidEnvelope() with { Capability = (AgentCapability)int.MaxValue },
+            Now,
+            TimeSpan.FromMinutes(1),
+            TimeSpan.FromSeconds(5));
+
+        Assert.False(result.IsValid);
+        Assert.Equal("unknown_capability", result.Code);
+    }
+
+    [Fact]
     public void RejectsExpiredEnvelope()
     {
         var result = TaskEnvelopeValidator.Validate(
