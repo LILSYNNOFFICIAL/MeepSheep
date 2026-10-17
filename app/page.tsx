@@ -228,7 +228,7 @@ export default function HomePage() {
       if (/^[=+@\t\r]/.test(text) || /^-[^0-9]/.test(text)) text = "'" + text;
       return '"' + text.replace(/"/g, '""') + '"';
     };
-    const rows = posts.map(post => [
+    const rows = filteredPosts.map(post => [
       post.id, post.title, post.platform, post.status, post.dateISO ?? post.date,
       post.time24 ?? post.time, post.kind, ...platforms.map(platform => post.captions?.[platform] ?? "")
     ]);
@@ -242,7 +242,7 @@ export default function HomePage() {
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    notify("Content exported as CSV");
+    notify(`${filteredPosts.length} ${filteredPosts.length === 1 ? "post" : "posts"} exported as CSV`);
   };
 
   const startNewPost = () => {
