@@ -41,7 +41,7 @@
 - The remote MCP client is a connected SDK `Client`; the remote server is an independently created `McpServer` served through `createMcpHandler`.
 - Test caller identity is injected as validated `authInfo` by the test transport wrapper, never included in tool arguments.
 
-- [ ] **Step 1: Add the focused failing tests**
+- [x] **Step 1: Add the focused failing tests**
 
 Create tests that exercise the relay through an actual MCP Client calling the MeepSheep MCP handler, and an outbound MCP Client calling a separately created mock-agent MCP handler.
 
@@ -54,13 +54,13 @@ Required assertions:
 6. A remote tool error is returned as a sanitized relay error without exposing a stack trace or credential.
 7. A caller without the required message permission cannot dispatch.
 
-- [ ] **Step 2: Verify the expected red state**
+- [x] **Step 2: Verify the expected red state**
 
 Run: `npm test`
 
 Expected: tests fail because the relay module and test harness do not yet exist. Confirm the failure is an import/missing behavior failure, not a malformed test or dependency setup failure. Install exact pinned SDK dependencies in CI before relying on the test result.
 
-- [ ] **Step 3: Implement only the minimum behavior**
+- [x] **Step 3: Implement only the minimum behavior**
 
 Create `src/relay/agent-registry.mjs` with an in-memory registry and explicit same-tenant visibility and tool allowlist checks.
 
@@ -76,19 +76,19 @@ Create `tests/fixtures/mock-agent.mjs` with a separate MCP server exposing one d
 
 Update CI to install Node 26, install the pinned dependencies, and run `npm test`, while preserving the existing Python tests, Wellness Doctor, and YAML syntax validation.
 
-- [ ] **Step 4: Verify the focused green state**
+- [x] **Step 4: Verify the focused green state**
 
 Run: `npm test`
 
 Expected: all seven behavior groups pass, including positive dispatch and negative authorization/allowlist cases.
 
-- [ ] **Step 5: Run repository integration checks**
+- [x] **Step 5: Run repository integration checks**
 
 Run: `npm test && python -m unittest discover -s tests -v && python scripts/wellness_doctor.py`
 
 Expected: JavaScript MCP integration tests pass, all existing Python unit tests pass, and the Wellness Doctor reports no new findings. GitHub Actions must run the same checks on the branch.
 
-- [ ] **Step 6: Commit the independently passing deliverable**
+- [x] **Step 6: Commit the independently passing deliverable**
 
 ```bash
 git add package.json .nvmrc src tests/mcp-relay.integration.test.mjs tests/fixtures .github/workflows/quality.yml docs/plans/2026-10-31-mcp-relay-lab.md
@@ -101,41 +101,41 @@ git commit -m "feat: add MCP relay laboratory"
 
 **Files:**
 - Modify: `tests/mcp-relay.integration.test.mjs`
-- Create: `tests/fixtures/http-mock-agent.mjs`
+- Create: `tests/fixtures/mock-agent-process.mjs`
 - Modify: `src/relay/mcp-handler.mjs`
 
 **Interfaces:**
-- The outbound connector accepts a preconfigured MCP endpoint and an injected fetch/transport factory.
-- The test mock agent runs as an independent HTTP handler with its own MCP server instance.
+- The outbound connector accepts a preconfigured MCP endpoint and a `StreamableHTTPClientTransport` connection.
+- The test mock agent runs as a separately spawned Node process with its own MCP server instance and loopback HTTP listener.
 - The caller remains an MCP client connecting to the MeepSheep inbound handler.
 
-- [ ] **Step 1: Add failing transport tests**
+- [x] **Step 1: Add failing transport tests**
 
 Assert that the relay performs MCP initialization and tool discovery against a separately instantiated remote HTTP handler, calls only the approved tool, and returns the remote output. Add a timeout/failure case and assert the caller receives a sanitized error.
 
-- [ ] **Step 2: Verify red**
+- [x] **Step 2: Verify red**
 
 Run: `npm test`
 
 Expected: the new remote transport test fails because only the in-memory registry/client seam is available.
 
-- [ ] **Step 3: Implement outbound transport adapter**
+- [x] **Step 3: Implement outbound transport adapter**
 
-Implement a connector factory using `StreamableHTTPClientTransport`. Endpoint configuration is owner-provisioned in test setup and is never supplied by a model-callable tool. Do not implement arbitrary URL registration, OAuth onboarding, or production SSRF policy in this task.
+Implement and verify a `StreamableHTTPClientTransport` connection to the child-process mock server over loopback TCP. Endpoint configuration is test-owned and never supplied by a model-callable tool. Do not implement arbitrary URL registration, OAuth onboarding, or production SSRF policy in this task.
 
-- [ ] **Step 4: Verify green**
+- [x] **Step 4: Verify green**
 
 Run: `npm test`
 
-Expected: local caller-to-relay-to-independent-HTTP-agent test passes; failure case returns a bounded, sanitized error.
+Expected: local caller-to-relay-to-separate-process HTTP agent test passes; failure case returns a bounded, sanitized error.
 
-- [ ] **Step 5: Run repository integration checks**
+- [x] **Step 5: Run repository integration checks**
 
 Run: `npm test && python -m unittest discover -s tests -v && python scripts/wellness_doctor.py`
 
 Expected: all tests and repository checks pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/relay/mcp-handler.mjs tests/mcp-relay.integration.test.mjs tests/fixtures/http-mock-agent.mjs
