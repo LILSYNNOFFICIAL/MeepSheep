@@ -130,3 +130,12 @@ Do not record secrets, access tokens, private keys, or unnecessary personal data
 - **Implementation state:** Documentation-only change. No application code, credentials, Cloudflare resources, DNS, or production deployment changed. No live AI-to-AI integration is claimed.
 - **Current branch:** docs/ai-interoperability-foundation. Changes await independent review and merge.
 - **Next gates:** Review protocol versions and client compatibility; inspect hosting account; settle datastore and auth; implement schemas and mock-agent round-trip tests; then build the first real supported connection.
+
+
+### Cloudflare account read-only inspection (2026-10-31)
+
+- Cloudflare connection identity was checked and one accessible account was returned.
+- Read-only inventory results: zero zones, zero Worker scripts, zero D1 databases, zero Durable Object namespaces, and zero Queues in that accessible account.
+- No resources were created, updated, or deleted.
+- This is an account-scoped snapshot, not proof that the domain is not owned or configured in another Cloudflare account or registrar.
+- Deployment remains blocked until the correct domain zone/account and access are confirmed.
