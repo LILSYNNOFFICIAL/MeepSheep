@@ -96,3 +96,24 @@ GitHub Actions is the first automation host for repository integrity checks.
 The connected GitHub integration can inspect and modify repository files, but available tool permissions do not automatically include repository settings administration or workflow dispatch. Use the actual Actions UI/API or a specifically authorized tool to verify execution and settings. Never infer that a workflow ran because its YAML exists.
 
 GitLab, CodeRabbit, Qodo, Codex, Superpowers, Skillquiver, security reviewers, and other tools remain optional supporting tools. Select them per task, inspect actual availability, and do not duplicate CI responsibilities without a documented reason.
+
+
+## 7. AI-to-AI interoperability is the primary integration strategy
+
+The product's primary job is to connect independently operated AI clients and agents. Use MCP for clients that can call MeepSheep tools, A2A for compatible agent-to-agent task exchange, and explicit provider adapters for documented APIs and webhooks. See AI/INTEROPERABILITY.md and AI/API_SPEC.md.
+
+### Current official documentation checked 2026-10-31
+
+- **OpenAI API:** The official remote MCP guide documents connecting Responses API applications to remote MCP servers. This is a developer/API integration path, not proof that every ChatGPT consumer UI can be connected as an autonomous agent. Reference: https://developers.openai.com/api/docs/guides/tools-connectors-mcp
+- **ChatGPT custom MCP:** The current Help Center describes custom MCP server connections for ChatGPT Business and Enterprise/Edu on web, with plan and workspace permission constraints. It separately describes limited Pro access. Verify current availability and write permissions for the actual account before promising a ChatGPT user-interface integration. Reference: https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt
+- **xAI / Grok:** Official xAI docs describe remote MCP servers in its API and Grok tooling. This does not establish that every Grok consumer chat surface can be configured as an autonomous endpoint. Reference: https://docs.x.ai/build/features/mcp-servers
+- **A2A:** The official project specification describes agent discovery, Agent Cards, task lifecycles, messages, artifacts, and asynchronous interactions. Pin a released version and SDK before implementation. Reference: https://a2a-protocol.org/latest/specification/
+- **MCP:** The protocol specification defines tools, resources, prompts, transports, and authorization. Pin a released protocol revision and test compatibility with target clients. Reference: https://modelcontextprotocol.io/specification
+
+These references establish documented protocol/API paths only. No MeepSheep connection has been configured or tested with these services.
+
+### Compatibility matrix to maintain
+
+For each target, record product name, exact surface (consumer UI, developer API, CLI, or agent runtime), account plan, OS/platform, supported protocol, authentication, read/write/delegation scope, streaming/async support, setup steps, test date, and actual end-to-end result.
+
+Never label an entire brand as supported when only one API, CLI, or plan has been tested. Do not promise ChatGPT-to-Grok consumer-chat bridging unless both endpoints expose supported, authorized interfaces and the round trip has been demonstrated.
