@@ -126,7 +126,8 @@ A checkbox is not completed because code was written or a tool returned success.
 
 - [x] Repository identity and `main` branch confirmed.
 - [x] Initial project documentation structure created.
-- [ ] Documentation independently fetched and verified from GitHub.
+- [x] All documentation files fetched back from GitHub and verified to exist with substantial content.
+- [x] README links point to the created AI documents.
 - [ ] MVP requirements finalized.
 - [ ] Hosting, domain, and account state re-inspected.
 - [ ] Architecture decisions finalized.
