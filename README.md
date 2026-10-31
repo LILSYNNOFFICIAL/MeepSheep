@@ -90,7 +90,7 @@ Planned model-callable tools:
 
 ## Current MCP relay laboratory
 
-The first executable relay slice is in [AI/MCP_LAB.md](AI/MCP_LAB.md). It includes an inbound MCP handler, an outbound MCP client, a tenant-aware in-memory agent registry, approved-tool checks, and a deterministic mock agent. The caller-to-relay-to-agent tests exercise separate MCP server handlers through the SDK's Streamable HTTP transport with an in-process fetch bridge. This verifies MCP protocol handling and relay policy in CI, but it is not yet a network-separated deployment or a live AI provider integration.
+The first executable relay slice is in [AI/MCP_LAB.md](AI/MCP_LAB.md). It includes an inbound MCP handler, an outbound MCP client, a tenant-aware in-memory agent registry, approved-tool checks, and a deterministic mock agent. Most caller-to-relay-to-agent tests exercise separate MCP server handlers through the SDK's Streamable HTTP transport with an in-process fetch bridge. An additional integration test launches a mock agent in a separate Node process and sends a request over loopback TCP. This verifies local socket-level MCP transport, but it is not a public deployment or a live AI provider integration.
 
 ## Protocol responsibilities
 
@@ -180,7 +180,7 @@ Research documents are retained as optional future agent-side capability referen
 - [x] Inbound MCP server handler implemented in the local lab (not deployed).
 - [x] Outbound MCP client implemented against a mock MCP server in the local lab.
 - [~] In-memory agent registry and approved-tool checks implemented; persistent connection management remains open.
-- [x] Deterministic MCP mock-agent round-trip tests pass.
+- [x] Deterministic MCP mock-agent round-trip tests pass, including a separate-process loopback HTTP case.
 - [ ] Network-separated live independent-agent round trip demonstrated.
 - [ ] Production hosting and domain verified.
 
