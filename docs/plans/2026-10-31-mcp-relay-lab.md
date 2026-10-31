@@ -6,7 +6,7 @@
 
 **Architecture:** The first lab is a local Node.js service using the official MCP TypeScript SDK v2.4.0. MeepSheep exposes an inbound MCP server and uses an outbound MCP client to connect to a separately instantiated remote MCP server. A small in-memory registry and test-only authenticated principal make the protocol and authorization boundary testable without production credentials or infrastructure.
 
-**Tech Stack:** Node.js 26.13.0 LTS, JavaScript ES modules, `@modelcontextprotocol/server@2.4.0`, `@modelcontextprotocol/client@2.4.0`, `zod@4.6.7`, Node's built-in test runner, GitHub Actions.
+**Tech Stack:** Node.js 26.13.0 LTS, JavaScript ES modules, `@modelcontextprotocol/server@2.4.0`, `@modelcontextprotocol/client@2.4.0`, `zod@4.6.7`, Node's built-in test runner, GitHub Actions. A generated `package-lock.json` is committed and CI uses `npm ci`.
 
 ## Global Constraints
 
@@ -133,7 +133,7 @@ Expected: local caller-to-relay-to-separate-process HTTP agent test passes; fail
 
 Run: `npm test && python -m unittest discover -s tests -v && python scripts/wellness_doctor.py`
 
-Expected: all tests and repository checks pass.
+Expected: all 8 MCP tests, 10 Python tests, and repository checks pass with 0 warnings/errors/critical findings.
 
 - [x] **Step 6: Commit**
 
@@ -161,7 +161,7 @@ git commit -m "test: prove outbound MCP HTTP relay"
 
 Add tests for response envelope shape, no credential leakage, duplicate message idempotency behavior if implemented in the lab, and malformed remote output handling.
 
-- [ ] **Step 2: Verify red**
+- [x] **Step 2: Verify red**
 
 Run: `npm test`
 
@@ -171,7 +171,7 @@ Expected: each new assertion fails on its intended missing contract behavior.
 
 Add only the fields and handling required by the API contract. Do not add a database, multi-tenant production auth, arbitrary remote endpoint registration, task queue, dashboard, or A2A adapter to this local lab.
 
-- [ ] **Step 4: Verify green**
+- [x] **Step 4: Verify green**
 
 Run: `npm test`
 
@@ -183,7 +183,7 @@ Run: `npm test && python -m unittest discover -s tests -v && python scripts/well
 
 Expected: all tests pass and the Doctor reports zero warnings/errors/critical findings. Review the diff for secrets, hardcoded production endpoints, unapproved scope expansion, and README claims that confuse mocks with live integrations.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add AI/MCP_LAB.md AI/API_SPEC.md AI/TEST_STRATEGY.md AI/BUILD_PLAN.md AI/STATE.md src tests
