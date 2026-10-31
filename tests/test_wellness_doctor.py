@@ -45,6 +45,31 @@ class RepositoryInspectionTests(unittest.TestCase):
         (root / "scripts" / "wellness_doctor.py").write_text("# doctor\n", encoding="utf-8")
         (root / "tests" / "test_wellness_doctor.py").write_text("# tests\n", encoding="utf-8")
 
+    def test_detects_unchecked_state_ledger_items_when_artifacts_exist(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.make_repo(root)
+            (root / "AI" / "STATE.md").write_text(
+                "# State\n"
+                "- [ ] Automated test suite exists.\n"
+                "- [ ] CI workflow exists.\n",
+                encoding="utf-8",
+            )
+            report = inspect_repository(root)
+            stale = [
+                finding for finding in report["findings"]
+                if finding["id"] == "STATE_LEDGER_STALE_CHECKBOX"
+            ]
+            self.assertEqual(len(stale), 2)
+            self.assertTrue(all(finding["severity"] == "warning" for finding in stale))
+            self.assertEqual(
+                {finding["message"] for finding in stale},
+                {
+                    "State ledger says the automated test suite does not exist, but tests/test_wellness_doctor.py is present.",
+                    "State ledger says CI does not exist, but .github/workflows/quality.yml is present.",
+                },
+            )
+
     def test_detects_missing_required_document_and_broken_link(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
