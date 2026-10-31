@@ -1,86 +1,82 @@
-# MeepSheep Project Brief
+# MeepSheep Product Definition
 
 **Product:** MeepSheep  
-**Canonical domain:** https://meepsheep.com  
+**Domain:** https://meepsheep.com  
 **Repository:** https://github.com/LILSYNNOFFICIAL/MeepSheep  
-**Default branch:** `main`  
-**Status:** Owner-confirmed product direction, 2026-10-31. Application implementation has not started.
+**Product direction:** MCP-first AI-to-AI communication and coordination  
+**Implementation status:** Not started
 
 ## 1. Mission
 
-MeepSheep is an **AI interoperability and coordination layer**. Its primary purpose is to let independently operated AI assistants and agents communicate, delegate work, exchange structured results, and collaborate through explicitly authorized interfaces.
+MeepSheep is a communication and coordination layer that lets independently connected AI agents talk to one another.
 
-A user should be able to ask one connected AI to consult another connected AI, assign it a task, receive its response, and coordinate further work without manually copying every message.
+A compatible AI client connects to MeepSheep through MCP. It can discover registered agents, send a message or task to another agent, receive the response, check progress, and continue coordinating additional agents. MeepSheep provides the shared relay and policy boundary.
 
-MeepSheep is not a foundation model and does not need to host or train an LLM. It cannot magically access closed consumer chat interfaces. It connects systems through the official interfaces they expose.
+MeepSheep is not an LLM, agent brain, research engine, or replacement for the agents' existing abilities. Agents decide how to perform their assigned work using the tools, models, and capabilities configured by their owners. MeepSheep transports, routes, authorizes, tracks, and returns the work.
 
-## 2. Core interaction
+## 2. MCP-first product model
 
-1. An AI client or user submits a task through a supported MeepSheep interface.
-2. MeepSheep authenticates the caller and checks permissions.
-3. The caller discovers or selects a registered target agent.
-4. MeepSheep checks capability, availability, authorization, budget, and deadline.
-5. MeepSheep dispatches through MCP, A2A, or a supported vendor API adapter.
-6. MeepSheep tracks progress, handles asynchronous completion, and validates the response.
-7. The caller receives the result with target identity, task status, warnings, and provenance.
+- **MCP server:** Primary interface for AI clients to interact with MeepSheep.
+- **MCP client connections:** Allow MeepSheep to call remote agents that expose MCP servers.
+- **Coordination core:** Registry, identity, permissions, routing, durable tasks, messages, events, budgets, and provenance.
+- **Optional adapters:** A2A, documented provider APIs, and explicitly authorized webhooks where useful.
+- **Management API/console:** Human setup for registering agents, credentials, grants, and policies.
 
-## 3. Product surfaces
+MCP is a client/server protocol for exposing tools and context. It does not automatically make every connected AI product an addressable agent. A remote agent must expose a supported endpoint or be connected through an authorized adapter.
 
-- **Remote MCP server:** Tools for compatible AI clients to discover agents, delegate tasks, inspect progress, and retrieve results.
-- **A2A endpoint:** Agent discovery and task exchange with A2A-compatible agents.
-- **Provider adapters:** Documented vendor APIs and webhooks where official interfaces permit.
-- **Web console/PWA:** Manage connections, credentials, permissions, agents, tasks, and audit history.
-- **Shared coordination core:** One canonical task model, authorization layer, router, durable execution system, and provenance trail.
+## 3. Core user journey
 
-MCP is the AI-client-to-tool interface. A2A is the agent-to-agent task protocol. Vendor APIs and webhooks are explicit adapters. These interfaces are complementary, not interchangeable.
+1. Owner registers or connects an agent and supplies its supported endpoint and authentication.
+2. MeepSheep validates the connection and records the agent's declared capabilities.
+3. A compatible AI client connects to MeepSheep through MCP.
+4. The AI asks MeepSheep to find an agent or sends a task to a known agent.
+5. MeepSheep checks caller identity, tenant, grants, target availability, budgets, and deadlines.
+6. MeepSheep sends only approved context through the target's adapter.
+7. The target processes the task using its own capabilities.
+8. MeepSheep receives the response or async status, validates the envelope, records provenance, and returns it to the caller.
 
 ## 4. MVP capabilities
 
-- Register and configure at least one remote agent through a supported interface.
-- Discover agents and declared capabilities.
-- Send a structured task to a selected, authorized target.
-- Support short request/response and durable asynchronous tasks.
-- Track task status and retrieve results.
-- Preserve caller, target, task, trace, and response provenance.
-- Enforce per-connection credentials, scopes, permissions, budgets, and limits.
-- Support cancellation where the target protocol permits it.
-- Expose core operations through a remote MCP server.
-- Demonstrate one real AI-to-AI round trip with a separately configured target agent.
-- Provide a minimal web console for connection and task management.
+- Authenticated MCP server with a versioned tool contract.
+- Agent registration and connection lifecycle through a protected owner surface.
+- Agent discovery and declared capability lookup.
+- Outbound MCP client connection to at least one separately configured remote agent.
+- Agent-to-agent messaging and task delegation.
+- Synchronous response and asynchronous task retrieval.
+- Structured response, error, status, trace, and provenance envelopes.
+- Per-connection credentials, grants, revocation, and health status.
+- Durable task state, idempotency, deadlines, bounded retries, and cancellation semantics.
+- Deterministic mock-agent laboratory and protocol contract tests.
+- One real end-to-end AI-client-to-MeepSheep-to-independent-agent round trip.
 
-## 5. Protocol strategy
+## 5. Non-goals for MVP
 
-- MCP is the primary client-facing tool interface.
-- A2A is the primary agent-to-agent task protocol.
-- Vendor APIs and webhooks are explicit adapters for systems that expose documented interfaces.
-- All protocols map to a versioned internal task/message envelope.
-
-No protocol grants access to a closed assistant that does not expose an authorized endpoint. Compatibility is verified per product, surface, plan, platform, and operation.
-
-## 6. Async-first execution
-
-Design durable asynchronous tasks from day one because agent collaboration may take seconds or minutes, require additional input, or involve multiple stages. Provide a synchronous fast path for short tasks. Each task has a deadline, budget, state, trace ID, idempotency behavior, and cancellation policy.
-
-## 7. Privacy and trust
-
-Share only context the caller explicitly authorizes. Never assume access to another AI's private chat history, memory, system prompt, tools, or hidden reasoning. Do not transmit hidden chain-of-thought. Keep credentials server-side and scoped to individual connections. Treat remote agents and their responses as untrusted.
-
-## 8. Non-goals for the first release
-
-- Hosting or training foundation models.
-- Bypassing platform restrictions or private interfaces.
-- Unofficial browser automation as the default integration method.
-- Unrestricted access to another agent's memory, tools, or credentials.
+- Building or hosting a foundation model.
+- Replacing or controlling an agent's internal reasoning, memory, or tools.
+- Creating a general-purpose research platform.
+- Requiring agents to use a MeepSheep-defined skill catalog to do their work.
+- Connecting to private consumer chat UIs without an official authorized interface.
 - Unlimited recursive delegation or unbounded fan-out.
-- Sensitive external actions without explicit policy and approval.
-- A full standalone research platform as the primary MVP. Research may later be an agent capability.
+- Exposing admin credentials or privileged tools to ordinary model-callable MCP tools.
+- Treating A2A support as a prerequisite for the first working MCP relay.
 
-## 9. Success criteria
+Research, coding, browsing, and other specialized tasks remain agent-side capabilities. MeepSheep may pass such tasks to an agent that declares and is authorized to perform them.
 
-The first meaningful success is a real, secure, observable round trip: one supported AI client delegates through MeepSheep to a separately configured agent and receives its response with correct identity, provenance, status, and permission enforcement.
+## 6. Core principles
 
-Numeric targets for reliability, latency, and cost are set after baseline measurements. A mock-agent test or protocol specification alone is not proof of a live integration.
+- MCP-first and agent-agnostic.
+- One canonical internal message/task envelope.
+- Every remote connection is explicit, authenticated, scoped, and revocable.
+- Discovery permission and invocation permission are separate.
+- Share only caller-authorized context.
+- Treat remote agents and their responses as untrusted.
+- Durable asynchronous execution with a synchronous fast path.
+- No false claims of platform support without a real tested connection.
 
-## 10. Maturity labels
+## 7. First success criterion
 
-Use Implemented, Tested, Verified, Proposed, Blocked, and Deferred precisely. Never describe a proposed integration as live.
+A real MCP client invokes a MeepSheep tool, MeepSheep dispatches to a separately configured remote agent, that agent actually processes and returns a response, and MeepSheep returns the response to the original client with correct caller/target identity, task status, and provenance. Mocks validate contracts but do not satisfy this live integration criterion.
+
+## 8. Maturity labels
+
+Use **Proposed**, **Implemented**, **Tested**, **Verified**, **Blocked**, and **Deferred** precisely. Documentation is not implementation. Protocol compatibility is not proof of a particular consumer app integration.
