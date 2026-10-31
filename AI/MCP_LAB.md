@@ -93,7 +93,7 @@ Remote errors are returned as `REMOTE_FAILED`; remote stack traces and raw error
 
 The suite is `tests/mcp-relay.integration.test.mjs`, with mock agent fixture `tests/fixtures/mock-agent.mjs`.
 
-Seven verified cases:
+Eight verified cases:
 1. Same-tenant discovery excludes other tenants and does not expose endpoint/secret references.
 2. Authorized `send_message` reaches the mock remote MCP tool and returns structured output and provenance.
 3. Cross-tenant agents are hidden and cannot be invoked by guessed ID.
@@ -101,6 +101,7 @@ Seven verified cases:
 5. A remote tool missing from the server's current tool list is rejected.
 6. A caller without `agent:message` cannot dispatch.
 7. Remote tool failure is sanitized before returning to the caller.
+8. A separate child process serves a mock MCP agent over loopback TCP; a unique caller message is received and echoed by that remote process.
 
 **Red/green evidence:**
 - Initial test-first run 41253274558 failed because the relay implementation modules did not yet exist.
@@ -112,7 +113,7 @@ Latest CI also passed the existing 10 Python Wellness Doctor unit tests, reporte
 ## Important limitations
 
 This is intentionally a local lab, not production:
-- The caller, relay, and mock target are separate MCP client/server handler instances, but tests use the SDK Streamable HTTP transport with an in-process `fetch` bridge. Socket-level HTTP and separate-process networking are not yet proven.
+- Most contract cases use the SDK Streamable HTTP transport with an in-process `fetch` bridge. An additional test starts a separate Node child process bound to loopback TCP, connects the outbound MCP client over actual HTTP, and verifies a unique message was received and echoed by that process. This proves local socket-level transport, but not a public network deployment or external provider integration.
 - The principal resolver is injected by test setup. No production OAuth/token verification or identity provider is implemented.
 - The registry is in-memory. No database, migrations, durable task history, or message retention exists.
 - Only `discover_agents` and `send_message` are implemented. Task delegation, task retrieval, wait, cancellation, and connection management remain planned.
@@ -123,11 +124,10 @@ This is intentionally a local lab, not production:
 
 ## Next engineering gates
 
-1. Add a socket-level HTTP test with the mock agent running as a separate process.
-2. Generate and commit a dependency lockfile, then switch CI to `npm ci`.
-3. Add full remote tool-schema fingerprint checks and owner reapproval on schema changes.
-4. Add production authentication and endpoint onboarding design.
-5. Select one authoritative database and durable task execution model.
-6. Verify the first actual caller/target integration surfaces before introducing live credentials.
+1. Add full remote tool-schema fingerprint checks and owner reapproval on schema changes.
+2. Add production authentication and endpoint onboarding design.
+3. Select one authoritative database and durable task execution model.
+4. Verify the first actual caller/target integration surfaces before introducing live credentials.
+5. Add negative timeout, malformed-response, and server-restart tests.
 
 See [BUILD_PLAN.md](BUILD_PLAN.md), [API_SPEC.md](API_SPEC.md), [TEST_STRATEGY.md](TEST_STRATEGY.md), and [STATE.md](STATE.md).
