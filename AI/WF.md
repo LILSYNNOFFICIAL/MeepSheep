@@ -43,7 +43,7 @@ Never infer implementation from documentation, a successful API response, or a m
 - [x] Establish unit tests for the repository doctor.
 - [x] Establish four-level README health indicators.
 - [x] Record the initial interoperability direction in a feature branch.
-- [ ] Merge the reviewed MCP-first documentation update after CI and review.
+- [x] Merge the reviewed MCP-first documentation update after CI and review (PR #2, merge commit `d0bec625eb191d71781ab3e1d239245e54dd9594`).
 
 **Exit:** Repository rules and project documents agree, and the PR is merged only after review and successful checks.
 
@@ -95,20 +95,20 @@ Never infer implementation from documentation, a successful API response, or a m
 
 ## Phase 4: Minimal relay implementation
 
-- [ ] Establish runtime, package manager, pinned versions, lint, types, and tests.
-- [ ] Implement one authoritative persistence layer and migrations.
-- [ ] Implement agent registry and connection manager.
-- [ ] Implement inbound remote MCP server.
-- [ ] Implement outbound MCP client for remote agent connections.
-- [ ] Discover remote tools and apply owner-approved allowlists.
-- [ ] Implement canonical router and task service.
-- [ ] Implement synchronous message/request-response path.
+- [~] Establish Node 26.13.0, npm, pinned direct dependencies, and tests; lockfile/lint/typecheck remain open.
+- [ ] Implement authoritative persistence layer and migrations.
+- [~] Implement in-memory agent registry; persistent connection management remains open.
+- [x] Implement inbound MCP server handler in the local lab.
+- [x] Implement outbound MCP client to an independent mock MCP server handler.
+- [x] Discover remote tools and enforce owner-approved tool-name allowlists.
+- [~] Implement synchronous `send_message` routing and response provenance; full canonical task router remains open.
 - [ ] Implement durable asynchronous task path.
-- [ ] Implement `discover_agents`, `get_agent`, `send_message`, `delegate_task`, `get_task`, `wait_task`, and `cancel_task` MCP tools.
-- [ ] Implement deterministic mock MCP agents for tests.
-- [ ] Add local setup and configuration documentation.
+- [~] Implement `discover_agents` and `send_message`; remaining planned tools are not implemented.
+- [x] Implement deterministic mock MCP agent for tests.
+- [x] Add local MCP integration tests and run them in GitHub Actions.
+- [x] Add local lab setup and verification notes in `AI/MCP_LAB.md`.
 
-**Exit:** A local MCP client can send a message through MeepSheep to a mock remote MCP agent and receive a validated response. This is a contract proof, not a live integration claim.
+**Current evidence:** Seven local MCP integration tests pass. Caller, relay, and mock target are separate SDK handler/client instances using Streamable HTTP with an in-process fetch bridge. This proves MCP protocol and relay policy behavior, not a network-separated deployment or live external AI connection.
 
 ## Phase 5: First real AI-to-AI round trip
 
@@ -205,4 +205,4 @@ Research can be performed by an agent connected to MeepSheep. It is not a core M
 
 ## Current next action
 
-Review and merge the MCP-first documentation correction. Then finalize the exact first caller/target pair, verify the correct Cloudflare account and domain, pin the MCP SDK/protocol baseline, and implement the local mock MCP round trip before live provider credentials are introduced.
+Extend the local test harness to a network-separated remote MCP process and commit a generated lockfile. Then confirm the first real caller and target, validate the exact product surfaces and credentials, and only then design the production authentication/persistence/deployment path.
