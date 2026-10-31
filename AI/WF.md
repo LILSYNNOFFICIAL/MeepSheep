@@ -95,7 +95,7 @@ Never infer implementation from documentation, a successful API response, or a m
 
 ## Phase 4: Minimal relay implementation
 
-- [~] Establish Node 26.13.0, npm, pinned dependencies, package lock, and tests; lint/typecheck remain open.
+- [x] Establish Node 26.13.0, npm, pinned dependencies, package lock, and CI tests; lint/typecheck remain open.
 - [ ] Implement authoritative persistence layer and migrations.
 - [~] Implement in-memory agent registry; persistent connection management remains open.
 - [x] Implement inbound MCP server handler in the local lab.
