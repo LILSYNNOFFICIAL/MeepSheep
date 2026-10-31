@@ -78,3 +78,13 @@ Do not record secrets, access tokens, private keys, or unnecessary personal data
 - The README links to each AI document.
 - No application code, infrastructure, domain records, or deployment settings were changed.
 - Limitation: no byte-for-byte comparison to local authored drafts was possible in this session; the repository copies were checked for successful retrieval and expected structure.
+
+
+## 2026-10-31: Wellness Doctor and GitHub automation work
+
+- **Owner approval:** The four-icon Wellness Doctor and GitHub workflow design was approved.
+- **Repository baseline inspected:** Existing main branch tree and AI documents were fetched before changes.
+- **Added operating specifications:** `AI/GITHUB_RULES.md`, `AI/ACTIONS.md`, `AI/WELLNESS_DOCTOR.md`, `AI/STATUS_ICONS.md`, `AI/INCIDENTS.md`, `AI/AUTOMATION_LOG.md`, and `AI/WELLNESS_IMPLEMENTATION_PLAN.md`.
+- **README:** Added links to the automation documents and a delimited generated health region.
+- **Implementation status:** Python doctor, unit tests, and GitHub Actions workflows are being added and must be verified by actual workflow execution before being marked operational.
+- **Not verified:** Branch protection/rulesets, production website uptime, DNS, Cloudflare/Supabase/GitLab external service health.
