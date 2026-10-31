@@ -27,20 +27,21 @@ When work is performed:
 
 ## Phase 0: Project foundation and documentation
 
-- [~] Confirm repository identity, default branch, and initial state.
-- [ ] Create and verify detailed root README.
-- [ ] Create and verify this master workflow.
-- [ ] Create and verify project brief.
-- [ ] Create and verify architecture document.
-- [ ] Create and verify decision log.
-- [ ] Create and verify security baseline.
-- [ ] Create and verify research methodology.
-- [ ] Create and verify integrations/tool strategy.
-- [ ] Create and verify project state ledger.
-- [ ] Review all documents for contradictions, stale assumptions, and invented implementation claims.
-- [ ] Confirm every AI document is linked from README.
-- [ ] Fetch all committed files from GitHub and compare with intended content.
-- [ ] Record resulting commit SHA and verification date in STATE.md.
+- [x] Confirm repository identity, default branch, and initial state.
+- [x] Create and verify detailed root README.
+- [x] Create and verify this master workflow.
+- [x] Create and verify project brief.
+- [x] Create and verify architecture document.
+- [x] Create and verify decision log.
+- [x] Create and verify security baseline.
+- [x] Create and verify research methodology.
+- [x] Create and verify integrations/tool strategy.
+- [x] Create and verify project state ledger.
+- [x] Review all documents for contradictions, stale assumptions, and invented implementation claims.
+- [x] Confirm every AI document is linked from README.
+- [x] Fetch all committed files from GitHub and confirm they exist with substantial content.
+- [ ] Perform a byte-for-byte comparison against the authored source drafts (drafts were not retained as local files in this session).
+- [ ] Record final verification commit SHA and date in STATE.md.
 
 **Exit criteria:** The documentation is committed on `main`, all links resolve, and a fresh reader can understand product scope, proposed architecture, security posture, decisions, and next actions without relying on chat history.
 
@@ -311,4 +312,4 @@ Append a dated entry to STATE.md for every substantial session. Include exact co
 
 ## Current next action
 
-Finish Phase 0 documentation, fetch every created file from GitHub, inspect the content, repair any discrepancy, then mark Phase 0 documentation tasks complete and record the commit evidence in STATE.md.
+Finish Phase 0 documentation by performing a final independent fetch of the updated workflow and state ledger, then record the resulting commit evidence.
