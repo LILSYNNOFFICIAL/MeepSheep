@@ -50,3 +50,17 @@ Use `AI/STATUS_ICONS.md`:
 - **Action maintenance:** Updated pinned checkout/setup-python actions to verified v6 commits after the prior pins emitted Node.js 20 deprecation warnings.
 - **TDD:** Expected red was observed against a stub; implemented behavior passed the test suite.
 - **Remaining verification:** A scheduled cron run and manual-dispatch run have not yet been observed. Repository branch protection/rulesets were not changed. Production and external integrations are not monitored by this doctor.
+
+
+### 2026-10-31 - Site Doctor state-ledger audit repair
+
+- **Status:** 🟢 Merged and verified on `main`.
+- **PR:** [#1](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/1), merged as `046e92739a5bd4b3f1aa5803a922551e052d7167`.
+- **Defect found:** The doctor did not detect stale unchecked state-ledger claims for the test suite and CI workflow, despite both artifacts existing.
+- **Repair:** Added `STATE_LEDGER_STALE_CHECKBOX` warnings, added a regression test, corrected the state ledger, and included the new finding in the documentation health category.
+- **TDD:** The new test failed first with `AssertionError: 0 != 2`; then all 10 tests passed after the implementation.
+- **Doctor:** 🟢 84 passed, 0 warnings, 0 errors, 0 critical.
+- **Quality:** [Run 41246535939](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41246535939) succeeded, including workflow YAML parsing.
+- **Wellness:** [Run 41246535992](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41246535992) succeeded and published the updated README health summary.
+- **Reliability repair:** Set quality concurrency to `cancel-in-progress: false` so rapid pushes queue instead of cancelling in-progress checks.
+- **Limitations:** Cron/manual event execution and external production services remain unverified.
