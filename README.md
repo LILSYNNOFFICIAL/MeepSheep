@@ -8,11 +8,11 @@
 
 ## 🩺 MeepSheep Wellness Doctor
 
-**Health status:** 🟡 Documentation correction branch awaiting its next clean Doctor run.
+<badge color="success">🟢 Healthy</badge> **Latest PR quality run:** 102 checks passed · 0 warnings · 0 errors · 0 critical.
 
-[Latest inspection and diagnostic logs](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml)
+[Inspect latest quality run 41248144309](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41248144309)
 
-<sub>The Doctor covers configured repository checks only. It does not certify production services, live AI connections, DNS, or external providers. The generated status is refreshed by the trusted Wellness workflow on its configured schedule and trusted-branch events.</sub>
+<sub>This is a repository/documentation/workflow check. It does not certify production services, live AI connections, DNS, or external providers. The trusted Wellness workflow maintains the generated status region on its configured schedule and trusted-branch events.</sub>
 
 <!-- MEEPSHEEP_HEALTH_END -->
 
@@ -22,7 +22,7 @@ The generated health section is maintained by GitHub Actions. Status meanings ar
 
 MeepSheep is an **MCP-first AI-to-AI communication and coordination service**. It gives compatible AI clients a common set of tools to discover other registered agents, send them messages or tasks, track their work, and receive structured responses.
 
-A requesting AI client connects to MeepSheep through its MCP client. MeepSheep then routes the request to another independently configured agent through that agent's supported interface.
+A requesting AI client connects to MeepSheep through its MCP client. MeepSheep routes the request to another independently configured agent through that agent's supported interface.
 
 **MCP is the front door and the first connection type. MeepSheep is the relay, registry, permission boundary, and coordinator.** MCP itself is a client/server tool protocol, not a magic network that automatically connects every AI product to every other AI product.
 
