@@ -2,6 +2,32 @@
 
 **Evidence-first research. Clear sources. Better answers.**
 
+## 🩺 Automated repository health
+
+<!-- MEEPSHEEP_HEALTH_START -->
+
+## 🩺 MeepSheep Wellness Doctor
+
+**Overall health: 🟢 Healthy** · `OK`
+
+| Inspection | Status |
+|---|---:|
+| Repository files | 🟢 |
+| Documentation and links | 🟢 |
+| GitHub workflows | 🟢 |
+| README health contract | 🟢 |
+
+**Checks:** 82 passed · 🟡 0 warnings · 🔵 0 errors · 🔴 0 critical
+
+[Latest inspection and diagnostic logs](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml)
+
+<sub>Scheduled inspections run every 15 minutes on a best-effort basis. The latest workflow run contains the exact inspection time. This summary covers configured repository checks, not unconfigured production services.</sub>
+
+<!-- MEEPSHEEP_HEALTH_END -->
+
+The generated health section is maintained by GitHub Actions. The status mapping is defined in [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md). Scheduled inspections run every 15 minutes on a best-effort basis; the latest workflow execution contains the exact inspection timestamp and diagnostic logs.
+
+
 MeepSheep is being designed as a source-grounded research and evidence platform with two complementary interfaces: a standalone web application and a remote Model Context Protocol (MCP) service for compatible AI assistants.
 
 The goal is not to produce confident-sounding answers. The goal is to help people investigate questions, inspect original sources, compare supporting and contradictory evidence, understand uncertainty, and create research reports that can be checked.
@@ -146,31 +172,6 @@ For every substantial task:
 8. Update the workflow and state ledger only with verified outcomes.
 
 A checkbox is not completed because code was written or a tool returned success. It is completed when the intended result has been checked.
-
-## 🩺 Automated repository health
-
-<!-- MEEPSHEEP_HEALTH_START -->
-
-## 🩺 MeepSheep Wellness Doctor
-
-**Overall health: 🟢 Healthy** · `OK`
-
-| Inspection | Status |
-|---|---:|
-| Repository files | 🟢 |
-| Documentation and links | 🟢 |
-| GitHub workflows | 🟢 |
-| README health contract | 🟢 |
-
-**Checks:** 82 passed · 🟡 0 warnings · 🔵 0 errors · 🔴 0 critical
-
-[Latest inspection and diagnostic logs](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml)
-
-<sub>Scheduled inspections run every 15 minutes on a best-effort basis. The latest workflow run contains the exact inspection time. This summary covers configured repository checks, not unconfigured production services.</sub>
-
-<!-- MEEPSHEEP_HEALTH_END -->
-
-The generated health section is maintained by GitHub Actions. The status mapping is defined in [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md). Scheduled inspections run every 15 minutes on a best-effort basis; the latest workflow execution contains the exact inspection timestamp and diagnostic logs.
 
 ## Current status
 
