@@ -179,3 +179,20 @@ test("callers without agent:message permission cannot dispatch", async () => {
   });
   assert.match(errorText(result), /PERMISSION_DENIED/);
 });
+
+test("remote tool failures are sanitized before returning to the caller", async () => {
+  const mock = createMockAgent({ id: "agent-alpha", failure: true });
+  const { caller } = await setup({ agents: [{ id: "agent-alpha", mock }] });
+  const result = await caller.callTool({
+    name: "send_message",
+    arguments: {
+      targetAgentId: "agent-alpha",
+      toolName: "review_message",
+      arguments: { message: "This will fail remotely." }
+    }
+  });
+  const message = errorText(result);
+  assert.match(message, /REMOTE_FAILED/);
+  assert.equal(message.includes("REMOTE SECRET"), false);
+  assert.equal(message.includes("/private/path"), false);
+});
