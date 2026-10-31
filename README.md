@@ -17,7 +17,7 @@
 | GitHub workflows | 🟢 |
 | README health contract | 🟢 |
 
-**Checks:** 102 passed · 🟡 0 warnings · 🔵 0 errors · 🔴 0 critical
+**Checks:** 103 passed · 🟡 0 warnings · 🔵 0 errors · 🔴 0 critical
 
 [Latest inspection and diagnostic logs](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml)
 
@@ -86,7 +86,11 @@ Planned model-callable tools:
 - `cancel_task`
 - `list_my_connections`
 
-These are design contracts, not implemented tools. Credential changes, endpoint registration, permission administration, and other privileged operations stay in a separately authenticated owner interface.
+`discover_agents` and `send_message` now have a local MCP lab implementation. The remaining tools are planned. The lab is not deployed and does not yet include production authentication, persistence, or live provider connections. Credential changes, endpoint registration, permission administration, and other privileged operations stay in a separately authenticated owner interface.
+
+## Current MCP relay laboratory
+
+The first executable relay slice is in [AI/MCP_LAB.md](AI/MCP_LAB.md). It includes an inbound MCP handler, an outbound MCP client, a tenant-aware in-memory agent registry, approved-tool checks, and a deterministic mock agent. The caller-to-relay-to-agent tests exercise separate MCP server handlers through the SDK's Streamable HTTP transport with an in-process fetch bridge. This verifies MCP protocol handling and relay policy in CI, but it is not yet a network-separated deployment or a live AI provider integration.
 
 ## Protocol responsibilities
 
@@ -172,10 +176,11 @@ Research documents are retained as optional future agent-side capability referen
 - [x] Product direction clarified as AI-to-AI communication.
 - [x] MCP-first inbound and outbound relay architecture documented.
 - [x] Repository Wellness Doctor and CI foundation exist.
-- [ ] MCP server implemented or deployed.
-- [ ] Outbound MCP client implemented.
-- [ ] Agent registry and connection manager implemented.
-- [ ] Real independent-agent round trip demonstrated.
+- [x] Inbound MCP server handler implemented in the local lab (not deployed).
+- [x] Outbound MCP client implemented against a mock MCP server in the local lab.
+- [~] In-memory agent registry and approved-tool checks implemented; persistent connection management remains open.
+- [x] Deterministic MCP mock-agent round-trip tests pass.
+- [ ] Network-separated live independent-agent round trip demonstrated.
 - [ ] Production hosting and domain verified.
 
 No live AI connection or production deployment is claimed. See [AI/STATE.md](AI/STATE.md) and [AI/WF.md](AI/WF.md).
