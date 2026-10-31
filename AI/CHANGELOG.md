@@ -1,16 +1,23 @@
 # MeepSheep Change Log
 
-Meaningful project, architecture, security, and release changes are recorded here. Dates use YYYY-MM-DD. This log does not replace Git history.
+Meaningful product, architecture, security, and release changes are recorded here. Dates use YYYY-MM-DD. This log does not replace Git history.
 
 ## 2026-10-31
 
-### Product direction clarified
+### Initial product direction correction
+- Replaced the research-first product framing with AI-to-AI interoperability and coordination.
+- Added MCP, A2A, and provider API planning documents.
+- Added task lifecycle, security, cost, and deployment design guidance.
 
-- Reframed MeepSheep as an AI interoperability and coordination layer.
-- Established MCP as the AI-client tool interface, A2A as the agent-to-agent task protocol, and vendor APIs/webhooks as explicit adapters.
-- Chose async-first task orchestration with a synchronous fast path.
-- Defined the first meaningful acceptance target as a real AI-to-AI delegation round trip.
-- Added build, API, data model, test, benchmark, deployment, environment, and interoperability documents.
-- Expanded the security baseline for agent connections, task routing, credential isolation, callback validation, replay protection, and delegation limits.
+### Owner clarification: MCP-first agent relay
+- Clarified that MeepSheep's primary purpose is for AI agents to communicate with other AI agents.
+- Established MeepSheep as the relay, registry, permission boundary, and coordinator.
+- Made the inbound MCP server the primary interface for requesting AI clients.
+- Added the outbound MCP client as the first remote-agent connection type.
+- Clarified that agents perform their own research, coding, browsing, and other work using their existing capabilities.
+- Deferred MeepSheep-owned research-engine functionality from the MVP.
+- Reclassified A2A, provider APIs, and webhooks as optional adapters, not first-release prerequisites.
+- Rewrote the master workflow to remove research-first phases and define an MCP relay implementation path.
+- Updated product, architecture, interoperability, API, data model, build, security, testing, integration, decision, and benchmark documents.
 
-All entries above describe documentation and product decisions, not implemented runtime capabilities.
+All entries describe product/documentation direction only. No application code, live MCP endpoint, remote AI connection, DNS, or production deployment is claimed.
