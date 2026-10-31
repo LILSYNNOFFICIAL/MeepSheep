@@ -72,7 +72,7 @@
 - [ ] Implement deterministic mock MCP agent.
 - [ ] Add contract tests and local integration tests.
 
-**Current evidence:** Seven contract cases exercise separate SDK handler/client instances through an in-process fetch bridge. An eighth test starts a separate mock-agent Node process and verifies an outbound MCP call over loopback TCP. This proves local socket-level transport and relay behavior. A public network deployment and live external AI agent are still required for the full phase exit.
+**Current evidence:** Eight contract cases exercise separate SDK handler/client instances through an in-process fetch bridge. A ninth test starts a separate mock-agent Node process and verifies an outbound MCP call over loopback TCP. This proves local socket-level transport and relay behavior. A public network deployment and live external AI agent are still required for the full phase exit.
 
 ## Phase 5: First real AI-to-AI proof
 
