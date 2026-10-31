@@ -3,8 +3,7 @@
 **Last updated:** 2026-10-31  
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
-**Documentation correction branch:** `docs/ai-interoperability-foundation`  
-**Latest recorded branch commit before this ledger update:** `b389faf4293b823ba48b7c76387ea93ae04f1b2f`
+**Documentation correction branch:** `docs/ai-interoperability-foundation`
 
 This ledger records verified repository and project state. A proposed design is not an implemented feature.
 
@@ -15,7 +14,7 @@ This ledger records verified repository and project state. A proposed design is 
 - [x] Inbound MCP server is the primary interface for compatible requesting AI clients.
 - [x] Outbound MCP client is the first remote-agent connection type.
 - [x] MeepSheep is the relay, registry, permission boundary, task coordinator, and response path.
-- [x] Remote agents perform their own research, coding, browsing, and other work using their own configured capabilities.
+- [x] Remote agents perform research, coding, browsing, and other work using their own configured capabilities.
 - [x] A2A, provider APIs, and webhooks are optional adapters, not MVP prerequisites.
 - [x] MeepSheep-owned research-engine functionality is deferred from the MVP.
 
@@ -23,13 +22,25 @@ This ledger records verified repository and project state. A proposed design is 
 
 - [x] Repository identity and default branch confirmed.
 - [x] README and AI operating-document structure exist.
-- [x] GitHub Actions quality workflow exists.
+- [x] Automated test suite exists.
+- [x] CI workflow exists.
 - [x] Wellness Doctor Python script and unit tests exist.
 - [x] Four-level health status and README marker contract exist.
-- [x] Prior verified automation run: 10 unit tests passed; Repository Doctor reported 104 passed, 0 warnings, 0 errors, 0 critical; both workflow YAML files parsed successfully. See https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41247189279.
 - [ ] Branch protection/rulesets verified.
 - [ ] Scheduled and manual Wellness Doctor executions independently observed after latest changes.
-- [ ] New MCP-first documentation commits verified by a fresh CI run.
+
+## Latest correction-branch verification
+
+- Pull request: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
+- Branch: `docs/ai-interoperability-foundation`
+- Tested PR merge revision: `0a9a5ccce8eaaa4e4418571738a510ed5705bf36` (merge of PR head `49904a04d371db48a12e67a1a76f73405b08a620` into current main base).
+- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41248058263
+- Unit tests: 10 passed.
+- Workflow YAML: both workflow files parsed successfully.
+- Wellness Doctor: 83 passed, 10 warnings, 0 errors, 0 critical.
+- Warnings found: two stale state-ledger wording checks and eight missing README links to operating documents.
+- **Status:** warnings are being corrected. Do not report the branch as 🟢 Healthy until a fresh run reports zero findings.
+- This was documentation-only. No application code, credentials, Cloudflare resources, DNS, or production deployment changed.
 
 ## Current implementation state
 
@@ -44,39 +55,6 @@ This ledger records verified repository and project state. A proposed design is 
 
 No live AI connection, production endpoint, or deployed application is claimed.
 
-## Documentation correction
-
-The owner clarified that MeepSheep is an MCP-based relay so agents can communicate with other agents. The previous documentation overemphasized research and gave A2A too central a role. The corrected documents make MCP the first implementation path and treat A2A/API/webhook support as optional adapters.
-
-Rewritten or corrected:
-- `README.md`
-- `AI/PROJECT.md`
-- `AI/ARCHITECTURE.md`
-- `AI/INTEROPERABILITY.md`
-- `AI/WF.md`
-- `AI/API_SPEC.md`
-- `AI/BUILD_PLAN.md`
-- `AI/SECURITY.md`
-- `AI/DATA_MODEL.md`
-- `AI/TEST_STRATEGY.md`
-- `AI/DECISIONS.md`
-- `AI/INTEGRATIONS.md`
-- `AI/QUALITY_BENCHMARKS.md`
-- `AI/CHANGELOG.md`
-- `AI/STATE.md`
-
-The README now explicitly distinguishes the inbound MCP server from the outbound MCP client and lists the planned model-callable tools. Research documents remain historical/optional references and do not define MVP scope.
-
-## Pull request and verification boundary
-
-- Pull request: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
-- Branch: `docs/ai-interoperability-foundation`
-- Latest documentation commit recorded before this ledger update: `b389faf4293b823ba48b7c76387ea93ae04f1b2f`.
-- The previous inspected head `e5fb023e833dfde68193c1f22f65c909fdfdd176` had a successful quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41247189279.
-- The latest documentation edits have not yet been verified by a new CI run.
-- PR merge status must be rechecked live. Do not assume it is merged.
-- Branch protection access was previously denied by the connected GitHub integration (HTTP 403); settings remain unverified.
-
 ## Infrastructure
 
 A read-only inspection on 2026-10-31 returned one accessible Cloudflare account with zero zones, Worker scripts, D1 databases, Durable Object namespaces, and Queues. This is account-scoped and does not rule out another account or registrar. No resources were created, changed, or deleted.
@@ -85,7 +63,7 @@ Do not deploy or change DNS until the correct account and domain zone are confir
 
 ## Next actions
 
-1. Review the MCP-first documentation branch and run the full repository quality workflow.
+1. Resolve all Wellness Doctor warnings and rerun CI.
 2. Confirm the exact first requesting MCP client and remote MCP agent.
 3. Verify current MCP SDK, protocol revision, transport, and authentication compatibility.
 4. Confirm the correct Cloudflare account/domain and select one authoritative data/auth owner.
