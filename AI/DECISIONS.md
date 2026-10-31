@@ -105,3 +105,36 @@ This file records decisions, proposals, and unresolved questions. Update it when
 - **Decision:** The initial doctor uses Python standard library checks against repository files and workflow definitions.
 - **Reason:** It should run without API credentials or production secrets and be easy to reproduce.
 - **Constraint:** It does not certify unconfigured production services or external providers.
+
+
+## Owner clarification and architecture decisions (2026-10-31)
+
+### D-007: AI interoperability is the primary product
+- **Status:** Accepted
+- **Decision:** MeepSheep's primary mission is to let independently operated AI assistants and agents communicate, delegate tasks, exchange structured results, and collaborate through explicitly authorized interfaces.
+- **Reason:** Explicit owner clarification: "This is mainly so AI can talk to other AI."
+- **Consequence:** The earlier research-first product description is superseded as the primary MVP. Research may be a future agent capability, not the core first release.
+
+### D-008: MCP plus A2A, with adapters
+- **Status:** Accepted as protocol direction; exact versions to be pinned during implementation
+- **Decision:** Use MCP as the primary AI-client-to-MeepSheep tool interface, A2A as the primary agent-to-agent task protocol, and documented vendor APIs/webhooks as explicit adapters where official interfaces permit.
+- **Reason:** MCP exposes tools to compatible clients; A2A is designed for agent discovery and task exchange. No single protocol reaches every closed consumer chat product.
+- **Consequence:** All protocols map to a canonical internal task envelope. Client compatibility must be verified separately by product, plan, platform, and operation.
+
+### D-009: Async-first task orchestration
+- **Status:** Accepted
+- **Decision:** Design durable asynchronous tasks from the beginning, with a synchronous fast path for short interactions.
+- **Reason:** Agent delegation may take multiple minutes, require additional input, or involve several agents. Retrofitting task durability later would risk architectural rework.
+- **Consequence:** Define task IDs, state transitions, deadlines, idempotency, cancellation, bounded retries, provenance, and durable event history before implementation.
+
+### D-010: No implicit access to private AI context
+- **Status:** Accepted
+- **Decision:** MeepSheep shares only context explicitly authorized by the caller. It does not assume access to another AI's private chat history, memory, system prompt, tools, or hidden reasoning.
+- **Reason:** Platform boundaries and user privacy.
+- **Consequence:** Context-sharing policy is part of each task contract; hidden reasoning is never requested or transmitted.
+
+### D-011: First proof is a real AI-to-AI round trip
+- **Status:** Accepted
+- **Decision:** The first end-to-end acceptance target is one supported AI client delegating a task through MeepSheep to a separately configured agent and receiving a structured response with provenance.
+- **Reason:** This validates the actual product promise rather than only validating documentation, mocks, or a standalone dashboard.
+- **Consequence:** A mock-agent test is necessary but insufficient for claiming a supported live integration.
