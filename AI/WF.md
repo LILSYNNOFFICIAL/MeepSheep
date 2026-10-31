@@ -108,7 +108,7 @@ Never infer implementation from documentation, a successful API response, or a m
 - [x] Add local MCP integration tests and run them in GitHub Actions.
 - [x] Add local lab setup and verification notes in `AI/MCP_LAB.md`.
 
-**Current evidence:** Eight local MCP integration tests pass. Seven use an in-process fetch bridge; one connects over loopback TCP to a mock MCP agent running in a separate Node process. This proves local socket-level MCP transport, not a public deployment or live external AI connection.
+**Current evidence:** Nine local MCP integration tests pass. Seven use an in-process fetch bridge; one connects over loopback TCP to a mock MCP agent running in a separate Node process. This proves local socket-level MCP transport, not a public deployment or live external AI connection.
 
 ## Phase 5: First real AI-to-AI round trip
 
