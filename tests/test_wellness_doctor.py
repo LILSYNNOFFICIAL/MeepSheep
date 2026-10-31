@@ -107,6 +107,25 @@ class ReadmeUpdateTests(unittest.TestCase):
                 update_readme(root, report)
             self.assertEqual((root / "README.md").read_text(encoding="utf-8"), original)
 
+    def test_duplicate_markers_never_rewrite_readme(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            original = (
+                "# README\\n<!-- MEEPSHEEP_HEALTH_START -->\\nx\\n"
+                "<!-- MEEPSHEEP_HEALTH_END -->\\n"
+                "<!-- MEEPSHEEP_HEALTH_START -->\\ny\\n"
+                "<!-- MEEPSHEEP_HEALTH_END -->\\n"
+            )
+            (root / "README.md").write_text(original, encoding="utf-8")
+            report = {
+                "status": {"icon": "🔴", "label": "Critical", "code": "MAJOR_FAILURE"},
+                "counts": {"passed": 0, "warning": 0, "error": 0, "critical": 1},
+                "findings": [],
+            }
+            with self.assertRaises(ValueError):
+                update_readme(root, report)
+            self.assertEqual((root / "README.md").read_text(encoding="utf-8"), original)
+
 
 if __name__ == "__main__":
     unittest.main()
