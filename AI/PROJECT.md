@@ -4,122 +4,83 @@
 **Canonical domain:** https://meepsheep.com  
 **Repository:** https://github.com/LILSYNNOFFICIAL/MeepSheep  
 **Default branch:** `main`  
-**Document status:** Initial project brief; requirements are subject to validation.
+**Status:** Owner-confirmed product direction, 2026-10-31. Application implementation has not started.
 
-## 1. Product vision
+## 1. Mission
 
-MeepSheep is a source-grounded research and evidence platform. It helps people investigate questions, verify claims, compare sources, inspect original material, and produce transparent research reports.
+MeepSheep is an **AI interoperability and coordination layer**. Its primary purpose is to let independently operated AI assistants and agents communicate, delegate work, exchange structured results, and collaborate through explicitly authorized interfaces.
 
-MeepSheep is intended to work in two complementary ways:
+A user should be able to ask one connected AI to consult another connected AI, assign it a task, receive its response, and coordinate further work without manually copying every message.
 
-1. **Standalone product:** a responsive website/PWA that people can use directly in a desktop or mobile browser.
-2. **AI-tool interface:** a remote Model Context Protocol (MCP) service that compatible AI assistants can call as a research capability.
+MeepSheep is not a foundation model and does not need to host or train an LLM. It cannot magically access closed consumer chat interfaces. It connects systems through the official interfaces they expose.
 
-The website and MCP interface must use the same underlying research capabilities. Neither is a disposable wrapper around the other.
+## 2. Core interaction
 
-## 2. Product promise
+1. An AI client or user submits a task through a supported MeepSheep interface.
+2. MeepSheep authenticates the caller and checks permissions.
+3. The caller discovers or selects a registered target agent.
+4. MeepSheep checks capability, availability, authorization, budget, and deadline.
+5. MeepSheep dispatches through MCP, A2A, or a supported vendor API adapter.
+6. MeepSheep tracks progress, handles asynchronous completion, and validates the response.
+7. The caller receives the result with target identity, task status, warnings, and provenance.
 
-Help users understand not only what a source says, but why a conclusion is or is not supported.
+## 3. Product surfaces
 
-MeepSheep should make it easy to inspect:
-- The exact claim or question being investigated.
-- Search strategy and research scope.
-- Original source URLs and publisher identity.
-- Publication dates and retrieval dates when available.
-- Relevant excerpts and the surrounding context.
-- Evidence that supports, contradicts, or qualifies a claim.
-- Whether apparently separate sources are actually repeating one origin.
-- Missing information, uncertainty, and limitations.
-- The reasoning that connects evidence to a cautious conclusion.
+- **Remote MCP server:** Tools for compatible AI clients to discover agents, delegate tasks, inspect progress, and retrieve results.
+- **A2A endpoint:** Agent discovery and task exchange with A2A-compatible agents.
+- **Provider adapters:** Documented vendor APIs and webhooks where official interfaces permit.
+- **Web console/PWA:** Manage connections, credentials, permissions, agents, tasks, and audit history.
+- **Shared coordination core:** One canonical task model, authorization layer, router, durable execution system, and provenance trail.
 
-MeepSheep is an evidence organizer and research assistant, not an oracle or an automatic truth detector.
+MCP is the AI-client-to-tool interface. A2A is the agent-to-agent task protocol. Vendor APIs and webhooks are explicit adapters. These interfaces are complementary, not interchangeable.
 
-## 3. Intended users and environments
+## 4. MVP capabilities
 
-- People doing general web research and fact checking.
-- Writers, researchers, developers, students, and analysts.
-- Users of compatible AI assistants who want research tools beyond a model's native browsing.
-- Desktop users on Windows and macOS.
-- Mobile users on Android and iOS through responsive web/PWA experiences.
-- AI clients that support remote MCP or a separately implemented compatible integration.
+- Register and configure at least one remote agent through a supported interface.
+- Discover agents and declared capabilities.
+- Send a structured task to a selected, authorized target.
+- Support short request/response and durable asynchronous tasks.
+- Track task status and retrieve results.
+- Preserve caller, target, task, trace, and response provenance.
+- Enforce per-connection credentials, scopes, permissions, budgets, and limits.
+- Support cancellation where the target protocol permits it.
+- Expose core operations through a remote MCP server.
+- Demonstrate one real AI-to-AI round trip with a separately configured target agent.
+- Provide a minimal web console for connection and task management.
 
-A native mobile application is not a launch prerequisite. Responsive web and installable PWA behavior should be evaluated first.
+## 5. Protocol strategy
 
-## 4. Core product capabilities
+- MCP is the primary client-facing tool interface.
+- A2A is the primary agent-to-agent task protocol.
+- Vendor APIs and webhooks are explicit adapters for systems that expose documented interfaces.
+- All protocols map to a versioned internal task/message envelope.
 
-### Initial capability set
-- Research a question using one or more approved search/retrieval providers.
-- Fetch and extract a supplied public source URL safely.
-- Verify a specific claim against retrieved evidence.
-- Deduplicate results and identify likely source relationships.
-- Classify evidence as supporting, contradicting, contextual, or insufficient.
-- Present citations that resolve to the original sources.
-- Produce a structured research report with explicit limitations.
-- Save and revisit research when a user account and persistence layer are available.
-- Expose the same core operations through MCP.
+No protocol grants access to a closed assistant that does not expose an authorized endpoint. Compatibility is verified per product, surface, plan, platform, and operation.
 
-### Explicit non-goals for the first release
-- Training or hosting a foundation model.
-- Replacing the user's AI assistant.
-- Claiming certainty or assigning unsupported universal truth scores.
-- Circumventing paywalls, logins, robots restrictions, provider terms, or rate limits.
-- Scraping private communities or authenticated content without authorization.
-- Running arbitrary user-supplied code or executing retrieved page instructions.
-- Requiring a local GPU or high-performance client hardware.
+## 6. Async-first execution
 
-## 5. Product principles
+Design durable asynchronous tasks from day one because agent collaboration may take seconds or minutes, require additional input, or involve multiple stages. Provide a synchronous fast path for short tasks. Each task has a deadline, budget, state, trace ID, idempotency behavior, and cancellation policy.
 
-1. **Evidence before confidence.** Conclusions must be traceable to inspectable sources.
-2. **Source transparency.** Do not conceal where evidence came from.
-3. **Separation of fact and inference.** Label direct source statements, extracted facts, analysis, and uncertainty distinctly.
-4. **Independent corroboration.** Ten copies of one press release are not ten independent confirmations.
-5. **Provider independence.** Search providers are adapters, not the product's identity.
-6. **User control.** Be clear about what is stored, for how long, and why.
-7. **Secure by default.** Treat URLs, documents, and retrieved content as untrusted input.
-8. **Progressive complexity.** Start with a small, testable system and add providers and features only when evidence supports the need.
-9. **Cross-client consistency.** Website and MCP results should share schemas, semantics, and quality rules.
-10. **Honest capability claims.** Clearly label unavailable, partial, blocked, stale, and unverified information.
+## 7. Privacy and trust
 
-## 6. Success criteria
+Share only context the caller explicitly authorizes. Never assume access to another AI's private chat history, memory, system prompt, tools, or hidden reasoning. Do not transmit hidden chain-of-thought. Keep credentials server-side and scoped to individual connections. Treat remote agents and their responses as untrusted.
 
-A release is not successful merely because it returns search results. It should demonstrate:
-- Reproducible research runs with traceable inputs.
-- Working citations and source inspection.
-- Useful handling of contradictory and inconclusive evidence.
-- Clear distinction between source publication time and retrieval time.
-- Resilience when a provider times out, rate-limits, or returns poor results.
-- Secure URL fetching and safe handling of hostile page content.
-- Consistent outputs between the web app and MCP tools.
-- Accessibility and usable layouts on desktop and mobile.
-- Automated tests for critical behavior and documented manual acceptance tests.
+## 8. Non-goals for the first release
 
-Numeric performance, quality, and cost targets must be established through benchmark runs, not invented in advance.
+- Hosting or training foundation models.
+- Bypassing platform restrictions or private interfaces.
+- Unofficial browser automation as the default integration method.
+- Unrestricted access to another agent's memory, tools, or credentials.
+- Unlimited recursive delegation or unbounded fan-out.
+- Sensitive external actions without explicit policy and approval.
+- A full standalone research platform as the primary MVP. Research may later be an agent capability.
 
-## 7. Product maturity labels
+## 9. Success criteria
 
-Documentation and UI must distinguish:
-- **Implemented:** present in code.
-- **Tested:** automated or documented manual checks passed.
-- **Verified:** the actual end-to-end behavior was independently checked.
-- **Proposed:** a candidate design not yet implemented.
-- **Blocked:** cannot proceed because of a known dependency or decision.
-- **Deferred:** intentionally outside current scope.
+The first meaningful success is a real, secure, observable round trip: one supported AI client delegates through MeepSheep to a separately configured agent and receives its response with correct identity, provenance, status, and permission enforcement.
 
-Do not describe proposed capabilities as live product features.
+Numeric targets for reliability, latency, and cost are set after baseline measurements. A mock-agent test or protocol specification alone is not proof of a live integration.
 
+## 10. Maturity labels
 
-## Owner clarification: primary product direction (2026-10-31)
-
-The primary product is an **AI interoperability and coordination layer**, not a research platform. MeepSheep should let independently operated AI assistants and agents communicate, delegate work, exchange structured results, and collaborate through explicitly authorized interfaces.
-
-The core loop is: authenticate caller; discover a registered target; check capability, permission, budget, and deadline; dispatch through a supported protocol or vendor API; track the task; validate and return the result with provenance.
-
-Primary surfaces are a remote MCP server for compatible AI clients, an A2A endpoint for A2A-compatible agents, documented vendor API/webhook adapters, and a responsive web console for connections, permissions, agents, tasks, and audit history. These surfaces share one application core.
-
-MCP is the AI-to-tool entry point. A2A is the agent-to-agent task protocol. Vendor APIs and webhooks are explicit adapters. A canonical internal task envelope prevents protocol coupling. These protocols do not grant access to closed consumer chat interfaces; each target must expose an official, authorized interface.
-
-The MVP must demonstrate at least one real end-to-end round trip from a supported AI client through MeepSheep to a separately configured target agent and back. It must include agent discovery, task dispatch, durable async status, result retrieval, provenance, per-connection credentials, permissions, limits, and cancellation where supported.
-
-Design asynchronous tasks from day one for multi-minute work, with a synchronous convenience path for short tasks. Do not build a foundation model, bypass platform restrictions, rely on unofficial browser automation, expose hidden reasoning, or permit unrestricted recursive delegation. A standalone research platform is not the primary first-release goal; research may be a future delegated capability.
-
-Support must be verified separately for each product, interface, plan, platform, and operation. A mock test or protocol specification alone is not proof of a live integration.
+Use Implemented, Tested, Verified, Proposed, Blocked, and Deferred precisely. Never describe a proposed integration as live.
