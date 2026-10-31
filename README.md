@@ -28,47 +28,45 @@
 The generated health section is maintained by GitHub Actions. The status mapping is defined in [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md). Scheduled inspections run every 15 minutes on a best-effort basis; the latest workflow execution contains the exact inspection timestamp and diagnostic logs.
 
 
-MeepSheep is being designed as a source-grounded research and evidence platform with two complementary interfaces: a standalone web application and a remote Model Context Protocol (MCP) service for compatible AI assistants.
+MeepSheep is being designed as an **AI interoperability and coordination layer**. Its primary purpose is to let independently operated AI assistants and agents communicate, delegate tasks, exchange structured results, and collaborate through explicitly authorized interfaces.
 
-The goal is not to produce confident-sounding answers. The goal is to help people investigate questions, inspect original sources, compare supporting and contradictory evidence, understand uncertainty, and create research reports that can be checked.
+The goal is to let one connected AI ask another connected AI to do work, track the task, receive its response, and coordinate further agents through a common routing layer. MeepSheep does not host or train a foundation model and cannot magically access closed consumer chat interfaces. It connects systems through the official interfaces they expose.
 
 > **Project status:** Foundation and planning stage. The repository is being initialized. The architecture and feature set described below are product direction and proposals unless explicitly labeled implemented and verified.
 
 ## Product vision
 
-MeepSheep should work directly in a browser on desktop and mobile, while also making its research capabilities available to compatible AI assistants through a shared backend.
+MeepSheep is the bridge between independently operated AI assistants and agents.
 
-- **Standalone web app:** Research, inspect evidence, compare sources, and revisit reports.
-- **MCP service:** Allow compatible AI clients to invoke the same research capabilities.
-- **Shared research engine:** One consistent source of truth for retrieval, evidence handling, citations, and report generation.
+- **Remote MCP server:** Give compatible AI clients tools to discover agents, delegate tasks, inspect progress, and retrieve results.
+- **A2A endpoint:** Communicate with agents that implement the Agent2Agent protocol.
+- **Provider adapters:** Bridge documented vendor APIs and webhooks where official interfaces permit.
+- **Web console/PWA:** Configure connections, credentials, permissions, agent capabilities, tasks, and audit history.
+- **Shared coordination core:** Normalize messages and tasks, enforce authorization, route work, track asynchronous execution, and preserve provenance.
+
+MCP is the AI-to-tool entry point. A2A is the agent-to-agent task protocol. Vendor APIs and webhooks are explicit adapters. These protocols are complementary, not interchangeable.
 
 The intended domain is [meepsheep.com](https://meepsheep.com). Domain routing and production availability have not yet been verified.
 
 ## What MeepSheep is intended to do
 
-- Research questions using selected web search and retrieval providers.
-- Verify specific claims against retrieved evidence.
-- Fetch and extract permitted public sources.
-- Preserve source URLs, publishers, titles, dates, and retrieval metadata.
-- Identify duplicate and syndicated reporting.
-- Separate evidence that supports, contradicts, or contextualizes a claim.
-- Highlight missing information, uncertainty, and research limitations.
-- Produce transparent, citation-rich reports.
-- Make core capabilities available through a standalone interface and MCP tools.
+- Register and discover connected agents and their declared capabilities.
+- Send structured tasks to explicitly authorized agents.
+- Support short request/response and multi-minute asynchronous work.
+- Coordinate sequential delegation and bounded parallel agent workflows.
+- Track progress, deadlines, cancellation, errors, and completion.
+- Pass only user-authorized context between agents.
+- Return structured results with caller, target, task, and response provenance.
+- Manage per-agent credentials, scopes, quotas, and revocation.
+- Expose the same coordination capabilities through MCP, A2A, and the web console.
 
-MeepSheep is not an oracle, a universal truth detector, or a replacement for careful judgment. Search results alone do not establish truth, and missing search results do not prove a claim false.
+A protocol being open does not mean every AI chat interface exposes an endpoint. Each connection must be configured and tested against the actual product, plan, platform, and supported interface.
 
-## Design principles
+## First-release proof
 
-1. **Evidence before confidence.** Findings must be traceable to sources.
-2. **Transparency.** Show where information came from and when it was retrieved.
-3. **Independent corroboration.** Repeated copies of one source do not count as independent confirmation.
-4. **Contradictions matter.** Do not hide evidence that challenges a conclusion.
-5. **Provider independence.** Search vendors are replaceable adapters, not the product.
-6. **Secure by default.** Retrieved content and user-supplied URLs are untrusted.
-7. **Privacy by design.** Collect and retain only what the product needs.
-8. **Cross-client consistency.** Web and MCP interfaces share the same research logic.
-9. **Honest status.** Proposed, implemented, tested, and verified are different states.
+The first meaningful release must demonstrate one real end-to-end round trip: a supported AI client delegates a task through MeepSheep to a separately configured target agent and receives a structured result with correct identity, status, provenance, and permission enforcement.
+
+Research and evidence gathering may later be capabilities that agents can perform. They are not the primary first-release product.
 
 ## Proposed technology direction
 
@@ -92,13 +90,16 @@ See [AI/ARCHITECTURE.md](AI/ARCHITECTURE.md) and [AI/DECISIONS.md](AI/DECISIONS.
 
 ## Initial MCP tool candidates
 
-The initial MCP surface is intentionally narrow:
+The planned MCP surface is intentionally narrow:
 
-- `research`: investigate a question and return a structured, cited report.
-- `verify_claim`: assess a specific claim against retrieved sources.
-- `fetch_source`: safely retrieve and extract a permitted public source.
+- `list_agents`: discover agents visible to the authenticated caller.
+- `get_agent`: inspect a permitted agent's capabilities and connection health.
+- `send_task`: delegate a bounded task to an authorized agent.
+- `get_task` and `wait_task`: inspect asynchronous task progress and results.
+- `cancel_task`: request cancellation where the target supports it.
+- `list_connections`: inspect the caller's configured connections without exposing credentials.
 
-These are planned tool contracts, not currently deployed tools. Tool schemas, authentication, quotas, and transport will be finalized after compatibility and security research.
+These are planned contracts, not currently deployed tools. Administrative credential and permission changes remain in a separately authenticated owner interface.
 
 ## Repository layout
 
@@ -141,6 +142,14 @@ tests/
 |---|---|
 | [AI/WF.md](AI/WF.md) | Master workflow, phases, acceptance criteria, and live checklists |
 | [AI/PROJECT.md](AI/PROJECT.md) | Product vision, scope, principles, and success criteria |
+| [AI/INTEROPERABILITY.md](AI/INTEROPERABILITY.md) | Primary AI-to-AI interoperability strategy and protocol boundaries |
+| [AI/API_SPEC.md](AI/API_SPEC.md) | Canonical task contract, MCP tools, A2A mapping, and errors |
+| [AI/DATA_MODEL.md](AI/DATA_MODEL.md) | Logical entities for agents, connections, grants, tasks, messages, and audit |
+| [AI/BUILD_PLAN.md](AI/BUILD_PLAN.md) | Phased implementation and first end-to-end acceptance target |
+| [AI/TEST_STRATEGY.md](AI/TEST_STRATEGY.md) | Unit, contract, integration, end-to-end, and security tests |
+| [AI/QUALITY_BENCHMARKS.md](AI/QUALITY_BENCHMARKS.md) | Interoperability reliability, quality, latency, and cost metrics |
+| [AI/DEPLOYMENT.md](AI/DEPLOYMENT.md) | Environment separation, deployment, monitoring, and rollback |
+| [AI/ENVIRONMENT.md](AI/ENVIRONMENT.md) | Runtime configuration and secret lifecycle
 | [AI/ARCHITECTURE.md](AI/ARCHITECTURE.md) | Proposed system boundaries, data flow, and technology choices |
 | [AI/DECISIONS.md](AI/DECISIONS.md) | Accepted decisions, proposals, and open questions |
 | [AI/SECURITY.md](AI/SECURITY.md) | Threat model and required security controls |
@@ -179,10 +188,10 @@ A checkbox is not completed because code was written or a tool returned success.
 - [x] Initial project documentation structure created.
 - [x] All documentation files fetched back from GitHub and verified to exist with substantial content.
 - [x] README links point to the created AI documents.
-- [ ] MVP requirements finalized.
+- [ ] AI interoperability MVP requirements finalized.
 - [ ] Hosting, domain, and account state re-inspected.
 - [ ] Architecture decisions finalized.
-- [ ] Research provider benchmark completed.
+- [ ] Agent protocol and provider compatibility benchmark completed.
 - [ ] Application implementation started.
 - [ ] Web application deployed and tested.
 - [ ] MCP endpoint deployed and tested.
