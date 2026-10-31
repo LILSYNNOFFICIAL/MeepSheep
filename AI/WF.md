@@ -340,3 +340,43 @@ Begin Phase 1 by finalizing the first-release user journey and MVP acceptance cr
 - Do not enable branch protection or rulesets by assumption. Record them only after inspecting actual GitHub settings.
 - The Wellness Doctor must fail closed if it cannot produce a trustworthy report.
 - Update `AI/STATE.md` and `AI/AUTOMATION_LOG.md` after meaningful verified automation changes.
+
+
+## Owner-approved scope correction: AI interoperability first (2026-10-31)
+
+The owner clarified that MeepSheep is primarily intended to let AI systems communicate with other AI systems. This product direction supersedes the research-first emphasis in the earlier phases below. Research functionality is deferred as an optional agent capability.
+
+### Updated execution order
+
+1. **Product and protocol contracts:** AI/PROJECT.md, AI/INTEROPERABILITY.md, AI/API_SPEC.md, AI/DATA_MODEL.md, AI/DECISIONS.md.
+2. **Current compatibility and infrastructure research:** verify MCP and A2A releases, target client interfaces, account-plan restrictions, Cloudflare runtime and account state, and provider APIs.
+3. **Security and environment foundation:** AI/SECURITY.md, AI/ENVIRONMENT.md, AI/TEST_STRATEGY.md, and AI/DEPLOYMENT.md.
+4. **Minimal interoperability core:** agent registry, per-connection credentials, capability discovery, task router, durable async state, one MCP interface, one outbound agent adapter, and a deterministic mock agent.
+5. **Real integration proof:** one supported caller delegates to a separately configured agent and receives a structured, attributable result.
+6. **Reliability and observability:** cancellation, idempotency, retries, deadlines, quotas, cost accounting, audit history, health monitoring, and incident drills.
+7. **Multi-agent orchestration:** bounded sequential and parallel delegation, aggregation, human approval, and context controls.
+8. **Web console and onboarding:** connections, agents, permissions, task timelines, audit history, and client-specific setup instructions.
+9. **Release readiness:** staging, end-to-end compatibility tests, security review, rollback, production deployment, and honest support matrix.
+
+### Required new build documents
+
+- [ ] AI/BUILD_PLAN.md reviewed and accepted as execution sequence.
+- [ ] AI/API_SPEC.md reviewed and converted into validated schemas.
+- [ ] AI/DATA_MODEL.md reviewed and mapped to one selected primary datastore.
+- [ ] AI/TEST_STRATEGY.md implemented in the test suite.
+- [ ] AI/QUALITY_BENCHMARKS.md populated with baseline measurements.
+- [ ] AI/DEPLOYMENT.md converted into verified environment-specific procedures.
+- [ ] AI/ENVIRONMENT.md converted into a validated configuration schema and safe example.
+- [ ] AI/INTEROPERABILITY.md kept current with verified client support.
+
+### Async-first completion criteria
+
+- [ ] Durable task IDs and validated state transitions.
+- [ ] Server-enforced deadlines and bounded retries.
+- [ ] Idempotent dispatch and duplicate-event handling.
+- [ ] Cancellation behavior documented per adapter.
+- [ ] Durable progress and result retrieval.
+- [ ] Per-task and per-tenant budgets and concurrency limits.
+- [ ] Trace and provenance across protocol boundaries.
+
+Do not mark the old research-engine, research-report UI, or research-provider benchmark phases as MVP blockers unless the owner explicitly restores that scope. The previous detailed research requirements remain useful as a future capability backlog.
