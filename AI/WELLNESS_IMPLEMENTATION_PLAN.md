@@ -92,9 +92,9 @@ Use `pathlib`, `re`, `json`, and `argparse`. Inspect every tracked-looking Markd
 Run: `python -m unittest discover -s tests -v`.
 Expected: all tests pass.
 
-- [~] **Step 7: Run negative/edge tests and CLI smoke checks**
+- [x] **Step 7: Run negative/edge tests and CLI smoke checks**
 
-Verify missing README, duplicate markers, broken links with URL fragments, spaces in paths, empty workflow directory, and JSON output. The doctor exits non-zero for error/critical findings; warning-only can remain a successful inspection with a warning status.
+Verified missing and duplicate markers, broken links, encoded paths with fragments, paths escaping the repository root, empty workflow directory, and JSON CLI output. The empty-repository JSON smoke test returned exit 1 and critical status. The GitHub Actions suite passed all nine tests.
 
 ### Task 3: Add CI and scheduled README health publishing
 
@@ -149,10 +149,20 @@ Confirm PR/push validation and trusted wellness execution separately. Verify the
 
 Check that malformed markers fail safely, broken links are detected, warnings do not masquerade as clean status, and critical status outranks all lower statuses.
 
-- [~] **Step 4: Update persistent state and automation log**
+- [x] **Step 4: Update persistent state and automation log**
 
 Record exact commit SHA, workflow run URLs, test commands/results, remaining limitations, and settings that still require owner-side configuration.
 
-- [~] **Step 5: Mark only evidence-backed checkboxes complete**
+- [x] **Step 5: Mark only evidence-backed checkboxes complete**
 
 Do not claim branch protection, deployment health, domain health, external provider health, or production application checks until those systems are configured and actually inspected.
+
+
+## Verified implementation outcome
+
+- Push-triggered quality and Wellness Doctor workflows passed on the verified source checkpoint.
+- The generated README health region showed 🟢 Healthy with 82 passed checks and zero findings.
+- A no-change run made no README commit.
+- The cron and manual-dispatch triggers are configured but have not yet been observed executing.
+- Branch protection and rulesets remain owner-side configuration and were not changed.
+- The doctor currently inspects repository inventory, required files, Markdown links/fences, README health markers, and workflow contracts. It is not a production uptime or external-service monitor.
