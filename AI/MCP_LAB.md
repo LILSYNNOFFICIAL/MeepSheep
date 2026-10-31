@@ -93,7 +93,7 @@ Remote errors are returned as `REMOTE_FAILED`; remote stack traces and raw error
 
 The suite is `tests/mcp-relay.integration.test.mjs`, with mock agent fixture `tests/fixtures/mock-agent.mjs`.
 
-Eight verified cases:
+Nine verified cases:
 1. Same-tenant discovery excludes other tenants and does not expose endpoint/secret references.
 2. Authorized `send_message` reaches the mock remote MCP tool and returns structured output and provenance.
 3. Cross-tenant agents are hidden and cannot be invoked by guessed ID.
@@ -102,13 +102,14 @@ Eight verified cases:
 6. A caller without `agent:message` cannot dispatch.
 7. Remote tool failure is sanitized before returning to the caller.
 8. A separate child process serves a mock MCP agent over loopback TCP; a unique caller message is received and echoed by that remote process.
+9. Requests without validated authentication context are rejected; caller/tenant identity fields supplied in tool arguments cannot override trusted auth context.
 
 **Red/green evidence:**
 - Initial test-first run 41253274558 failed because the relay implementation modules did not yet exist.
 - After implementing the registry and MCP handler, run 41253320195 passed the initial six tests.
 - After adding remote failure sanitization coverage, run 41253359267 passed all seven tests.
 
-Latest CI run 41253637578 passed all 8 Node MCP tests and the existing 10 Python Wellness Doctor unit tests, reported 112 repository checks with zero warnings/errors/critical findings, and parsed both GitHub Actions workflow YAML files. [Inspect the run](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253637578).
+Latest CI run 41253712934 passed all 9 Node MCP tests and the existing 10 Python Wellness Doctor unit tests, reported 112 repository checks with zero warnings/errors/critical findings, and parsed both GitHub Actions workflow YAML files. [Inspect the run](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253712934).
 
 ## Important limitations
 
