@@ -122,6 +122,13 @@ tests/
 | [AI/INTEGRATIONS.md](AI/INTEGRATIONS.md) | Product integrations and connected development-tool strategy |
 | [AI/STATE.md](AI/STATE.md) | Verified project state and session handoff record |
 | [AI/CONTRIBUTING.md](AI/CONTRIBUTING.md) | Human and AI contributor operating rules |
+| [AI/GITHUB_RULES.md](AI/GITHUB_RULES.md) | Branch, commit, permissions, and repository policy |
+| [AI/ACTIONS.md](AI/ACTIONS.md) | GitHub Actions triggers, permissions, and execution rules |
+| [AI/WELLNESS_DOCTOR.md](AI/WELLNESS_DOCTOR.md) | Automated repository and workflow health inspector |
+| [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md) | Authoritative four-level health icon mapping |
+| [AI/INCIDENTS.md](AI/INCIDENTS.md) | Failure response, recovery, and incident reporting |
+| [AI/AUTOMATION_LOG.md](AI/AUTOMATION_LOG.md) | Significant automation changes and health transitions |
+| [AI/WELLNESS_IMPLEMENTATION_PLAN.md](AI/WELLNESS_IMPLEMENTATION_PLAN.md) | Detailed implementation plan and verification checklist |
 
 ## Development workflow
 
