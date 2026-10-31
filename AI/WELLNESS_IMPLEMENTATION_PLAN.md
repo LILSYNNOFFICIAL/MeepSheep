@@ -40,19 +40,19 @@
 - Consumes: repository paths, documented severity mapping, README marker contract.
 - Produces: stable check identifiers, status severity model, workflow permissions model, incident response rules.
 
-- [ ] **Step 1: Specify deterministic status mapping and check inventory**
+- [x] **Step 1: Specify deterministic status mapping and check inventory**
 
 Use stable severities `ok`, `warning`, `error`, `critical`. Map them respectively to 🟢, 🟡, 🔵, 🔴. Overall severity is the maximum severity present. Record all findings with check ID, severity, concise message, and file path when applicable.
 
-- [ ] **Step 2: Specify README generated-region contract**
+- [x] **Step 2: Specify README generated-region contract**
 
 Use exactly one `<!-- MEEPSHEEP_HEALTH_START -->` and one `<!-- MEEPSHEEP_HEALTH_END -->` marker. The doctor owns only the content between them. Missing, duplicate, or reversed markers are a critical doctor failure; it must not overwrite the rest of README.
 
-- [ ] **Step 3: Specify permission separation**
+- [x] **Step 3: Specify permission separation**
 
 PR validation uses `contents: read`. The trusted doctor uses `contents: write` only on the default branch, schedule, or manual dispatch. Never checkout or execute an untrusted PR head in a write-enabled job.
 
-- [ ] **Step 4: Review and fetch all new operating documents**
+- [x] **Step 4: Review and fetch all new operating documents**
 
 Confirm each is under `AI/`, linked from README, and does not claim repository settings or deployment infrastructure that have not been verified.
 
@@ -66,33 +66,33 @@ Confirm each is under `AI/`, linked from README, and does not claim repository s
 - Consumes: repository root path, README markers, required documentation list, workflow directory.
 - Produces: `inspect_repository(root) -> dict`, `render_health_block(report) -> str`, `update_readme(root, report) -> bool`, and CLI flags `--root`, `--write-readme`, `--json`.
 
-- [ ] **Step 1: Add tests for status precedence and all four mappings**
+- [x] **Step 1: Add tests for status precedence and all four mappings**
 
 Assert warning-only => 🟡; error => 🔵; critical => 🔴; no findings => 🟢; mixed findings use the highest severity.
 
-- [ ] **Step 2: Add tests for repository inspection**
+- [x] **Step 2: Add tests for repository inspection**
 
 Assert required files are found, a missing required operating document is detected, broken relative Markdown links are reported, unbalanced Markdown fences are detected, and missing/duplicate health markers are critical.
 
-- [ ] **Step 3: Add tests for safe README updates**
+- [x] **Step 3: Add tests for safe README updates**
 
 Assert only the marked region changes, content outside the markers is byte-for-byte preserved, and a second identical update returns unchanged without rewriting.
 
-- [ ] **Step 4: Run focused tests before implementation**
+- [x] **Step 4: Run focused tests before implementation**
 
 Run: `python -m unittest discover -s tests -v`.
 Expected: focused tests fail because the doctor module/behaviors are absent, not because of test setup errors.
 
-- [ ] **Step 5: Implement the minimum standard-library doctor**
+- [x] **Step 5: Implement the minimum standard-library doctor**
 
 Use `pathlib`, `re`, `json`, and `argparse`. Inspect every tracked-looking Markdown file in root and `AI/`, validate relative links and fence balance, verify required files and workflow files, and produce deterministic findings. Do not follow symlinks outside the repository root.
 
-- [ ] **Step 6: Re-run focused tests**
+- [x] **Step 6: Re-run focused tests**
 
 Run: `python -m unittest discover -s tests -v`.
 Expected: all tests pass.
 
-- [ ] **Step 7: Run negative/edge tests and CLI smoke checks**
+- [~] **Step 7: Run negative/edge tests and CLI smoke checks**
 
 Verify missing README, duplicate markers, broken links with URL fragments, spaces in paths, empty workflow directory, and JSON output. The doctor exits non-zero for error/critical findings; warning-only can remain a successful inspection with a warning status.
 
@@ -107,24 +107,24 @@ Verify missing README, duplicate markers, broken links with URL fragments, space
 - Quality workflow consumes repository checkout and runs tests, doctor read-only, and YAML syntax validation.
 - Wellness workflow consumes trusted default-branch checkout, runs the same tests and doctor, and commits README only if the generated health block changed.
 
-- [ ] **Step 1: Add read-only quality workflow**
+- [x] **Step 1: Add read-only quality workflow**
 
 Trigger on pull requests and pushes to main. Set `permissions: contents: read`. Run Python unit tests, doctor inspection, and Ruby/Psych parsing of all workflow YAML files.
 
-- [ ] **Step 2: Add trusted wellness workflow**
+- [x] **Step 2: Add trusted wellness workflow**
 
 Trigger on pushes to main, manual dispatch, and a 15-minute schedule. Set minimal `contents: write` permissions. Use concurrency to prevent overlapping runs. Never run a write-enabled job on pull_request events.
 
-- [ ] **Step 3: Prevent automation loops and noisy commits**
+- [x] **Step 3: Prevent automation loops and noisy commits**
 
 Configure bot identity. Commit only when `git diff --quiet -- README.md` reports a change. Do not put per-run timestamps in the generated block; link to the workflow page for the latest execution. Bot-authored README commits must not recursively start another doctor run.
 
-- [ ] **Step 4: Run workflow YAML parser and local test suite**
+- [x] **Step 4: Run workflow YAML parser and local test suite**
 
 Run: `ruby -e 'require "yaml"; Dir.glob(".github/workflows/*.yml").each { |f| YAML.load_file(f); puts "OK #{f}" }'` and `python -m unittest discover -s tests -v`.
 Expected: every workflow parses and all tests pass.
 
-- [ ] **Step 5: Verify GitHub Actions execution**
+- [x] **Step 5: Verify GitHub Actions execution**
 
 After push, inspect the actual workflow run, jobs, and logs. A workflow file existing in GitHub is not proof it ran. Repair failures and rerun.
 
@@ -137,22 +137,22 @@ After push, inspect the actual workflow run, jobs, and logs. A workflow file exi
 **Interfaces:**
 - Produces: final verified status, latest run link, commit SHA, known limitations, and updated workflow checkboxes.
 
-- [ ] **Step 1: Fetch all changed files from GitHub**
+- [x] **Step 1: Fetch all changed files from GitHub**
 
 Verify paths, content, marker uniqueness, README links, and no unintended changes.
 
-- [ ] **Step 2: Inspect workflow runs and logs**
+- [x] **Step 2: Inspect workflow runs and logs**
 
 Confirm PR/push validation and trusted wellness execution separately. Verify the README update behavior and that a no-change run does not create an unnecessary commit.
 
-- [ ] **Step 3: Try to disprove the doctor**
+- [x] **Step 3: Try to disprove the doctor**
 
 Check that malformed markers fail safely, broken links are detected, warnings do not masquerade as clean status, and critical status outranks all lower statuses.
 
-- [ ] **Step 4: Update persistent state and automation log**
+- [~] **Step 4: Update persistent state and automation log**
 
 Record exact commit SHA, workflow run URLs, test commands/results, remaining limitations, and settings that still require owner-side configuration.
 
-- [ ] **Step 5: Mark only evidence-backed checkboxes complete**
+- [~] **Step 5: Mark only evidence-backed checkboxes complete**
 
 Do not claim branch protection, deployment health, domain health, external provider health, or production application checks until those systems are configured and actually inspected.
