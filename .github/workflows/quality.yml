@@ -32,6 +32,14 @@ jobs:
       - name: Install MCP relay dependencies
         run: npm install --ignore-scripts --no-audit --no-fund
 
+      - name: Upload generated npm lockfile (temporary bootstrap)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: meepsheep-npm-lockfile-bootstrap
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Run MCP relay integration tests
         run: npm test
 
