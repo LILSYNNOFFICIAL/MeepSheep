@@ -1,0 +1,67 @@
+name: MeepSheep Wellness Doctor
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: meepsheep-wellness-main
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    name: Inspect and publish repository health
+    if: github.ref == 'refs/heads/main' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out trusted main branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Run Wellness Doctor unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Inspect and update README health region
+        id: doctor
+        shell: bash
+        run: |
+          set +e
+          python scripts/wellness_doctor.py --write-readme
+          doctor_status=$?
+          echo "exit_code=$doctor_status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Commit changed health summary only
+        if: steps.doctor.outputs.exit_code != '2'
+        shell: bash
+        run: |
+          if git diff --quiet -- README.md; then
+            echo "Health summary unchanged; no commit created."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "chore: update automated repository health"
+          git push
+
+      - name: Fail the run when the doctor finds errors
+        if: steps.doctor.outputs.exit_code != '0'
+        run: |
+          echo "Wellness Doctor exit code: ${{ steps.doctor.outputs.exit_code }}"
+          exit 1
