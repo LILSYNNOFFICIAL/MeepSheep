@@ -8,16 +8,11 @@
 
 ## 🩺 MeepSheep Wellness Doctor
 
-**Repository health:** See the latest verified [Wellness Doctor run](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml).
+**Health status:** 🟡 Documentation correction branch awaiting its next clean Doctor run.
 
-| Inspection | Status |
-|---|---:|
-| Repository files | 🟢 |
-| Documentation and links | 🟢 |
-| GitHub workflows | 🟢 |
-| README health contract | 🟢 |
+[Latest inspection and diagnostic logs](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml)
 
-<sub>This status covers configured repository checks only. It does not certify production services, live AI connections, DNS, or external providers.</sub>
+<sub>The Doctor covers configured repository checks only. It does not certify production services, live AI connections, DNS, or external providers. The generated status is refreshed by the trusted Wellness workflow on its configured schedule and trusted-branch events.</sub>
 
 <!-- MEEPSHEEP_HEALTH_END -->
 
@@ -27,7 +22,7 @@ The generated health section is maintained by GitHub Actions. Status meanings ar
 
 MeepSheep is an **MCP-first AI-to-AI communication and coordination service**. It gives compatible AI clients a common set of tools to discover other registered agents, send them messages or tasks, track their work, and receive structured responses.
 
-An AI connects to MeepSheep through its MCP client. MeepSheep then routes the request to another independently configured agent through that agent's supported interface. The target may be exposed through MCP, A2A, a documented provider API, or an explicitly configured webhook adapter.
+A requesting AI client connects to MeepSheep through its MCP client. MeepSheep then routes the request to another independently configured agent through that agent's supported interface.
 
 **MCP is the front door and the first connection type. MeepSheep is the relay, registry, permission boundary, and coordinator.** MCP itself is a client/server tool protocol, not a magic network that automatically connects every AI product to every other AI product.
 
@@ -59,7 +54,7 @@ MeepSheep returns structured response
 Requesting AI client
 ```
 
-The inbound MCP server and outbound MCP client are separate roles. MeepSheep must implement both to act as an MCP relay. Optional A2A, provider API, and webhook adapters can connect targets that do not expose MCP.
+The inbound MCP server and outbound MCP client are separate roles. MeepSheep implements both to act as an MCP relay. Optional A2A, provider API, and webhook adapters can connect targets that do not expose MCP.
 
 ## Primary capabilities
 
@@ -71,11 +66,10 @@ The inbound MCP server and outbound MCP client are separate roles. MeepSheep mus
 - Coordinate sequential handoffs and bounded parallel collaboration.
 - Preserve caller, target, task, trace, permission, and response provenance.
 - Manage connection scopes, credentials, quotas, approval requirements, and revocation.
-- Expose the relay through a remote MCP server and a management API/console.
 
 ## Initial MCP tools
 
-The planned model-callable tool surface includes:
+Planned model-callable tools:
 
 - `discover_agents` and `get_agent`
 - `send_message` and `delegate_task`
@@ -90,7 +84,7 @@ These are design contracts, not implemented tools. Credential changes, endpoint 
 | Layer | Responsibility |
 |---|---|
 | Inbound MCP server | Primary interface used by compatible AI clients to call MeepSheep tools |
-| MeepSheep coordination core | Identity, registry, permissions, routing, task state, budgets, audit, result delivery |
+| Coordination core | Identity, registry, permissions, routing, task state, budgets, audit, result delivery |
 | Outbound MCP client | Connect MeepSheep to remote agents that expose MCP servers |
 | Optional A2A adapter | Interoperate with targets that expose A2A |
 | Provider/API adapters | Explicit connections to documented vendor agent APIs |
@@ -99,8 +93,6 @@ These are design contracts, not implemented tools. Credential changes, endpoint 
 A platform is not connected just because it uses AI or supports MCP somewhere. Each connection must expose an authorized endpoint and pass a real compatibility test. Consumer chat UIs, developer APIs, desktop clients, command-line clients, and agent runtimes are separate integration surfaces.
 
 ## First release target
-
-The first meaningful demonstration is a real round trip:
 
 1. A compatible AI client invokes MeepSheep through MCP.
 2. MeepSheep authenticates the caller and checks the requested action.
@@ -113,23 +105,22 @@ A mock agent is required for deterministic tests, but a mock alone is not proof 
 
 ## Design principles
 
-- **Agent-agnostic:** do not hardwire the product to one model or vendor.
-- **MCP-first:** keep the primary client experience simple and consistent.
-- **Capability-respecting:** agents do their own work using their own configured abilities.
-- **Explicit connections:** no hidden access to closed chat interfaces or private conversations.
-- **Least privilege:** discovery does not imply permission to invoke.
-- **Async-ready:** durable task IDs, progress, deadlines, retries, and cancellation where supported.
-- **No hidden reasoning transfer:** share only caller-authorized task context and outputs.
-- **Observable:** return meaningful status, errors, and provenance.
-- **Cost-bounded:** enforce limits before dispatch and across delegated child tasks.
+- Agent-agnostic and MCP-first.
+- Agents do their own work using their own configured abilities.
+- Explicit connections and least-privilege grants.
+- Discovery does not imply permission to invoke.
+- Async-ready with durable task IDs, progress, deadlines, retries, and cancellation where supported.
+- No hidden reasoning transfer or unapproved conversation history.
+- Observable status, errors, and provenance.
+- Cost-bounded execution and delegation.
 
-## Proposed hosting direction
+## Hosting direction
 
 Cloudflare is a candidate hosting platform, not yet a verified deployment. The connected Cloudflare account inspected on 2026-10-31 returned no zones, Workers, D1 databases, Durable Object namespaces, or Queues. This is an account-scoped snapshot and does not rule out another account. Do not configure DNS or deploy until the correct account and domain zone are confirmed.
 
 No local GPU is required for a relay service. Connected AI providers perform inference. MeepSheep handles networking, authorization, orchestration, and storage. Hosted infrastructure and external provider usage may still incur costs.
 
-## Documentation
+## Product and engineering documentation
 
 | File | Purpose |
 |---|---|
@@ -151,7 +142,21 @@ No local GPU is required for a relay service. Connected AI providers perform inf
 | [AI/QUALITY_BENCHMARKS.md](AI/QUALITY_BENCHMARKS.md) | Reliability, latency, and cost metrics |
 | [AI/CHANGELOG.md](AI/CHANGELOG.md) | Product and architecture change history |
 
-Research documents remain as optional future agent-side capability references. They do not define the MeepSheep MVP.
+## Repository operating documents
+
+| File | Purpose |
+|---|---|
+| [AI/RESEARCH.md](AI/RESEARCH.md) | Historical research methodology, not MVP scope |
+| [AI/CONTRIBUTING.md](AI/CONTRIBUTING.md) | Human and AI contributor rules |
+| [AI/GITHUB_RULES.md](AI/GITHUB_RULES.md) | Branch, commit, permissions, and repository rules |
+| [AI/ACTIONS.md](AI/ACTIONS.md) | GitHub Actions triggers and permissions |
+| [AI/WELLNESS_DOCTOR.md](AI/WELLNESS_DOCTOR.md) | Repository health inspector |
+| [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md) | Four-level health icon mapping |
+| [AI/INCIDENTS.md](AI/INCIDENTS.md) | Failure response and recovery |
+| [AI/AUTOMATION_LOG.md](AI/AUTOMATION_LOG.md) | Significant automation changes |
+| [AI/WELLNESS_IMPLEMENTATION_PLAN.md](AI/WELLNESS_IMPLEMENTATION_PLAN.md) | Wellness Doctor implementation and verification plan |
+
+Research documents are retained as optional future agent-side capability references. They do not define the MeepSheep MVP.
 
 ## Current verified status
 
