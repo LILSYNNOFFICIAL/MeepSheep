@@ -52,7 +52,7 @@
 - [x] Select Node.js 26.13.0 for the local laboratory.
 - [x] Select npm and pin direct MCP SDK/Zod dependencies.
 - [x] Add Node's built-in test runner and GitHub Actions execution.
-- [ ] Commit a generated npm lockfile and switch CI to `npm ci`.
+- [x] Generate and commit `package-lock.json`; CI uses `npm ci`.
 - [ ] Add formatting, lint, and typecheck gates.
 - [ ] Add production environment schema, safe example config, secret scanning, and dependency auditing.
 - [x] Verify a clean CI checkout installs dependencies and runs the local MCP tests.
@@ -72,7 +72,7 @@
 - [ ] Implement deterministic mock MCP agent.
 - [ ] Add contract tests and local integration tests.
 
-**Current evidence:** The caller, relay handler, and mock-agent handler are separate MCP server/client instances exercised through the SDK Streamable HTTP transport and an in-process fetch bridge. This proves protocol-level tool discovery, authorized dispatch, and response handling in CI. A separate process/socket deployment and live external AI agent are still required for the full phase exit.
+**Current evidence:** Seven contract cases exercise separate SDK handler/client instances through an in-process fetch bridge. An eighth test starts a separate mock-agent Node process and verifies an outbound MCP call over loopback TCP. This proves local socket-level transport and relay behavior. A public network deployment and live external AI agent are still required for the full phase exit.
 
 ## Phase 5: First real AI-to-AI proof
 
