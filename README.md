@@ -144,7 +144,22 @@ A checkbox is not completed because code was written or a tool returned success.
 
 <!-- MEEPSHEEP_HEALTH_START -->
 
-**🟡 Initializing Wellness Doctor** · The first automated inspection will publish the verified status.
+## 🩺 MeepSheep Wellness Doctor
+
+**Overall health: 🟡 Warning / Error 1** · `ERROR_1`
+
+| Inspection | Status |
+|---|---:|
+| Repository files | 🟢 |
+| Documentation and links | 🟡 |
+| GitHub workflows | 🟢 |
+| README health contract | 🟢 |
+
+**Checks:** 69 passed · 🟡 6 warnings · 🔵 0 errors · 🔴 0 critical
+
+[Latest inspection and diagnostic logs](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml)
+
+<sub>Scheduled inspections run every 15 minutes on a best-effort basis. The latest workflow run contains the exact inspection time. This summary covers configured repository checks, not unconfigured production services.</sub>
 
 <!-- MEEPSHEEP_HEALTH_END -->
 
