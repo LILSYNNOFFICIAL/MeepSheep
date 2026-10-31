@@ -18,7 +18,7 @@ This file is the compact handoff record. Update it after meaningful repository, 
 - [ ] Production deployment verified.
 - [ ] Domain routing and TLS verified.
 - [ ] MCP endpoint deployed and tested.
-- [ ] Search provider selected through benchmark.
+- [ ] Initial agent protocol and provider adapters selected through compatibility tests.
 - [ ] Authentication configured and tested.
 - [ ] Data persistence configured and tested.
 
@@ -28,10 +28,12 @@ The unchecked items are not claims that no work exists elsewhere; they mean this
 
 - MeepSheep is the product name.
 - `meepsheep.com` is the intended canonical domain.
-- Standalone responsive web/PWA and MCP are both product surfaces.
-- Both surfaces should share one research core.
-- Research results must be evidence-linked and uncertainty-aware.
-- No local GPU is required for the proposed cloud-hosted design.
+- Primary product: AI interoperability, agent discovery, task delegation, and multi-agent coordination.
+- Product surfaces: remote MCP server, A2A endpoint, documented vendor API/webhook adapters, and responsive management console.
+- All surfaces share one authorization, routing, and durable task core.
+- Async-first task execution with a synchronous fast path.
+- Research may be offered later as an agent capability, not the primary MVP.
+- No local GPU is required for the relay architecture; connected model providers perform inference.
 
 ## Infrastructure verification warning
 
