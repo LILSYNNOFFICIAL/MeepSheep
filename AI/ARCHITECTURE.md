@@ -183,3 +183,37 @@ These are proposed routing choices only. DNS, domain ownership in the active Clo
 - No hidden use of sources whose terms prohibit the intended use.
 - No claim of unlimited free usage.
 - No dependency on a single search provider for the product's core value.
+
+
+## 10. Repository health and automation architecture
+
+The repository maintenance layer is separate from the MeepSheep application runtime.
+
+```text
+GitHub push / pull request ──> Read-only quality workflow
+                                      |
+                                      v
+                                Unit tests + doctor
+                                      |
+                                      v
+                                YAML validation
+
+Trusted main push / schedule / manual dispatch
+                    |
+                    v
+          Wellness Doctor (Python)
+                    |
+          +---------+----------+
+          |                    |
+          v                    v
+    Findings + severity   README marker updater
+                               |
+                               v
+                        Conditional bot commit
+```
+
+The doctor inspects repository files, Markdown integrity, required project documents, and workflow contracts. It uses no production secrets and makes no network requests. GitHub Actions handles workflow YAML parsing and supplies the run history.
+
+The README updater owns only the content between `MEEPSHEEP_HEALTH_START` and `MEEPSHEEP_HEALTH_END` markers. It must preserve all other content and avoid no-op commits.
+
+This subsystem does not monitor production HTTP availability, Cloudflare resources, Supabase databases, external search providers, or MCP clients. Those require separate authenticated probes and explicit product decisions.
