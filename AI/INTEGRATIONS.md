@@ -82,3 +82,17 @@ The exact list and connection state can change. Before a task:
 ## 5. No false integration claims
 
 Do not claim MeepSheep is connected to, approved by, listed in, or available through an AI platform until the actual integration has been configured and its real behavior verified.
+
+
+## 6. GitHub automation integrations
+
+GitHub Actions is the first automation host for repository integrity checks.
+
+- `quality.yml`: read-only validation on pull requests and pushes to main.
+- `wellness-doctor.yml`: trusted main-branch, scheduled, and manual health inspection with conditional README update.
+- `scripts/wellness_doctor.py`: deterministic repository inspector.
+- `tests/test_wellness_doctor.py`: unit tests for status mapping, inspection findings, and safe README updates.
+
+The connected GitHub integration can inspect and modify repository files, but available tool permissions do not automatically include repository settings administration or workflow dispatch. Use the actual Actions UI/API or a specifically authorized tool to verify execution and settings. Never infer that a workflow ran because its YAML exists.
+
+GitLab, CodeRabbit, Qodo, Codex, Superpowers, Skillquiver, security reviewers, and other tools remain optional supporting tools. Select them per task, inspect actual availability, and do not duplicate CI responsibilities without a documented reason.
