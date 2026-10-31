@@ -77,3 +77,31 @@ This file records decisions, proposals, and unresolved questions. Update it when
 4. Add a new entry with status, decision, rationale, and consequences.
 5. Update affected architecture, security, and workflow documents.
 6. Verify code and deployment match the accepted decision before describing it as implemented.
+
+
+## Accepted decisions
+
+### D-005: Four-level Wellness Doctor status mapping
+- **Status:** Accepted
+- **Decision:** Use 🟢 OK, 🟡 ERROR_1, 🔵 ERROR_2, and 🔴 MAJOR_FAILURE.
+- **Precedence:** Critical/red overrides error/blue, which overrides warning/yellow, which overrides healthy/green.
+- **Source of truth:** `AI/STATUS_ICONS.md`.
+- **Reason:** The owner explicitly requested these four visible states.
+
+### D-006: README health region is generated
+- **Status:** Accepted
+- **Decision:** GitHub Actions generates the README health summary inside exactly one marker pair. It may update only that region.
+- **Reason:** The project status should be visible on GitHub and reflect automated inspection rather than manual claims.
+- **Constraint:** No timestamp-only commits. Scheduled inspections run every 15 minutes on a best-effort basis; exact execution times live in Actions run history.
+
+### D-007: Separate read-only CI and trusted write automation
+- **Status:** Accepted
+- **Decision:** Pull-request quality validation is read-only. A separate trusted-branch/scheduled/manual Wellness workflow may have `contents: write`.
+- **Reason:** Prevent untrusted pull-request code from accessing a write-enabled token.
+- **Constraint:** The write-enabled workflow must not have a pull_request trigger.
+
+### D-008: Wellness Doctor is deterministic and dependency-light
+- **Status:** Accepted
+- **Decision:** The initial doctor uses Python standard library checks against repository files and workflow definitions.
+- **Reason:** It should run without API credentials or production secrets and be easy to reproduce.
+- **Constraint:** It does not certify unconfigured production services or external providers.
