@@ -80,7 +80,10 @@ The current candidate is a Cloudflare-first deployment, subject to current accou
 | Relational data | Cloudflare D1 or Supabase after comparison | Open |
 | Cache | Cloudflare KV where appropriate | Optional proposal |
 | File/artifact storage | Cloudflare R2 if required | Optional proposal |
-| AI integration | Remote MCP | Proposed |
+| AI client interface | Remote MCP | Proposed |
+| Agent-to-agent protocol | A2A | Proposed |
+| Vendor connectivity | Documented APIs and webhooks | Adapter candidates |
+| Task execution | Async-first durable orchestration | Proposed |
 | Source retrieval | Provider-independent adapters | Proposed |
 | Repository | GitHub | Confirmed |
 
