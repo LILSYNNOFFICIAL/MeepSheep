@@ -4,50 +4,56 @@
 
 ## 1. Purpose
 
-Measure whether MeepSheep reliably connects authorized agents, routes tasks correctly, preserves context and provenance, handles failures safely, and controls cost.
+Measure whether MeepSheep can securely connect independent AI clients and agents, route messages correctly, preserve provenance, handle failures, and control cost.
 
-## 2. Fixed test matrix
+## 2. Initial benchmark matrix
 
-Include:
-- Same-protocol A2A-to-A2A delegation.
-- MCP caller to MeepSheep router to A2A target.
-- MCP caller to a supported vendor API adapter.
-- Immediate response and multi-minute task.
-- Parallel fan-out to multiple agents.
+- Inbound MCP client -> MeepSheep -> outbound MCP agent.
+- Immediate request/response.
+- Durable asynchronous task and later result retrieval.
+- Multiple agents discovered with different grants.
+- Owner-approved versus unapproved remote tools.
 - Sequential handoff between agents.
-- One agent unavailable during fan-out.
-- Conflicting agent outputs.
-- Human approval required.
-- Credential revoked mid-task.
-- Duplicate dispatch and callback.
-- Malformed and malicious agent responses.
+- Bounded parallel fan-out.
+- One unavailable agent during a multi-agent task.
+- Conflicting or incomplete remote outputs.
+- Human approval/input-required state.
+- Credential revoked before or during a task.
+- Duplicate dispatch and duplicate/out-of-order event.
+- Malformed, oversized, and malicious remote responses.
+- Connection loss and remote server restart.
 
-## 3. Metrics
+Optional A2A/API adapter benchmarks are added only when those adapters are implemented.
 
-- Connection setup success.
-- Discovery correctness.
-- Dispatch success.
-- Completion success.
-- Median and tail latency.
+## 3. Operational metrics
+
+- Inbound MCP initialization and tool-call success.
+- Outbound MCP connection and authentication success.
+- Remote tool discovery and allowlist correctness.
+- Agent discovery correctness under tenant/grant policies.
+- Dispatch and completion success rate.
+- Median and tail dispatch/completion latency.
 - Time to first progress update.
-- Task state consistency.
-- Duplicate side effects.
-- Cancellation effectiveness.
-- Context/payload size.
-- Cost per completed task.
-- Unauthorized request rejection.
+- Task state consistency and recovery after restart.
+- Duplicate remote side effects.
+- Cancellation support and outcome.
+- Payload/context bytes transferred.
+- Cost per completed task and per failed task.
+- Unauthorized invocation rejection rate.
 - Schema validity and provenance completeness.
 
-## 4. Output quality
+## 4. Response quality
 
-Evaluate user-visible output for:
-- Relevance to requested task.
-- Faithfulness to the remote response.
-- Clear attribution to the responding agent.
-- Preservation of uncertainty and conflicting outputs.
-- No fabricated completion or capability claims.
-- No hidden instructions or secret leakage.
+Evaluate:
+- Relevance to the delegated task.
+- Faithfulness to the actual remote response.
+- Correct source-agent attribution.
+- Preservation of uncertainty, caveats, and conflicting outputs.
+- No fabricated tool execution or completion claims.
+- No secret or unauthorized context leakage.
+
+MeepSheep transports results. It must not claim that an agent's answer is independently verified unless a separate verification step actually occurred.
 
 ## 5. Acceptance philosophy
 
-Set numeric SLOs only after the first baseline is measured. Security invariants are hard gates, not averages. A high success rate cannot compensate for a cross-tenant authorization failure or a leaked credential.
+Set numeric service-level targets after collecting a baseline from real test endpoints. Security invariants are hard gates, not averages. A high success rate cannot compensate for cross-tenant access, unapproved tool invocation, or credential leakage.
