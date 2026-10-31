@@ -313,3 +313,30 @@ Append a dated entry to STATE.md for every substantial session. Include exact co
 ## Current next action
 
 Begin Phase 1 by finalizing the first-release user journey and MVP acceptance criteria. Before implementation, complete the current-state research in Phase 2.
+
+
+## Phase 0B: GitHub automation and Wellness Doctor
+
+- [x] Approve the four-level health icon model and automation design.
+- [x] Create the GitHub rules, Actions, Wellness Doctor, status icon, incident, and automation-log specifications.
+- [x] Add the README health marker region and links to the automation documents.
+- [ ] Implement the deterministic Python Wellness Doctor.
+- [ ] Add unit tests for status precedence, file inventory, Markdown links/fences, malformed markers, and safe idempotent README updates.
+- [ ] Add read-only pull-request/push quality workflow.
+- [ ] Add trusted-branch scheduled/manual wellness workflow.
+- [ ] Validate workflow YAML and run unit tests.
+- [ ] Inspect actual GitHub Actions runs and job logs.
+- [ ] Verify README status changes only when the generated health block changes.
+- [ ] Verify a no-change scheduled run creates no commit.
+- [ ] Record workflow run URLs, commit SHAs, and final limitations in STATE.md and AUTOMATION_LOG.md.
+
+**Exit criteria:** The doctor runs in GitHub Actions, detects configured repository/documentation/workflow defects, publishes the correct icon without overwriting README content outside its markers, and has passing tests plus observed successful workflow runs.
+
+## Permanent GitHub operating rules
+
+- Treat `AI/GITHUB_RULES.md`, `AI/ACTIONS.md`, and `AI/STATUS_ICONS.md` as normative.
+- Read-only pull-request checks and write-enabled trusted-branch automation must remain separate.
+- Never execute untrusted pull-request content with a token that can write repository contents.
+- Do not enable branch protection or rulesets by assumption. Record them only after inspecting actual GitHub settings.
+- The Wellness Doctor must fail closed if it cannot produce a trustworthy report.
+- Update `AI/STATE.md` and `AI/AUTOMATION_LOG.md` after meaningful verified automation changes.
