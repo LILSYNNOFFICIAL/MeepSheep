@@ -18,7 +18,7 @@
 - [x] Owner clarified that the primary purpose is AI systems communicating with other AI systems.
 - [x] Reframe the product around interoperability and coordination, not research as the primary use case.
 - [x] Identify MCP as the AI-tool interface and A2A as the agent-to-agent task protocol.
-- [ ] Review current released MCP and A2A specifications and record pinned versions.
+- [x] Review current released MCP and A2A specifications and record reviewed baseline versions in AI/API_SPEC.md.
 - [ ] Confirm initial target client surfaces and their real connection requirements.
 - [ ] Freeze MVP scope and acceptance scenarios.
 
