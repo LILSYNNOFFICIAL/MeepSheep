@@ -1,108 +1,82 @@
-# MeepSheep Project Brief
+# MeepSheep Product Definition
 
 **Product:** MeepSheep  
-**Canonical domain:** https://meepsheep.com  
+**Domain:** https://meepsheep.com  
 **Repository:** https://github.com/LILSYNNOFFICIAL/MeepSheep  
-**Default branch:** `main`  
-**Document status:** Initial project brief; requirements are subject to validation.
+**Product direction:** MCP-first AI-to-AI communication and coordination  
+**Implementation status:** Not started
 
-## 1. Product vision
+## 1. Mission
 
-MeepSheep is a source-grounded research and evidence platform. It helps people investigate questions, verify claims, compare sources, inspect original material, and produce transparent research reports.
+MeepSheep is a communication and coordination layer that lets independently connected AI agents talk to one another.
 
-MeepSheep is intended to work in two complementary ways:
+A compatible AI client connects to MeepSheep through MCP. It can discover registered agents, send a message or task to another agent, receive the response, check progress, and continue coordinating additional agents. MeepSheep provides the shared relay and policy boundary.
 
-1. **Standalone product:** a responsive website/PWA that people can use directly in a desktop or mobile browser.
-2. **AI-tool interface:** a remote Model Context Protocol (MCP) service that compatible AI assistants can call as a research capability.
+MeepSheep is not an LLM, agent brain, research engine, or replacement for the agents' existing abilities. Agents decide how to perform their assigned work using the tools, models, and capabilities configured by their owners. MeepSheep transports, routes, authorizes, tracks, and returns the work.
 
-The website and MCP interface must use the same underlying research capabilities. Neither is a disposable wrapper around the other.
+## 2. MCP-first product model
 
-## 2. Product promise
+- **MCP server:** Primary interface for AI clients to interact with MeepSheep.
+- **MCP client connections:** Allow MeepSheep to call remote agents that expose MCP servers.
+- **Coordination core:** Registry, identity, permissions, routing, durable tasks, messages, events, budgets, and provenance.
+- **Optional adapters:** A2A, documented provider APIs, and explicitly authorized webhooks where useful.
+- **Management API/console:** Human setup for registering agents, credentials, grants, and policies.
 
-Help users understand not only what a source says, but why a conclusion is or is not supported.
+MCP is a client/server protocol for exposing tools and context. It does not automatically make every connected AI product an addressable agent. A remote agent must expose a supported endpoint or be connected through an authorized adapter.
 
-MeepSheep should make it easy to inspect:
-- The exact claim or question being investigated.
-- Search strategy and research scope.
-- Original source URLs and publisher identity.
-- Publication dates and retrieval dates when available.
-- Relevant excerpts and the surrounding context.
-- Evidence that supports, contradicts, or qualifies a claim.
-- Whether apparently separate sources are actually repeating one origin.
-- Missing information, uncertainty, and limitations.
-- The reasoning that connects evidence to a cautious conclusion.
+## 3. Core user journey
 
-MeepSheep is an evidence organizer and research assistant, not an oracle or an automatic truth detector.
+1. Owner registers or connects an agent and supplies its supported endpoint and authentication.
+2. MeepSheep validates the connection and records the agent's declared capabilities.
+3. A compatible AI client connects to MeepSheep through MCP.
+4. The AI asks MeepSheep to find an agent or sends a task to a known agent.
+5. MeepSheep checks caller identity, tenant, grants, target availability, budgets, and deadlines.
+6. MeepSheep sends only approved context through the target's adapter.
+7. The target processes the task using its own capabilities.
+8. MeepSheep receives the response or async status, validates the envelope, records provenance, and returns it to the caller.
 
-## 3. Intended users and environments
+## 4. MVP capabilities
 
-- People doing general web research and fact checking.
-- Writers, researchers, developers, students, and analysts.
-- Users of compatible AI assistants who want research tools beyond a model's native browsing.
-- Desktop users on Windows and macOS.
-- Mobile users on Android and iOS through responsive web/PWA experiences.
-- AI clients that support remote MCP or a separately implemented compatible integration.
+- Authenticated MCP server with a versioned tool contract.
+- Agent registration and connection lifecycle through a protected owner surface.
+- Agent discovery and declared capability lookup.
+- Outbound MCP client connection to at least one separately configured remote agent.
+- Agent-to-agent messaging and task delegation.
+- Synchronous response and asynchronous task retrieval.
+- Structured response, error, status, trace, and provenance envelopes.
+- Per-connection credentials, grants, revocation, and health status.
+- Durable task state, idempotency, deadlines, bounded retries, and cancellation semantics.
+- Deterministic mock-agent laboratory and protocol contract tests.
+- One real end-to-end AI-client-to-MeepSheep-to-independent-agent round trip.
 
-A native mobile application is not a launch prerequisite. Responsive web and installable PWA behavior should be evaluated first.
+## 5. Non-goals for MVP
 
-## 4. Core product capabilities
+- Building or hosting a foundation model.
+- Replacing or controlling an agent's internal reasoning, memory, or tools.
+- Creating a general-purpose research platform.
+- Requiring agents to use a MeepSheep-defined skill catalog to do their work.
+- Connecting to private consumer chat UIs without an official authorized interface.
+- Unlimited recursive delegation or unbounded fan-out.
+- Exposing admin credentials or privileged tools to ordinary model-callable MCP tools.
+- Treating A2A support as a prerequisite for the first working MCP relay.
 
-### Initial capability set
-- Research a question using one or more approved search/retrieval providers.
-- Fetch and extract a supplied public source URL safely.
-- Verify a specific claim against retrieved evidence.
-- Deduplicate results and identify likely source relationships.
-- Classify evidence as supporting, contradicting, contextual, or insufficient.
-- Present citations that resolve to the original sources.
-- Produce a structured research report with explicit limitations.
-- Save and revisit research when a user account and persistence layer are available.
-- Expose the same core operations through MCP.
+Research, coding, browsing, and other specialized tasks remain agent-side capabilities. MeepSheep may pass such tasks to an agent that declares and is authorized to perform them.
 
-### Explicit non-goals for the first release
-- Training or hosting a foundation model.
-- Replacing the user's AI assistant.
-- Claiming certainty or assigning unsupported universal truth scores.
-- Circumventing paywalls, logins, robots restrictions, provider terms, or rate limits.
-- Scraping private communities or authenticated content without authorization.
-- Running arbitrary user-supplied code or executing retrieved page instructions.
-- Requiring a local GPU or high-performance client hardware.
+## 6. Core principles
 
-## 5. Product principles
+- MCP-first and agent-agnostic.
+- One canonical internal message/task envelope.
+- Every remote connection is explicit, authenticated, scoped, and revocable.
+- Discovery permission and invocation permission are separate.
+- Share only caller-authorized context.
+- Treat remote agents and their responses as untrusted.
+- Durable asynchronous execution with a synchronous fast path.
+- No false claims of platform support without a real tested connection.
 
-1. **Evidence before confidence.** Conclusions must be traceable to inspectable sources.
-2. **Source transparency.** Do not conceal where evidence came from.
-3. **Separation of fact and inference.** Label direct source statements, extracted facts, analysis, and uncertainty distinctly.
-4. **Independent corroboration.** Ten copies of one press release are not ten independent confirmations.
-5. **Provider independence.** Search providers are adapters, not the product's identity.
-6. **User control.** Be clear about what is stored, for how long, and why.
-7. **Secure by default.** Treat URLs, documents, and retrieved content as untrusted input.
-8. **Progressive complexity.** Start with a small, testable system and add providers and features only when evidence supports the need.
-9. **Cross-client consistency.** Website and MCP results should share schemas, semantics, and quality rules.
-10. **Honest capability claims.** Clearly label unavailable, partial, blocked, stale, and unverified information.
+## 7. First success criterion
 
-## 6. Success criteria
+A real MCP client invokes a MeepSheep tool, MeepSheep dispatches to a separately configured remote agent, that agent actually processes and returns a response, and MeepSheep returns the response to the original client with correct caller/target identity, task status, and provenance. Mocks validate contracts but do not satisfy this live integration criterion.
 
-A release is not successful merely because it returns search results. It should demonstrate:
-- Reproducible research runs with traceable inputs.
-- Working citations and source inspection.
-- Useful handling of contradictory and inconclusive evidence.
-- Clear distinction between source publication time and retrieval time.
-- Resilience when a provider times out, rate-limits, or returns poor results.
-- Secure URL fetching and safe handling of hostile page content.
-- Consistent outputs between the web app and MCP tools.
-- Accessibility and usable layouts on desktop and mobile.
-- Automated tests for critical behavior and documented manual acceptance tests.
+## 8. Maturity labels
 
-Numeric performance, quality, and cost targets must be established through benchmark runs, not invented in advance.
-
-## 7. Product maturity labels
-
-Documentation and UI must distinguish:
-- **Implemented:** present in code.
-- **Tested:** automated or documented manual checks passed.
-- **Verified:** the actual end-to-end behavior was independently checked.
-- **Proposed:** a candidate design not yet implemented.
-- **Blocked:** cannot proceed because of a known dependency or decision.
-- **Deferred:** intentionally outside current scope.
-
-Do not describe proposed capabilities as live product features.
+Use **Proposed**, **Implemented**, **Tested**, **Verified**, **Blocked**, and **Deferred** precisely. Documentation is not implementation. Protocol compatibility is not proof of a particular consumer app integration.

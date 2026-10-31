@@ -1,141 +1,127 @@
 # MeepSheep Security and Privacy Baseline
 
-**Status:** Required design baseline. Implementation and compliance are not yet verified.
+**Status:** Required design controls. Implementation is not yet verified.  
+**Primary risk boundary:** Untrusted agents and tools communicating through an authorized relay.
 
 ## 1. Threat model
 
-MeepSheep processes user questions, URLs, retrieved web pages, provider responses, account data, and potentially uploaded documents. Treat all external content as hostile until validated.
+MeepSheep accepts requests from AI clients and routes them to independently operated remote agents. Treat inbound callers, remote tool metadata, tool outputs, callbacks, artifacts, and provider responses as potentially malicious or compromised.
 
 Primary risks:
-- Server-side request forgery (SSRF) through user-supplied URLs and redirects.
-- Prompt injection and malicious instructions embedded in retrieved content.
-- API key or session-token leakage.
-- Abuse of search and extraction providers, causing unexpected cost.
-- Denial of service through large pages, fan-out, repeated requests, or expensive parsing.
-- Cross-user data exposure.
-- Unsafe HTML rendering and script injection.
-- OAuth redirect, token, and session vulnerabilities.
-- Misuse of stored research or personal information.
-- Supply-chain and dependency compromise.
+- Unauthorized agent discovery, invocation, or cross-tenant access.
+- Confused-deputy use of a connection credential beyond the caller's grant.
+- Remote tool-description or response prompt injection.
+- Credential substitution, leakage, or reuse across connections.
+- SSRF through remote endpoint registration, redirects, Agent Cards, or callbacks.
+- Replay, duplicate dispatch, forged callbacks, and out-of-order task events.
+- Delegation amplification, unbounded fan-out, runaway cost, and denial of service.
+- Context exfiltration through oversized or overbroad task payloads.
+- Malicious artifacts, unsafe rendering, and supply-chain compromise.
 
-## 2. URL fetching controls
+## 2. Identity and authorization
 
-Any server-side URL fetcher must:
-- Accept only explicitly supported schemes, normally HTTP and HTTPS.
-- Reject localhost, loopback, private, link-local, multicast, reserved, and otherwise non-public destination addresses.
-- Resolve DNS and validate every resolved address before connecting.
-- Revalidate every redirect target; do not trust the initial URL alone.
-- Limit redirect count, response bytes, decompressed bytes, content types, and total time.
-- Prevent DNS rebinding and address-validation/connect-time gaps to the extent supported by the runtime.
-- Block cloud metadata endpoints and internal service addresses.
-- Avoid forwarding user cookies, authorization headers, or internal headers.
-- Use explicit outbound network policies where available.
-- Record a safe reason when a URL is blocked.
+- Authenticate every inbound MCP client using the selected supported auth mechanism.
+- Derive principal and tenant identity from trusted credentials, never caller-supplied body fields.
+- Bind each agent connection to an owner and tenant.
+- Separate discovery, message-send, task-dispatch, status-read, cancellation, artifact-read, and administration scopes.
+- Check authorization server-side on every operation, not only at connection setup.
+- Treat discovered capabilities and remote tool names as metadata, not grants.
+- Require owner approval before remote tools become callable through MeepSheep.
+- Keep credential management, endpoint registration, grant changes, and tenant administration outside ordinary model-callable tools.
+- Prevent cross-tenant IDOR by checking ownership for every agent, task, message, and artifact.
 
-A hostname check alone is insufficient. IP validation must account for IPv4 and IPv6.
+## 3. Remote endpoint and SSRF controls
 
-## 3. Retrieved content and prompt injection
+For every configured remote endpoint, tool URL, redirect, Agent Card, or callback:
+- Allow only supported secure schemes and transports.
+- Reject loopback, private, link-local, multicast, reserved, and metadata-service destinations.
+- Resolve and validate every DNS answer, including IPv4 and IPv6.
+- Revalidate every redirect target.
+- Defend against DNS rebinding and connect-time address changes where runtime permits.
+- Limit redirects, response bytes, decompressed bytes, content types, and time.
+- Do not forward inbound cookies, auth headers, or internal headers.
+- Prefer explicit owner-configured endpoints over arbitrary URLs supplied by model tool arguments.
 
-- Treat web pages, PDFs, search snippets, and documents as untrusted data, never as instructions.
-- Separate system/developer instructions from source content in every model prompt.
-- Do not execute scripts, commands, links, or tool requests found in retrieved content.
-- Do not allow a source to alter tool permissions, identity, quotas, or policy.
-- Preserve source provenance and extraction boundaries.
-- Escape output before rendering in the browser.
-- Do not infer that a page is safe because a provider returned it.
+A hostname-only allowlist is insufficient.
 
-## 4. Secrets and credentials
+## 4. Remote tool and prompt-injection boundary
 
-- Keep provider keys, OAuth client secrets, signing keys, and service credentials server-side.
-- Use platform secret storage, not committed environment files.
-- Never log full tokens, secrets, authorization headers, or sensitive query parameters.
-- Rotate credentials after suspected exposure.
-- Use separate credentials for development, staging, and production.
-- Scope tokens to the minimum required permissions.
-- Ensure build output and source maps do not expose secrets.
+- Treat tool descriptions, schemas, outputs, artifacts, and agent messages as untrusted data.
+- Never let remote content change MeepSheep policy, grants, routing, budgets, or tool permissions.
+- Do not automatically execute instructions or invoke additional tools suggested by a remote agent.
+- A remote agent may request more context or another action, but MeepSheep must re-authorize it as a new operation.
+- Escape untrusted output before rendering.
+- Do not send hidden chain-of-thought, private system prompts, or unapproved chat history.
+- Share only caller-selected task context and explicitly authorized artifacts.
 
-## 5. Authentication and authorization
+## 5. Credentials and connection lifecycle
 
-Before launch:
-- Select and document an authentication architecture.
-- Validate OAuth state, redirect URIs, issuer, audience, expiry, and signature where applicable.
-- Bind user-owned research and artifacts to a verified principal.
-- Enforce authorization server-side on every read and write.
-- Prevent insecure direct object references.
-- Use secure, HttpOnly, appropriately SameSite cookies when cookie sessions are used.
-- Implement logout, revocation, and session expiry.
-- Require explicit authorization for MCP access to user-specific data.
-- Do not assume a client identity based only on a supplied username or email string.
+- Store raw credentials only in platform secret storage or a dedicated secret manager.
+- Store references and metadata in the database, not raw secrets.
+- Use per-connection credentials and least privilege.
+- Encrypt secrets at rest and in transit.
+- Redact tokens, authorization headers, and secret-bearing query parameters from logs.
+- Support rotation, revocation, disable, and disconnect.
+- Use separate development, staging, and production credentials.
+- Never expose credentials to browser bundles or ordinary MCP tool outputs.
 
-## 6. Abuse and cost controls
+## 6. Task integrity and reliability
 
-- Per-user and per-client quotas.
-- Per-IP or other abuse controls where appropriate and privacy-conscious.
-- Per-request provider budgets and maximum fan-out.
-- Maximum query count, result count, page count, response size, and execution time.
-- Bounded retries with exponential backoff and jitter.
-- Circuit breakers or temporary provider disablement when appropriate.
-- Idempotency for retryable jobs.
-- Cancellation for long-running jobs.
-- Usage metering and alert thresholds.
-- Clear user-facing errors when a limit is reached.
+- Generate task IDs, trace IDs, timestamps, tenant IDs, and idempotency identities server-side.
+- Bind every task to caller, target, connection, grant, deadline, and budget.
+- Enforce idempotency and deduplicate remote events.
+- Authenticate callbacks or use authenticated polling.
+- Reject forged, stale, replayed, or out-of-order events.
+- Bound retries, task duration, payload size, concurrency, fan-out, and delegation depth.
+- Child tasks may narrow but never expand parent permissions, deadlines, or budgets.
+- Treat cancellation as best-effort when the remote protocol cannot guarantee it.
+- Never mark a task completed solely because a remote agent claims success if required result validation failed.
 
-Free-tier infrastructure is not an abuse-prevention system.
+## 7. Cost and abuse controls
 
-## 7. Data minimization and privacy
+- Reserve budget before external dispatch.
+- Enforce limits by tenant, caller, connection, agent, and task.
+- Bound target count, retries, delegation depth, and parallel child tasks.
+- Apply rate limits and circuit breakers.
+- Require approval or reject when cost is unknown and cannot be bounded.
+- Reconcile provider-reported usage and flag unknown costs honestly.
+- Provide a kill switch for each connection and globally.
 
-Define before collecting data:
-- What user data is necessary.
-- Which research queries and source URLs are retained.
-- Whether raw page text is stored or only metadata/excerpts.
-- Retention periods for reports, logs, and cached results.
-- How users export and delete their data.
-- Whether data is sent to external providers and which providers receive it.
-- Whether any content is used for analytics or model improvement.
+## 8. Privacy and retention
 
-Avoid storing sensitive query content in routine logs. Publish a clear privacy notice before public launch.
+Before public launch, define:
+- What message/task content is stored and for how long.
+- Whether remote outputs/artifacts are retained or only referenced.
+- Which external providers receive user content.
+- User export, deletion, and revocation behavior.
+- Privacy-safe audit retention.
+- Whether any data is used for analytics or model improvement.
 
-## 8. Browser and API security
-
-- Validate and size-limit all inputs.
-- Use a strict Content Security Policy appropriate to the chosen frontend.
-- Escape untrusted text and sanitize any intentionally supported rich HTML.
-- Configure CORS narrowly; CORS is not authentication.
-- Apply CSRF protections where cookie-based authentication requires them.
-- Use security headers and HTTPS.
-- Validate MIME types and file signatures for uploads.
-- Keep dependency and lockfile updates reviewable.
-- Do not expose internal stack traces or provider responses directly to end users.
+Do not store complete private conversations by default. Do not log full task payloads unless explicitly required and protected.
 
 ## 9. Security acceptance gates
 
-A release must not be called production-ready until:
-- [ ] SSRF tests cover private IPv4, private IPv6, loopback, metadata IPs, redirects, DNS edge cases, and mixed DNS answers.
-- [ ] Prompt-injection test fixtures cannot change system policy or trigger unauthorized actions.
-- [ ] Authentication and cross-user authorization tests pass.
-- [ ] Secrets are absent from repository history, browser bundles, and logs.
-- [ ] Input, response, redirect, timeout, and concurrency limits are enforced.
-- [ ] XSS and unsafe-rendering tests pass.
-- [ ] Dependency and static security checks have been reviewed.
-- [ ] Data retention and deletion behavior is tested.
-- [ ] Rate limits and provider cost caps are tested.
-- [ ] A documented incident and credential-rotation procedure exists.
+- [ ] Cross-tenant discovery, task, message, and artifact isolation tests pass.
+- [ ] Confused-deputy and privilege-escalation tests pass.
+- [ ] Remote tool prompt injection cannot alter MeepSheep policy or invoke unapproved tools.
+- [ ] SSRF tests cover IPv4, IPv6, DNS answers, redirects, and metadata destinations.
+- [ ] Replay, duplicate, forged callback, and out-of-order event tests pass.
+- [ ] Credential rotation and revocation stop future dispatch.
+- [ ] Fan-out, depth, retries, concurrency, duration, and budgets are enforced.
+- [ ] Secrets are absent from Git, browser bundles, logs, and task outputs.
+- [ ] Retention, deletion, and artifact authorization are tested.
+- [ ] Incident response and kill-switch procedures are documented.
 
-## 10. Security rule
+## 10. GitHub automation security
 
-Convenience must never silently weaken the URL-fetching boundary, credential boundary, user-data boundary, or tool-permission boundary.
+- Keep PR quality checks read-only.
+- Never expose write-enabled tokens to untrusted PR code.
+- Pin third-party Actions to immutable SHAs where practical.
+- Declare minimal workflow permissions.
+- Keep Wellness Doctor free of production credentials.
+- Restrict README updates to the exact marker region.
+- Do not treat repository health as proof of production or agent health.
 
+## 11. Rule
 
-## 11. GitHub Actions and automation security
-
-- Separate read-only PR validation from any workflow that has `contents: write`.
-- Never expose write-enabled tokens to untrusted fork or pull-request code.
-- Pin third-party actions to immutable commit SHAs where practical; review action updates deliberately.
-- Declare explicit workflow permissions instead of relying on broad defaults.
-- Do not pass secrets to the Wellness Doctor. It must operate on repository files only.
-- Do not print environment variables, tokens, authorization headers, or secret values in logs.
-- Restrict the README updater to the exact delimited health block. Missing, duplicate, or reversed markers must fail without modifying README.
-- Use concurrency controls to prevent simultaneous health commits.
-- Do not let bot-authored health commits recursively trigger another write cycle.
-- Treat workflow logs and artifacts as potentially visible repository data. Never include private user queries or source contents.
-- The doctor is not a security scanner or production monitor. Do not use a green repository status as proof that production infrastructure is secure or available.
+No agent, tool output, or remote endpoint may grant itself new permissions. Every capability invocation must be authorized by MeepSheep's trusted policy layer.

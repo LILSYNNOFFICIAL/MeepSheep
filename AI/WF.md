@@ -1,342 +1,208 @@
-# MeepSheep Master Workflow (WF)
+# MeepSheep Master Workflow
 
-**Purpose:** The persistent, detailed operating workflow for planning, building, testing, securing, deploying, and maintaining MeepSheep.
+**Purpose:** Authoritative workflow for designing, building, testing, securing, deploying, and maintaining MeepSheep.  
+**Product:** MCP-first AI-to-AI communication and coordination.  
+**Source of truth:** This workflow and the linked documents under `AI/`.  
+**Branch policy:** `main` is the default branch. Use feature branches and pull requests for substantial work.  
+**Completion rule:** A task is checked only after its outcome is independently verified.
 
-**Source of truth:** This file plus the related documents in `AI/`.  
-**Rule:** Read this workflow and the relevant AI documents before substantial work. Update this workflow and `AI/STATE.md` after verified progress.  
-**Branch policy:** `main` is the confirmed default branch. Use feature branches for substantial code changes unless the owner explicitly directs otherwise.  
-**Completion standard:** A checkbox is checked only after the stated outcome is actually verified. A successful tool response alone is not enough when downstream behavior can be tested.
+## Product boundary
 
-## How to use this workflow
+MeepSheep is the relay, registry, permission boundary, and coordinator. Compatible AI clients call MeepSheep through its MCP server. MeepSheep calls separately configured remote agents through outbound MCP connections first, with optional A2A, vendor API, or webhook adapters when a real integration requires them.
 
-- `[x]` means completed and verified.
-- `[ ]` means not completed.
-- `[~]` means in progress or partially complete.
-- `[!]` means blocked by a known issue or missing decision.
+Agents perform their own work using their own models, tools, and capabilities. MeepSheep does not become a research engine or dictate how an agent completes a task. Research, coding, browsing, and other skills are agent-side capabilities.
 
-When work is performed:
-1. Read the current repository and relevant documents.
-2. Identify the exact scope and acceptance criteria.
-3. Inspect dependencies and live account state before changing anything.
+**MCP is the primary interface, not magic connectivity.** Every target agent must expose a supported endpoint and be explicitly configured and authorized.
+
+## Workflow notation
+
+- `[x]` completed and verified.
+- `[ ]` not completed.
+- `[~]` in progress or partially complete.
+- `[!]` blocked by a known issue or missing decision.
+
+## Mandatory task method
+
+1. Read README, this workflow, STATE, and relevant design/security docs.
+2. Inspect the actual branch, files, dependencies, account state, and existing implementation.
+3. Define scope, acceptance criteria, dependencies, and risks.
 4. Make the smallest coherent change.
-5. Run appropriate automated checks.
-6. Independently inspect the resulting files, state, and behavior.
-7. Try to disprove the result by checking likely failure modes.
-8. Update this file and the state ledger with evidence.
-9. Never check off a parent task while required child tasks remain incomplete.
+5. Run relevant unit, contract, integration, build, security, and live checks.
+6. Fetch/re-read changed files and inspect the diff.
+7. Independently try to disprove the result with negative and edge-case tests.
+8. Update this workflow, decision log, changelog, and state ledger with evidence.
+9. Report verified, partial, blocked, and unverified outcomes separately.
 
-## Phase 0: Project foundation and documentation
+Never infer implementation from documentation, a successful API response, or a mock test.
 
-- [x] Confirm repository identity, default branch, and initial state.
-- [x] Create and verify detailed root README.
-- [x] Create and verify this master workflow.
-- [x] Create and verify project brief.
-- [x] Create and verify architecture document.
-- [x] Create and verify decision log.
-- [x] Create and verify security baseline.
-- [x] Create and verify research methodology.
-- [x] Create and verify integrations/tool strategy.
-- [x] Create and verify project state ledger.
-- [x] Review all documents for contradictions, stale assumptions, and invented implementation claims.
-- [x] Confirm every AI document is linked from README.
-- [x] Fetch all committed files from GitHub and confirm they exist with substantial content.
-- [x] Confirm fetched GitHub copies have the expected structure and substantial content; byte-for-byte comparison was unavailable because local source drafts were not retained.
-- [x] Record the verified automation checkpoint SHA and date in STATE.md.
+## Phase 0: Repository foundation and automation
 
-**Exit criteria:** The documentation is committed on `main`, all links resolve, and a fresh reader can understand product scope, proposed architecture, security posture, decisions, and next actions without relying on chat history.
+- [x] Confirm repository identity and default branch.
+- [x] Establish README and AI documentation structure.
+- [x] Establish GitHub Actions quality workflow and Wellness Doctor.
+- [x] Establish unit tests for the repository doctor.
+- [x] Establish four-level README health indicators.
+- [x] Record the initial interoperability direction in a feature branch.
+- [ ] Merge the reviewed MCP-first documentation update after CI and review.
 
-## Phase 1: Requirements and product definition
+**Exit:** Repository rules and project documents agree, and the PR is merged only after review and successful checks.
 
-- [ ] Confirm the primary first-release user journey.
-- [ ] Define supported research input types.
-- [ ] Define report output and evidence schema.
-- [ ] Define whether user accounts are required for first public test.
-- [ ] Define saved research and retention behavior.
-- [ ] Define initial usage limits and cost guardrails.
-- [ ] Define first-release accessibility and mobile acceptance criteria.
-- [ ] Define explicit exclusions for the first release.
-- [ ] Review product scope for unnecessary features.
-- [ ] Update PROJECT.md and DECISIONS.md with accepted decisions.
+## Phase 1: Freeze the MVP product contract
 
-**Exit criteria:** A testable MVP scope exists, with acceptance criteria and no unresolved decisions that would invalidate the architecture.
+- [ ] Confirm the first real caller and target agent connection surfaces.
+- [ ] Define agent registration and connection ownership.
+- [ ] Define caller identity, tenant, and permission scopes.
+- [ ] Define MCP server tool schemas and versioning.
+- [ ] Define outbound MCP client lifecycle and approved remote tool allowlists.
+- [ ] Define canonical message, task, event, and response envelopes.
+- [ ] Define synchronous and asynchronous task behavior.
+- [ ] Define context-sharing, retention, and deletion defaults.
+- [ ] Define limits for payloads, deadlines, concurrency, retries, and budgets.
+- [ ] Define admin-only operations and owner approval requirements.
+- [ ] Freeze acceptance scenarios in API_SPEC.md and TEST_STRATEGY.md.
 
-## Phase 2: Current-state and vendor research
+**Exit:** An engineer can implement the first relay without guessing at identities, permissions, message shapes, or task behavior.
 
-- [ ] Inspect the active GitHub repository, branches, settings, and workflows.
-- [ ] Inspect the active Cloudflare account and identify the actual MeepSheep domain zone.
-- [ ] Verify domain ownership and DNS control without changing records.
-- [ ] Inspect existing Workers, Pages/Static Assets, D1, KV, R2, Queues, and relevant account limits.
-- [ ] Inspect Supabase projects only if a Supabase architecture remains under consideration.
-- [ ] Compare Cloudflare-native and Supabase-backed data/auth approaches.
-- [ ] Verify current Cloudflare runtime/framework compatibility from official documentation.
-- [ ] Benchmark frontend stack candidates against PWA, accessibility, build, and deployment needs.
-- [ ] Identify candidate search providers and read current official API documentation.
-- [ ] Verify current provider pricing, free quotas, rate limits, data use, attribution, and commercial terms.
-- [ ] Verify extraction and source-access restrictions.
-- [ ] Verify current MCP transport and authentication requirements.
-- [ ] Verify current ChatGPT, Grok, Claude, and other target-client integration requirements separately.
-- [ ] Record sources, dates, findings, and unresolved questions in RESEARCH.md / DECISIONS.md.
+## Phase 2: Verify actual integrations and infrastructure
 
-**Exit criteria:** Critical technology and provider choices are supported by current evidence, not assumptions or stale pricing.
+- [ ] Inspect current GitHub branch, PR, workflows, and repository settings.
+- [ ] Confirm the correct Cloudflare account and meepsheep.com zone.
+- [ ] Verify domain ownership and DNS control read-only.
+- [ ] Inventory Workers, Agents SDK, Workflows, Durable Objects, D1, Queues, KV, R2, and Static Assets.
+- [ ] Verify current MCP protocol revision, SDK support, transport, and authentication.
+- [ ] Select one remote MCP test agent and verify its endpoint and auth.
+- [ ] Verify the intended caller's exact MCP client surface and account-plan requirements.
+- [ ] Compare D1 and Supabase for one authoritative relational data owner.
+- [ ] Verify current platform limits, pricing, logging, and secret storage.
+- [ ] Record sources, dates, test evidence, and unresolved issues.
 
-## Phase 3: Architecture and interface contracts
+**Exit:** The first deployment and connection path are supported by current evidence and actual account access.
 
-- [ ] Select frontend framework and build/deploy path.
-- [ ] Select primary backend runtime.
-- [ ] Select primary authentication and relational data owner.
-- [ ] Define provider adapter interface.
-- [ ] Define normalized source/result schema.
-- [ ] Define claim/evidence/report schema and versioning.
-- [ ] Define research orchestration limits and cancellation behavior.
-- [ ] Define API contract shared by web and MCP.
-- [ ] Define MCP tool names, descriptions, input schemas, and output schemas.
-- [ ] Define caching, retention, and deletion behavior.
-- [ ] Define observability and privacy-safe logging.
-- [ ] Draw and review data-flow and trust-boundary diagrams.
-- [ ] Update ARCHITECTURE.md and DECISIONS.md.
+## Phase 3: Contract and security foundation
 
-**Exit criteria:** Interfaces, data ownership, trust boundaries, and failure behavior are explicit enough to implement and test independently.
+- [ ] Create versioned schemas for agent, connection, grant, message, task, event, artifact, and response.
+- [ ] Implement strict input/output validation.
+- [ ] Implement authentication and tenant resolution.
+- [ ] Implement server-side authorization and separate discovery/invocation scopes.
+- [ ] Implement credential references, encryption, rotation, and revocation.
+- [ ] Implement endpoint validation and SSRF protections.
+- [ ] Implement idempotency and duplicate event handling.
+- [ ] Implement context minimization and redaction.
+- [ ] Implement audit provenance and privacy-safe logs.
+- [ ] Add adversarial fixtures and negative tests.
 
-## Phase 4: Repository and engineering foundation
+**Exit:** Security and protocol contracts are testable before connecting live agents.
 
-- [ ] Establish project structure and package manager.
-- [ ] Add pinned runtime/tool versions where practical.
-- [ ] Add formatting and lint rules.
-- [ ] Add type checking.
-- [ ] Add unit and integration test frameworks.
-- [ ] Add environment variable schema and safe example file.
-- [ ] Ensure secrets are excluded from Git.
-- [ ] Add local development instructions.
-- [ ] Add CI for install, lint, typecheck, tests, and build.
-- [ ] Add dependency/security scanning appropriate to the stack.
-- [ ] Add contribution and pull-request guidance.
-- [ ] Verify a clean checkout can install and run the project.
+## Phase 4: Minimal relay implementation
 
-**Exit criteria:** A new contributor can reproduce the development environment and CI rejects basic regressions.
+- [ ] Establish runtime, package manager, pinned versions, lint, types, and tests.
+- [ ] Implement one authoritative persistence layer and migrations.
+- [ ] Implement agent registry and connection manager.
+- [ ] Implement inbound remote MCP server.
+- [ ] Implement outbound MCP client for remote agent connections.
+- [ ] Discover remote tools and apply owner-approved allowlists.
+- [ ] Implement canonical router and task service.
+- [ ] Implement synchronous message/request-response path.
+- [ ] Implement durable asynchronous task path.
+- [ ] Implement `discover_agents`, `get_agent`, `send_message`, `delegate_task`, `get_task`, `wait_task`, and `cancel_task` MCP tools.
+- [ ] Implement deterministic mock MCP agents for tests.
+- [ ] Add local setup and configuration documentation.
 
-## Phase 5: Core research engine
+**Exit:** A local MCP client can send a message through MeepSheep to a mock remote MCP agent and receive a validated response. This is a contract proof, not a live integration claim.
 
-- [ ] Define canonical internal research request schema.
-- [ ] Define normalized provider result schema.
-- [ ] Implement provider adapter contract.
-- [ ] Implement first provider adapter only after benchmark selection.
-- [ ] Add bounded query planning and provider fan-out.
-- [ ] Add timeout, retry, backoff, and rate-limit handling.
-- [ ] Add canonical URL normalization.
-- [ ] Add exact and near-duplicate detection.
-- [ ] Preserve publisher, title, author, dates, URL, and retrieval metadata.
-- [ ] Implement permitted source fetching with SSRF protections.
-- [ ] Implement bounded content extraction.
-- [ ] Preserve excerpts and source locators.
-- [ ] Implement claim decomposition.
-- [ ] Implement support/contradiction/context/insufficient evidence categories.
-- [ ] Add source-independence and syndication signals.
-- [ ] Implement report assembly and schema validation.
-- [ ] Add partial-result and provider-failure states.
-- [ ] Add fixtures for stale, contradictory, duplicate, missing-date, and malicious sources.
-- [ ] Benchmark result quality and cost against a fixed query set.
+## Phase 5: First real AI-to-AI round trip
 
-**Exit criteria:** Research runs are bounded, reproducible, traceable, and useful even when sources disagree or providers fail.
+- [ ] Configure one separately operated remote agent with owner-authorized credentials.
+- [ ] Configure one compatible AI client to connect to MeepSheep.
+- [ ] Verify caller authentication and target authorization.
+- [ ] Send a unique test task through the actual MCP endpoint.
+- [ ] Verify the remote agent endpoint received and processed the request.
+- [ ] Verify the returned content originated from the remote agent.
+- [ ] Verify target identity, task ID, trace ID, status, and provenance.
+- [ ] Test denial, timeout, malformed response, duplicate request, and revoked credential.
+- [ ] Save sanitized evidence and exact tested client/plan/protocol versions.
 
-## Phase 6: Standalone web application
+**Exit:** One genuine independent system-to-system round trip works. A local mock, hardcoded response, or two model calls inside one process does not satisfy this phase.
 
-- [ ] Establish responsive application shell.
-- [ ] Implement accessible research input.
-- [ ] Implement research settings and scope controls.
-- [ ] Implement progress and partial-result states.
-- [ ] Implement findings summary.
-- [ ] Implement evidence and contradiction views.
-- [ ] Implement source cards with original-source links.
-- [ ] Implement methodology, limitations, and timestamps.
-- [ ] Implement report export if included in MVP.
-- [ ] Implement saved research only after persistence and privacy decisions.
-- [ ] Implement empty, loading, error, rate-limit, and offline states.
-- [ ] Test keyboard navigation and screen-reader semantics.
-- [ ] Test narrow mobile viewport and touch interactions.
-- [ ] Test desktop layouts and supported browsers.
-- [ ] Verify no privileged key or internal endpoint leaks to the client.
+## Phase 6: Reliability and multi-agent coordination
 
-**Exit criteria:** A user can complete the defined research journey through the website on desktop and mobile browsers.
+- [ ] Add bounded sequential delegation.
+- [ ] Add bounded parallel fan-out.
+- [ ] Add result aggregation with per-agent provenance.
+- [ ] Add durable progress events and resumable tasks.
+- [ ] Add deadline propagation and bounded retries.
+- [ ] Add cancellation where the target supports it.
+- [ ] Add input-required and human approval states.
+- [ ] Add circuit breakers, concurrency limits, and dead-letter handling.
+- [ ] Add usage reconciliation and budget reservation before dispatch.
+- [ ] Test worker restarts, queue redelivery, partial failure, and duplicate callbacks.
 
-## Phase 7: MCP service
+**Exit:** Multi-agent work remains observable, bounded, recoverable, and permission-safe.
 
-- [ ] Implement remote MCP transport supported by target clients.
-- [ ] Add authentication and authorization appropriate to the deployment.
-- [ ] Implement `research` tool.
-- [ ] Implement `verify_claim` tool.
-- [ ] Implement `fetch_source` tool with strict URL controls.
-- [ ] Validate all tool inputs and enforce output limits.
-- [ ] Return structured, citation-rich outputs.
-- [ ] Keep tool descriptions concise and behavior-specific.
-- [ ] Ensure retrieved content is treated as untrusted data.
-- [ ] Add protocol-level and application-level tests.
-- [ ] Test with an independent MCP client.
-- [ ] Test cancellation, timeout, provider outage, and malformed input.
-- [ ] Document endpoint and client setup without claiming directory approval.
+## Phase 7: Optional adapter expansion
 
-**Exit criteria:** An independent compatible client can authenticate, invoke tools, receive useful structured results, and cannot bypass security or usage limits.
+- [ ] Add A2A only when a target agent requires it and official compatibility is verified.
+- [ ] Add provider API adapters only for documented, authorized endpoints.
+- [ ] Add webhook adapters only with explicit endpoint ownership, authentication, signatures, and replay defense.
+- [ ] Reuse the same registry, grants, canonical envelopes, task lifecycle, and audit model.
+- [ ] Add one adapter at a time with contract and end-to-end tests.
+- [ ] Maintain a product/surface/plan/platform compatibility matrix.
 
-## Phase 8: Identity, persistence, and user data
+**Exit:** Each additional adapter solves a real interoperability need without creating a parallel product architecture.
 
-- [ ] Implement selected identity provider.
-- [ ] Verify OAuth/session handling and logout.
-- [ ] Implement per-user authorization.
-- [ ] Implement database migrations and rollback strategy.
-- [ ] Implement saved report ownership.
-- [ ] Implement retention policy.
-- [ ] Implement export and deletion behavior.
-- [ ] Test cross-user isolation.
-- [ ] Test backup/restore strategy where applicable.
-- [ ] Document data flows and third-party processing.
-- [ ] Publish privacy and terms documents before public launch.
+## Phase 8: Owner console and onboarding
 
-**Exit criteria:** User data is protected, lifecycle behavior is tested, and privacy disclosures match actual processing.
+- [ ] Build connection setup and verification UI.
+- [ ] Build agent registry and capability view.
+- [ ] Build permission and scope management.
+- [ ] Build task timeline, progress, result, and error inspection.
+- [ ] Add credential rotation and revoke/disconnect controls.
+- [ ] Add audit and usage views with secrets redacted.
+- [ ] Test mobile, desktop, keyboard, and accessibility behavior.
+- [ ] Publish clear setup and data-sharing documentation.
 
-## Phase 9: Security and abuse resistance
+**Exit:** An owner can understand and control which agents can communicate and what context they receive.
 
-- [ ] Complete threat model review.
-- [ ] Test SSRF including redirects and IPv6.
-- [ ] Test prompt-injection resistance.
-- [ ] Test XSS and untrusted HTML handling.
-- [ ] Test authentication and authorization boundaries.
-- [ ] Test rate limits and provider spend limits.
-- [ ] Test maximum input, response, file, and execution sizes.
-- [ ] Review CORS, CSRF, CSP, and security headers.
-- [ ] Scan dependencies and review high-severity findings.
-- [ ] Check repository history and build artifacts for secrets.
-- [ ] Review logs for sensitive-data leakage.
-- [ ] Verify abuse reporting and operational response procedures.
-- [ ] Update SECURITY.md with actual controls and test evidence.
+## Phase 9: Security, quality, and cost release gates
 
-**Exit criteria:** No unresolved critical/high security issue remains without an explicit owner-approved mitigation and documented risk acceptance.
+- [ ] Cross-tenant isolation tests pass.
+- [ ] Confused-deputy and privilege-escalation tests pass.
+- [ ] Malicious tool description and prompt-injection tests pass.
+- [ ] SSRF and redirect tests pass for IPv4 and IPv6.
+- [ ] Replay, duplicate, forged callback, and out-of-order event tests pass.
+- [ ] Credential revocation and rotation are verified.
+- [ ] Fan-out, depth, concurrency, payload, deadline, and budget limits are enforced.
+- [ ] Logs and traces contain no credentials or unapproved private context.
+- [ ] Latency, reliability, and cost baselines are measured.
+- [ ] Backups, restore, retention, and deletion are tested.
 
-## Phase 10: Quality, performance, and cost validation
+**Exit:** No unresolved critical/high security issue remains without explicit owner-approved risk acceptance.
 
-- [ ] Create a representative research benchmark set.
-- [ ] Measure relevance, freshness, diversity, independence, and extraction success.
-- [ ] Measure latency and provider failure rates.
-- [ ] Measure cost per completed and useful research run.
-- [ ] Test concurrent requests and provider throttling.
-- [ ] Test cache correctness and freshness behavior.
-- [ ] Test graceful degradation.
-- [ ] Run end-to-end tests on web and MCP surfaces.
-- [ ] Run mobile and desktop acceptance checks.
-- [ ] Verify accessibility baseline.
-- [ ] Validate usage limits against measured costs.
-- [ ] Record benchmark results and known limitations.
+## Phase 10: Deployment and launch
 
-**Exit criteria:** Performance and cost behavior are measured, bounded, and acceptable for the intended release.
+- [ ] Confirm Cloudflare account and domain zone.
+- [ ] Select runtime, database, auth, and orchestration services.
+- [ ] Configure isolated development, staging, and production environments.
+- [ ] Configure secrets outside Git.
+- [ ] Deploy web console, API, and MCP endpoint.
+- [ ] Configure DNS and TLS only after explicit owner approval.
+- [ ] Verify real endpoint health and client setup.
+- [ ] Verify monitoring, alerts, cost controls, and rollback.
+- [ ] Publish privacy, retention, acceptable-use, and service-limit documents.
+- [ ] Obtain owner approval before public launch.
 
-## Phase 11: Deployment and domain
+**Exit:** Production behavior and support claims are backed by tested live endpoints.
 
-- [ ] Confirm the active Cloudflare account and domain zone.
-- [ ] Confirm domain DNS ownership and current records.
-- [ ] Configure development/staging environment.
-- [ ] Configure production environment.
-- [ ] Configure secrets through platform secret storage.
-- [ ] Deploy web assets and backend.
-- [ ] Configure custom domain and TLS.
-- [ ] Configure MCP hostname/path if selected.
-- [ ] Verify health endpoints and real user journeys.
-- [ ] Verify logs, metrics, alerts, and rollback procedure.
-- [ ] Verify database migrations and backups.
-- [ ] Verify deployment from a clean commit.
-- [ ] Record deployment identifiers and tested URLs in STATE.md.
+## Deferred product work
 
-**Exit criteria:** The actual deployed product works over its intended public URLs. A successful deployment command alone does not satisfy this phase.
+- General-purpose research platform.
+- Search-provider comparisons and evidence synthesis as MeepSheep-owned services.
+- Built-in model hosting or training.
+- Native mobile applications before web usage justifies them.
+- Large protocol catalog without concrete target integrations.
 
-## Phase 12: External AI client integrations
-
-For each client independently:
-- [ ] Read current official integration documentation.
-- [ ] Verify protocol and authentication compatibility.
-- [ ] Configure endpoint and OAuth metadata as required.
-- [ ] Test connection on supported web clients.
-- [ ] Test desktop support.
-- [ ] Test mobile support separately.
-- [ ] Verify account/plan eligibility and restrictions.
-- [ ] Verify public listing or review requirements if pursuing a directory.
-- [ ] Test real research and error scenarios.
-- [ ] Document exact setup instructions and limitations.
-
-**Exit criteria:** Only clients actually tested are listed as supported. Protocol compatibility is not misrepresented as app-store or directory approval.
-
-## Phase 13: Release readiness
-
-- [ ] All MVP acceptance criteria pass.
-- [ ] Critical automated tests pass on the release commit.
-- [ ] Security acceptance gates pass or have documented risk acceptance.
-- [ ] Privacy and terms reflect actual behavior.
-- [ ] README and setup instructions match the code.
-- [ ] Known limitations are documented.
-- [ ] Provider quotas and cost controls are enabled.
-- [ ] Monitoring and incident response are ready.
-- [ ] Rollback path is tested.
-- [ ] Production smoke tests pass.
-- [ ] Release notes identify exact version and commit.
-- [ ] Owner explicitly approves public launch.
-
-**Exit criteria:** A release candidate has verified behavior, known limitations, operational safeguards, and explicit approval.
-
-## Phase 14: Ongoing maintenance
-
-- [ ] Recheck provider terms, quotas, and pricing periodically.
-- [ ] Recheck MCP client compatibility as platforms change.
-- [ ] Update dependencies and review breaking changes.
-- [ ] Monitor provider quality and outages.
-- [ ] Monitor spend, abuse, latency, and error rates.
-- [ ] Review security findings and incidents.
-- [ ] Retest backups and deletion behavior.
-- [ ] Update decision log when architecture changes.
-- [ ] Update workflow and state ledger after each meaningful milestone.
-- [ ] Remove obsolete documentation and code only after checking dependencies.
-
-## Mandatory per-task workflow
-
-For every non-trivial task:
-
-1. **Read:** README, WF.md, STATE.md, and relevant architecture/security/decision docs.
-2. **Inspect:** actual files, Git state, runtime, account configuration, and dependencies relevant to the task.
-3. **Scope:** write acceptance criteria and identify risks.
-4. **Plan:** choose the smallest safe implementation path.
-5. **Implement:** make focused changes; do not mix unrelated refactors.
-6. **Test:** run relevant unit, integration, build, security, and end-to-end checks.
-7. **Verify independently:** inspect resulting files and actual downstream behavior.
-8. **Disprove:** deliberately test likely failure cases and unintended side effects.
-9. **Document:** update decisions, state, and checkboxes with evidence.
-10. **Report:** separate completed, partially completed, blocked, and unverified work.
-
-## Session handoff record
-
-Append a dated entry to STATE.md for every substantial session. Include exact commit SHA, files changed, commands/checks, actual results, known risks, and next step. Never store secrets in handoff notes.
+Research can be performed by an agent connected to MeepSheep. It is not a core MeepSheep engine.
 
 ## Current next action
 
-Begin Phase 1 by finalizing the first-release user journey and MVP acceptance criteria. Before implementation, complete the current-state research in Phase 2.
-
-
-## Phase 0B: GitHub automation and Wellness Doctor
-
-- [x] Approve the four-level health icon model and automation design.
-- [x] Create the GitHub rules, Actions, Wellness Doctor, status icon, incident, and automation-log specifications.
-- [x] Add the README health marker region and links to the automation documents.
-- [x] Implement the deterministic Python Wellness Doctor.
-- [x] Add unit tests for status precedence, file inventory, Markdown links/fences, malformed markers, and safe idempotent README updates.
-- [x] Add read-only pull-request/push quality workflow.
-- [x] Add trusted-branch scheduled/manual wellness workflow definitions.
-- [x] Validate workflow YAML and run unit tests.
-- [x] Inspect actual GitHub Actions runs and job logs.
-- [x] Verify README status transitions from warning to healthy after repairing missing links, and remains unchanged when health output is unchanged.
-- [x] Verify a no-change Wellness Doctor run creates no commit (push-triggered no-op verified; scheduled no-op event not yet observed).
-- [x] Record workflow run URLs, commit SHAs, and final limitations in STATE.md and AUTOMATION_LOG.md.
-
-**Exit criteria:** The doctor runs in GitHub Actions, detects configured repository/documentation/workflow defects, publishes the correct icon without overwriting README content outside its markers, and has passing tests plus observed successful push-triggered workflow runs. Scheduled and manual event execution remain to be observed.
-
-## Permanent GitHub operating rules
-
-- Treat `AI/GITHUB_RULES.md`, `AI/ACTIONS.md`, and `AI/STATUS_ICONS.md` as normative.
-- Read-only pull-request checks and write-enabled trusted-branch automation must remain separate.
-- Never execute untrusted pull-request content with a token that can write repository contents.
-- Do not enable branch protection or rulesets by assumption. Record them only after inspecting actual GitHub settings.
-- The Wellness Doctor must fail closed if it cannot produce a trustworthy report.
-- Update `AI/STATE.md` and `AI/AUTOMATION_LOG.md` after meaningful verified automation changes.
+Review and merge the MCP-first documentation correction. Then finalize the exact first caller/target pair, verify the correct Cloudflare account and domain, pin the MCP SDK/protocol baseline, and implement the local mock MCP round trip before live provider credentials are introduced.

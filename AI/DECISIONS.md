@@ -1,107 +1,97 @@
 # MeepSheep Decision Log
 
-This file records decisions, proposals, and unresolved questions. Update it when a decision changes. Do not silently overwrite historical reasoning.
+This file records accepted decisions, proposals, and open questions. Do not silently overwrite historical reasoning.
 
 ## Status vocabulary
 
-- **Accepted:** explicitly selected and current.
-- **Proposed:** recommended but not yet approved or implemented.
-- **Open:** requires research, a test, or user decision.
-- **Superseded:** replaced by a later recorded decision.
+- **Accepted:** current product decision.
+- **Proposed:** recommended, not yet approved or implemented.
+- **Open:** requires evidence, test, or owner decision.
+- **Superseded:** replaced by a later decision.
 
 ## Accepted decisions
 
-### D-001: Product name
+### D-001: Product identity
 - **Status:** Accepted
-- **Decision:** The product is named **MeepSheep**.
-- **Canonical domain:** `meepsheep.com`
-- **Reason:** Explicit product-owner direction.
-- **Constraint:** Do not rename it SYNINTEL or use that as the product identity.
+- **Decision:** Product name is MeepSheep; intended domain is `meepsheep.com`.
+- **Repository:** `LILSYNNOFFICIAL/MeepSheep`, default branch `main`.
 
-### D-002: Repository
+### D-002: Project documentation
 - **Status:** Accepted
-- **Decision:** Use `LILSYNNOFFICIAL/MeepSheep` as the working GitHub repository.
-- **Default branch:** `main`
-- **Reason:** Explicit product-owner direction and repository inspection.
+- **Decision:** Maintain operating documentation under `AI/`, with `AI/WF.md` as the master workflow.
 
-### D-003: Documentation memory
+### D-003: MCP-first relay
 - **Status:** Accepted
-- **Decision:** Maintain project-specific AI working documentation under `AI/`, with `AI/WF.md` as the master workflow.
-- **Reason:** The repository should carry project context across sessions and tools.
-- **Rule:** Read the AI documents before substantial work and update them after verified changes.
+- **Decision:** MeepSheep is an MCP-first AI-to-AI communication and coordination service. Its inbound MCP server is the primary interface for compatible AI clients. MeepSheep also implements outbound MCP client connections to separately configured remote MCP servers.
+- **Reason:** The owner's clarified goal is for AI agents to talk to other AI agents.
+- **Consequence:** The relay, registry, permissions, routing, task lifecycle, and result delivery are the core product. MCP is the front door; MeepSheep provides the shared coordination layer.
 
-### D-004: Dual product surface
-- **Status:** Accepted as product direction
-- **Decision:** MeepSheep is both a standalone web product and a reusable AI-tool service. The two surfaces share one research core.
-- **Reason:** The product must be useful outside an AI assistant and consistent inside one.
+### D-004: Agent-side capabilities
+- **Status:** Accepted
+- **Decision:** Agents perform research, coding, browsing, and other work using their own existing models, tools, and capabilities. MeepSheep transports and coordinates tasks; it does not build a research engine or replace agent intelligence.
+- **Consequence:** Research-first plans and research-provider pipelines are deferred. Research remains a possible task performed by a connected agent.
 
-## Proposed decisions
+### D-005: Optional protocol adapters
+- **Status:** Accepted
+- **Decision:** MCP is the first-class connection type for the MVP. A2A, documented vendor APIs, and authorized webhooks are optional adapters added only when a concrete target requires them.
+- **Reason:** Avoid making multiple protocols a prerequisite before the first useful relay works.
+- **Consequence:** Every adapter shares the same registry, grants, canonical envelopes, task service, and audit model. A2A is not the primary product interface.
 
-### P-001: Cloudflare-first hosting
-- **Status:** Proposed
-- **Proposal:** Evaluate Cloudflare Workers and Static Assets as the initial deployment platform.
-- **Reason:** The owner has Cloudflare access and wants a low-cost hosted product.
-- **Validation needed:** Current account access, domain zone, runtime compatibility, quotas, pricing, observability, and deployment workflow.
+### D-006: Canonical message/task model
+- **Status:** Accepted
+- **Decision:** Normalize inbound MCP calls and outbound agent interactions into versioned message, task, event, and response envelopes.
+- **Consequence:** Protocol adapters cannot create parallel identity, authorization, or task systems.
 
-### P-002: MCP as the first AI integration protocol
-- **Status:** Proposed
-- **Proposal:** Implement a remote MCP endpoint backed by the same API and research core as the web application.
-- **Validation needed:** Current client support, transport requirements, authentication, app review requirements, and plan/platform restrictions for each target assistant.
+### D-007: Async-capable execution
+- **Status:** Accepted
+- **Decision:** Support durable asynchronous tasks from the beginning, with a synchronous fast path for short interactions.
+- **Consequence:** Task IDs, status transitions, deadlines, idempotency, bounded retries, and cancellation semantics are defined before implementation.
 
-### P-003: Provider-independent search
-- **Status:** Proposed
-- **Proposal:** Use an adapter layer and benchmark a small provider shortlist instead of hardwiring one vendor.
-- **Validation needed:** Relevance, freshness, diversity, extraction, legal terms, pricing, latency, and rate limits.
+### D-008: Explicit context sharing
+- **Status:** Accepted
+- **Decision:** Share only context explicitly authorized by the caller. Never assume access to private chats, memory, system prompts, tools, or hidden reasoning.
 
-### P-004: Responsive PWA before native apps
-- **Status:** Proposed
-- **Proposal:** Deliver desktop and mobile browser experiences first; evaluate native apps only after product usage demonstrates a need.
-- **Validation needed:** Offline requirements, push notifications, app-store distribution, and device-specific features.
+### D-009: Real integration proof
+- **Status:** Accepted
+- **Decision:** The first meaningful acceptance target is a real MCP caller -> MeepSheep -> separately configured remote agent -> MeepSheep -> caller round trip.
+- **Consequence:** A mock is required for tests but does not prove a live integration.
+
+### D-010: Security and cost boundaries
+- **Status:** Accepted
+- **Decision:** Enforce least privilege, tenant isolation, credential isolation, endpoint validation, idempotency, bounded delegation, budgets, and audit provenance before enabling live external agents.
+
+### D-011: No local model hosting requirement
+- **Status:** Accepted
+- **Decision:** MeepSheep does not require a local GPU or host a foundation model. Connected agents/providers perform inference; MeepSheep handles networking and coordination.
+
+## Superseded history
+
+### Historical research-first framing
+- **Status:** Superseded by D-003 and D-004.
+- **Decision at the time:** The original concept emphasized evidence-first research and source synthesis.
+- **Reason for change:** The owner clarified that MeepSheep's main purpose is AI agents communicating with other AI agents.
+- **Disposition:** Keep research as an optional agent-side task, not the core MVP.
+
+### Historical A2A-primary framing
+- **Status:** Superseded by D-003 and D-005.
+- **Decision at the time:** A2A was described as the primary agent-to-agent protocol.
+- **Correction:** MCP is the first implementation target and primary interface. MeepSheep can relay between MCP-connected agents. A2A is optional when needed for a specific endpoint.
 
 ## Open decisions
 
-- **O-001:** Which frontend stack best fits current Cloudflare deployment support and the desired UI?
-- **O-002:** Which platform owns primary user identity and relational data: Cloudflare, Supabase, or a deliberately separated hybrid?
-- **O-003:** Which search and extraction providers pass the benchmark?
-- **O-004:** Which authentication model is required for web users and remote MCP clients?
-- **O-005:** What data is persisted by default, and what retention/deletion controls are required?
-- **O-006:** How should long-running research jobs be queued, canceled, retried, and resumed?
-- **O-007:** What free-tier usage limits can be responsibly offered after cost testing?
-- **O-008:** Which AI platforms and client surfaces are launch targets, based on current official support and account constraints?
+- **O-001:** Which exact requesting MCP client and target remote MCP agent will be the first live integration pair?
+- **O-002:** Which MCP transport, protocol revision, SDK, and authentication mechanism will be pinned?
+- **O-003:** Which Cloudflare account contains the intended domain zone, and is it accessible?
+- **O-004:** Which single system owns primary relational data and authentication: D1/Cloudflare or Supabase?
+- **O-005:** Which durable execution primitive best fits the verified hosting plan and workload?
+- **O-006:** What default message/task retention and deletion policy will be published?
+- **O-007:** Which optional adapters are justified by actual target demand?
 
 ## Decision change procedure
 
-1. Identify the decision ID.
-2. Record the new evidence or requirement.
-3. Mark the previous entry superseded if applicable.
-4. Add a new entry with status, decision, rationale, and consequences.
-5. Update affected architecture, security, and workflow documents.
-6. Verify code and deployment match the accepted decision before describing it as implemented.
-
-
-## Accepted decisions
-
-### D-005: Four-level Wellness Doctor status mapping
-- **Status:** Accepted
-- **Decision:** Use 🟢 OK, 🟡 ERROR_1, 🔵 ERROR_2, and 🔴 MAJOR_FAILURE.
-- **Precedence:** Critical/red overrides error/blue, which overrides warning/yellow, which overrides healthy/green.
-- **Source of truth:** `AI/STATUS_ICONS.md`.
-- **Reason:** The owner explicitly requested these four visible states.
-
-### D-006: README health region is generated
-- **Status:** Accepted
-- **Decision:** GitHub Actions generates the README health summary inside exactly one marker pair. It may update only that region.
-- **Reason:** The project status should be visible on GitHub and reflect automated inspection rather than manual claims.
-- **Constraint:** No timestamp-only commits. Scheduled inspections run every 15 minutes on a best-effort basis; exact execution times live in Actions run history.
-
-### D-007: Separate read-only CI and trusted write automation
-- **Status:** Accepted
-- **Decision:** Pull-request quality validation is read-only. A separate trusted-branch/scheduled/manual Wellness workflow may have `contents: write`.
-- **Reason:** Prevent untrusted pull-request code from accessing a write-enabled token.
-- **Constraint:** The write-enabled workflow must not have a pull_request trigger.
-
-### D-008: Wellness Doctor is deterministic and dependency-light
-- **Status:** Accepted
-- **Decision:** The initial doctor uses Python standard library checks against repository files and workflow definitions.
-- **Reason:** It should run without API credentials or production secrets and be easy to reproduce.
-- **Constraint:** It does not certify unconfigured production services or external providers.
+1. Identify the affected decision.
+2. Record new evidence or owner clarification.
+3. Mark replaced decisions superseded.
+4. Add the new decision, rationale, and consequences.
+5. Update all affected product, architecture, API, security, and workflow documents.
+6. Verify implementation matches the decision before claiming it is live.

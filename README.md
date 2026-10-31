@@ -1,6 +1,6 @@
 # MeepSheep
 
-**Evidence-first research. Clear sources. Better answers.**
+**Let AI agents talk to AI agents.**
 
 ## 🩺 Automated repository health
 
@@ -8,198 +8,165 @@
 
 ## 🩺 MeepSheep Wellness Doctor
 
-**Overall health: 🟢 Healthy** · `OK`
+<badge color="success">🟢 Healthy</badge> **Latest PR quality run:** 102 checks passed · 0 warnings · 0 errors · 0 critical.
 
-| Inspection | Status |
-|---|---:|
-| Repository files | 🟢 |
-| Documentation and links | 🟢 |
-| GitHub workflows | 🟢 |
-| README health contract | 🟢 |
+[Inspect latest quality run 41248222272](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41248222272)
 
-**Checks:** 84 passed · 🟡 0 warnings · 🔵 0 errors · 🔴 0 critical
-
-[Latest inspection and diagnostic logs](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml)
-
-<sub>Scheduled inspections run every 15 minutes on a best-effort basis. The latest workflow run contains the exact inspection time. This summary covers configured repository checks, not unconfigured production services.</sub>
+<sub>This is a repository/documentation/workflow check. It does not certify production services, live AI connections, DNS, or external providers. The trusted Wellness workflow maintains the generated status region on its configured schedule and trusted-branch events.</sub>
 
 <!-- MEEPSHEEP_HEALTH_END -->
 
-The generated health section is maintained by GitHub Actions. The status mapping is defined in [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md). Scheduled inspections run every 15 minutes on a best-effort basis; the latest workflow execution contains the exact inspection timestamp and diagnostic logs.
+The generated health section is maintained by GitHub Actions. Status meanings are defined in [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md).
 
+## What MeepSheep is
 
-MeepSheep is being designed as a source-grounded research and evidence platform with two complementary interfaces: a standalone web application and a remote Model Context Protocol (MCP) service for compatible AI assistants.
+MeepSheep is an **MCP-first AI-to-AI communication and coordination service**. It gives compatible AI clients a common set of tools to discover other registered agents, send them messages or tasks, track their work, and receive structured responses.
 
-The goal is not to produce confident-sounding answers. The goal is to help people investigate questions, inspect original sources, compare supporting and contradictory evidence, understand uncertainty, and create research reports that can be checked.
+A requesting AI client connects to MeepSheep through its MCP client. MeepSheep routes the request to another independently configured agent through that agent's supported interface.
 
-> **Project status:** Foundation and planning stage. The repository is being initialized. The architecture and feature set described below are product direction and proposals unless explicitly labeled implemented and verified.
+**MCP is the front door and the first connection type. MeepSheep is the relay, registry, permission boundary, and coordinator.** MCP itself is a client/server tool protocol, not a magic network that automatically connects every AI product to every other AI product.
 
-## Product vision
+Research is not MeepSheep's central service. An agent might research, code, browse, summarize, or perform another task because it already has that capability. MeepSheep transports and coordinates the request and response. It does not replace the agent's intelligence or dictate its skill set.
 
-MeepSheep should work directly in a browser on desktop and mobile, while also making its research capabilities available to compatible AI assistants through a shared backend.
+## Core flow
 
-- **Standalone web app:** Research, inspect evidence, compare sources, and revisit reports.
-- **MCP service:** Allow compatible AI clients to invoke the same research capabilities.
-- **Shared research engine:** One consistent source of truth for retrieval, evidence handling, citations, and report generation.
+```text
+Requesting AI client
+        |
+        | MCP client -> MeepSheep MCP server
+        v
+MEEPSHEEP COORDINATION CORE
+  identity + permissions
+  agent discovery + registry
+  message/task routing
+  durable task state
+  response + provenance
+        |
+        | MeepSheep outbound MCP client
+        v
+Remote MCP server / AI agent
+        |
+        | remote result
+        v
+MeepSheep returns structured response
+        |
+        v
+Requesting AI client
+```
 
-The intended domain is [meepsheep.com](https://meepsheep.com). Domain routing and production availability have not yet been verified.
+The inbound MCP server and outbound MCP client are separate roles. MeepSheep implements both to act as an MCP relay. Optional A2A, provider API, and webhook adapters can connect targets that do not expose MCP.
 
-## What MeepSheep is intended to do
+## Primary capabilities
 
-- Research questions using selected web search and retrieval providers.
-- Verify specific claims against retrieved evidence.
-- Fetch and extract permitted public sources.
-- Preserve source URLs, publishers, titles, dates, and retrieval metadata.
-- Identify duplicate and syndicated reporting.
-- Separate evidence that supports, contradicts, or contextualizes a claim.
-- Highlight missing information, uncertainty, and research limitations.
-- Produce transparent, citation-rich reports.
-- Make core capabilities available through a standalone interface and MCP tools.
+- Register and connect independently operated agents.
+- Discover agents and their declared capabilities.
+- Send agent-to-agent messages and delegate bounded tasks.
+- Receive replies, status updates, and artifacts.
+- Support synchronous replies and durable asynchronous tasks.
+- Coordinate sequential handoffs and bounded parallel collaboration.
+- Preserve caller, target, task, trace, permission, and response provenance.
+- Manage connection scopes, credentials, quotas, approval requirements, and revocation.
 
-MeepSheep is not an oracle, a universal truth detector, or a replacement for careful judgment. Search results alone do not establish truth, and missing search results do not prove a claim false.
+## Initial MCP tools
+
+Planned model-callable tools:
+
+- `discover_agents` and `get_agent`
+- `send_message` and `delegate_task`
+- `get_task` and `wait_task`
+- `cancel_task`
+- `list_my_connections`
+
+These are design contracts, not implemented tools. Credential changes, endpoint registration, permission administration, and other privileged operations stay in a separately authenticated owner interface.
+
+## Protocol responsibilities
+
+| Layer | Responsibility |
+|---|---|
+| Inbound MCP server | Primary interface used by compatible AI clients to call MeepSheep tools |
+| Coordination core | Identity, registry, permissions, routing, task state, budgets, audit, result delivery |
+| Outbound MCP client | Connect MeepSheep to remote agents that expose MCP servers |
+| Optional A2A adapter | Interoperate with targets that expose A2A |
+| Provider/API adapters | Explicit connections to documented vendor agent APIs |
+| Webhook/custom adapter | Authorized integration for endpoints with a documented contract |
+
+A platform is not connected just because it uses AI or supports MCP somewhere. Each connection must expose an authorized endpoint and pass a real compatibility test. Consumer chat UIs, developer APIs, desktop clients, command-line clients, and agent runtimes are separate integration surfaces.
+
+## First release target
+
+1. A compatible AI client invokes MeepSheep through MCP.
+2. MeepSheep authenticates the caller and checks the requested action.
+3. MeepSheep discovers or resolves a separately configured target agent.
+4. MeepSheep sends the authorized message/task through an outbound MCP client.
+5. The target agent actually processes the request and responds.
+6. MeepSheep returns the response with target identity, status, trace, and provenance.
+
+A mock agent is required for deterministic tests, but a mock alone is not proof of a live integration.
 
 ## Design principles
 
-1. **Evidence before confidence.** Findings must be traceable to sources.
-2. **Transparency.** Show where information came from and when it was retrieved.
-3. **Independent corroboration.** Repeated copies of one source do not count as independent confirmation.
-4. **Contradictions matter.** Do not hide evidence that challenges a conclusion.
-5. **Provider independence.** Search vendors are replaceable adapters, not the product.
-6. **Secure by default.** Retrieved content and user-supplied URLs are untrusted.
-7. **Privacy by design.** Collect and retain only what the product needs.
-8. **Cross-client consistency.** Web and MCP interfaces share the same research logic.
-9. **Honest status.** Proposed, implemented, tested, and verified are different states.
+- Agent-agnostic and MCP-first.
+- Agents do their own work using their own configured abilities.
+- Explicit connections and least-privilege grants.
+- Discovery does not imply permission to invoke.
+- Async-ready with durable task IDs, progress, deadlines, retries, and cancellation where supported.
+- No hidden reasoning transfer or unapproved conversation history.
+- Observable status, errors, and provenance.
+- Cost-bounded execution and delegation.
 
-## Proposed technology direction
+## Hosting direction
 
-The current candidate is a Cloudflare-first deployment, subject to current account, domain, pricing, runtime, and compatibility verification.
+Cloudflare is a candidate hosting platform, not yet a verified deployment. The connected Cloudflare account inspected on 2026-10-31 returned no zones, Workers, D1 databases, Durable Object namespaces, or Queues. This is an account-scoped snapshot and does not rule out another account. Do not configure DNS or deploy until the correct account and domain zone are confirmed.
 
-| Area | Candidate direction | Status |
-|---|---|---|
-| Hosting and API | Cloudflare Workers | Proposed |
-| Web delivery | Workers Static Assets or compatible frontend deployment | Proposed |
-| Frontend | Responsive web app / installable PWA | Proposed |
-| Relational data | Cloudflare D1 or Supabase after comparison | Open |
-| Cache | Cloudflare KV where appropriate | Optional proposal |
-| File/artifact storage | Cloudflare R2 if required | Optional proposal |
-| AI integration | Remote MCP | Proposed |
-| Source retrieval | Provider-independent adapters | Proposed |
-| Repository | GitHub | Confirmed |
+No local GPU is required for a relay service. Connected AI providers perform inference. MeepSheep handles networking, authorization, orchestration, and storage. Hosted infrastructure and external provider usage may still incur costs.
 
-No local GPU is required for the proposed cloud-hosted architecture. The browser is the user interface; research processing and provider requests run on hosted infrastructure. Free tiers can help start the project, but they do not mean unlimited usage or zero marginal cost.
+## Product and engineering documentation
 
-See [AI/ARCHITECTURE.md](AI/ARCHITECTURE.md) and [AI/DECISIONS.md](AI/DECISIONS.md) for the current reasoning and unresolved choices.
-
-## Initial MCP tool candidates
-
-The initial MCP surface is intentionally narrow:
-
-- `research`: investigate a question and return a structured, cited report.
-- `verify_claim`: assess a specific claim against retrieved sources.
-- `fetch_source`: safely retrieve and extract a permitted public source.
-
-These are planned tool contracts, not currently deployed tools. Tool schemas, authentication, quotas, and transport will be finalized after compatibility and security research.
-
-## Repository layout
-
-```text
-MeepSheep/
-├── README.md
-└── AI/
-    ├── WF.md
-    ├── PROJECT.md
-    ├── ARCHITECTURE.md
-    ├── DECISIONS.md
-    ├── SECURITY.md
-    ├── RESEARCH.md
-    ├── INTEGRATIONS.md
-    ├── STATE.md
-    ├── CONTRIBUTING.md
-    ├── GITHUB_RULES.md
-    ├── ACTIONS.md
-    ├── WELLNESS_DOCTOR.md
-    ├── STATUS_ICONS.md
-    ├── INCIDENTS.md
-    ├── AUTOMATION_LOG.md
-    └── WELLNESS_IMPLEMENTATION_PLAN.md
-
-.github/
-└── workflows/
-    ├── quality.yml
-    └── wellness-doctor.yml
-
-scripts/
-└── wellness_doctor.py
-
-tests/
-└── test_wellness_doctor.py
-```
-
-### Project memory and operating documents
-
-| Document | Purpose |
+| File | Purpose |
 |---|---|
-| [AI/WF.md](AI/WF.md) | Master workflow, phases, acceptance criteria, and live checklists |
-| [AI/PROJECT.md](AI/PROJECT.md) | Product vision, scope, principles, and success criteria |
-| [AI/ARCHITECTURE.md](AI/ARCHITECTURE.md) | Proposed system boundaries, data flow, and technology choices |
-| [AI/DECISIONS.md](AI/DECISIONS.md) | Accepted decisions, proposals, and open questions |
-| [AI/SECURITY.md](AI/SECURITY.md) | Threat model and required security controls |
-| [AI/RESEARCH.md](AI/RESEARCH.md) | Evidence methodology and provider benchmark plan |
-| [AI/INTEGRATIONS.md](AI/INTEGRATIONS.md) | Product integrations and connected development-tool strategy |
-| [AI/STATE.md](AI/STATE.md) | Verified project state and session handoff record |
-| [AI/CONTRIBUTING.md](AI/CONTRIBUTING.md) | Human and AI contributor operating rules |
-| [AI/GITHUB_RULES.md](AI/GITHUB_RULES.md) | Branch, commit, permissions, and repository policy |
-| [AI/ACTIONS.md](AI/ACTIONS.md) | GitHub Actions triggers, permissions, and execution rules |
-| [AI/WELLNESS_DOCTOR.md](AI/WELLNESS_DOCTOR.md) | Automated repository and workflow health inspector |
-| [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md) | Authoritative four-level health icon mapping |
-| [AI/INCIDENTS.md](AI/INCIDENTS.md) | Failure response, recovery, and incident reporting |
-| [AI/AUTOMATION_LOG.md](AI/AUTOMATION_LOG.md) | Significant automation changes and health transitions |
-| [AI/WELLNESS_IMPLEMENTATION_PLAN.md](AI/WELLNESS_IMPLEMENTATION_PLAN.md) | Detailed implementation plan and verification checklist |
+| [AI/WF.md](AI/WF.md) | Authoritative build and operating workflow |
+| [AI/PROJECT.md](AI/PROJECT.md) | Product definition, scope, and success criteria |
+| [AI/INTEROPERABILITY.md](AI/INTEROPERABILITY.md) | Agent communication model and protocol boundaries |
+| [AI/API_SPEC.md](AI/API_SPEC.md) | MCP tools, canonical message/task envelopes, errors |
+| [AI/ARCHITECTURE.md](AI/ARCHITECTURE.md) | System topology and service boundaries |
+| [AI/DATA_MODEL.md](AI/DATA_MODEL.md) | Agents, connections, grants, messages, tasks, events |
+| [AI/BUILD_PLAN.md](AI/BUILD_PLAN.md) | Implementation phases and acceptance tests |
+| [AI/TEST_STRATEGY.md](AI/TEST_STRATEGY.md) | Unit, protocol, security, and live integration tests |
+| [AI/SECURITY.md](AI/SECURITY.md) | Threat model and mandatory safeguards |
+| [AI/COST_MODEL.md](AI/COST_MODEL.md) | Budgets, usage accounting, and abuse controls |
+| [AI/INTEGRATIONS.md](AI/INTEGRATIONS.md) | Supported integration surfaces and compatibility evidence |
+| [AI/DECISIONS.md](AI/DECISIONS.md) | Accepted decisions and open questions |
+| [AI/STATE.md](AI/STATE.md) | Verified project state and session handoff |
+| [AI/DEPLOYMENT.md](AI/DEPLOYMENT.md) | Environments, deployment, monitoring, rollback |
+| [AI/ENVIRONMENT.md](AI/ENVIRONMENT.md) | Configuration and secret handling |
+| [AI/QUALITY_BENCHMARKS.md](AI/QUALITY_BENCHMARKS.md) | Reliability, latency, and cost metrics |
+| [AI/CHANGELOG.md](AI/CHANGELOG.md) | Product and architecture change history |
 
-## Development workflow
+## Repository operating documents
 
-The project workflow is maintained in [AI/WF.md](AI/WF.md). It is the primary execution checklist.
+| File | Purpose |
+|---|---|
+| [AI/RESEARCH.md](AI/RESEARCH.md) | Historical research methodology, not MVP scope |
+| [AI/CONTRIBUTING.md](AI/CONTRIBUTING.md) | Human and AI contributor rules |
+| [AI/GITHUB_RULES.md](AI/GITHUB_RULES.md) | Branch, commit, permissions, and repository rules |
+| [AI/ACTIONS.md](AI/ACTIONS.md) | GitHub Actions triggers and permissions |
+| [AI/WELLNESS_DOCTOR.md](AI/WELLNESS_DOCTOR.md) | Repository health inspector |
+| [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md) | Four-level health icon mapping |
+| [AI/INCIDENTS.md](AI/INCIDENTS.md) | Failure response and recovery |
+| [AI/AUTOMATION_LOG.md](AI/AUTOMATION_LOG.md) | Significant automation changes |
+| [AI/WELLNESS_IMPLEMENTATION_PLAN.md](AI/WELLNESS_IMPLEMENTATION_PLAN.md) | Wellness Doctor implementation and verification plan |
 
-For every substantial task:
+Research documents are retained as optional future agent-side capability references. They do not define the MeepSheep MVP.
 
-1. Read the README and relevant AI documents.
-2. Inspect the actual repository, runtime, and dependencies.
-3. Define scope and acceptance criteria.
-4. Make focused changes.
-5. Run relevant tests, builds, and security checks.
-6. Inspect the resulting diff and actual downstream behavior.
-7. Try to disprove the result with negative and edge-case tests.
-8. Update the workflow and state ledger only with verified outcomes.
+## Current verified status
 
-A checkbox is not completed because code was written or a tool returned success. It is completed when the intended result has been checked.
+- [x] Product direction clarified as AI-to-AI communication.
+- [x] MCP-first inbound and outbound relay architecture documented.
+- [x] Repository Wellness Doctor and CI foundation exist.
+- [ ] MCP server implemented or deployed.
+- [ ] Outbound MCP client implemented.
+- [ ] Agent registry and connection manager implemented.
+- [ ] Real independent-agent round trip demonstrated.
+- [ ] Production hosting and domain verified.
 
-## Current status
-
-- [x] Repository identity and `main` branch confirmed.
-- [x] Initial project documentation structure created.
-- [x] All documentation files fetched back from GitHub and verified to exist with substantial content.
-- [x] README links point to the created AI documents.
-- [ ] MVP requirements finalized.
-- [ ] Hosting, domain, and account state re-inspected.
-- [ ] Architecture decisions finalized.
-- [ ] Research provider benchmark completed.
-- [ ] Application implementation started.
-- [ ] Web application deployed and tested.
-- [ ] MCP endpoint deployed and tested.
-- [ ] External AI clients individually connected and tested.
-
-See [AI/STATE.md](AI/STATE.md) for the verified state and [AI/WF.md](AI/WF.md) for the full roadmap.
-
-## Security and responsible use
-
-Security is a design requirement, not a later polish task. In particular, server-side URL fetching must defend against SSRF, redirects must be revalidated, retrieved content must be treated as untrusted data, credentials must remain server-side, and research/provider usage must be bounded.
-
-Read [AI/SECURITY.md](AI/SECURITY.md) before implementing fetch, authentication, persistence, or external integrations.
-
-## Contributing
-
-Before making substantial changes, read [AI/CONTRIBUTING.md](AI/CONTRIBUTING.md) and the master workflow. Do not commit secrets or claim support for an integration that has not been tested.
-
-## License
-
-No license has been selected yet. Until a license is added, do not assume this repository grants permission to reuse, redistribute, or modify its contents beyond rights provided by applicable law.
+No live AI connection or production deployment is claimed. See [AI/STATE.md](AI/STATE.md) and [AI/WF.md](AI/WF.md).

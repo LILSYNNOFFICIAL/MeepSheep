@@ -1,118 +1,83 @@
 # MeepSheep Project State Ledger
 
-**Last verified:** 2026-10-31  
+**Last updated:** 2026-10-31  
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
-**Branch:** `main`
+**Default branch:** `main`  
+**Documentation correction branch:** `docs/ai-interoperability-foundation`
 
-This file is the compact handoff record. Update it after meaningful repository, architecture, infrastructure, or release changes.
-
-## Current repository facts
-
-- [x] Repository identity confirmed: `LILSYNNOFFICIAL/MeepSheep`.
-- [x] Default branch confirmed as `main`.
-- [x] Existing README inspected before replacement.
-- [x] Initial repository was a clean slate with only a minimal README at the time of inspection.
-- [ ] Application source code exists.
-- [x] Automated test suite exists.
-- [x] CI workflow exists.
-- [ ] Production deployment verified.
-- [ ] Domain routing and TLS verified.
-- [ ] MCP endpoint deployed and tested.
-- [ ] Search provider selected through benchmark.
-- [ ] Authentication configured and tested.
-- [ ] Data persistence configured and tested.
-
-The unchecked items are not claims that no work exists elsewhere; they mean this repository's current verified project state has not established them.
+This ledger records verified repository and project state. A proposed design is not an implemented feature.
 
 ## Product direction
 
-- MeepSheep is the product name.
-- `meepsheep.com` is the intended canonical domain.
-- Standalone responsive web/PWA and MCP are both product surfaces.
-- Both surfaces should share one research core.
-- Research results must be evidence-linked and uncertainty-aware.
-- No local GPU is required for the proposed cloud-hosted design.
+- [x] Owner-confirmed primary purpose: AI agents communicate with other AI agents.
+- [x] MCP-first product direction documented.
+- [x] Inbound MCP server is the primary interface for compatible requesting AI clients.
+- [x] Outbound MCP client is the first remote-agent connection type.
+- [x] MeepSheep is the relay, registry, permission boundary, task coordinator, and response path.
+- [x] Remote agents perform research, coding, browsing, and other work using their own configured capabilities.
+- [x] A2A, provider APIs, and webhooks are optional adapters, not MVP prerequisites.
+- [x] MeepSheep-owned research-engine functionality is deferred from the MVP.
 
-## Infrastructure verification warning
+## Repository and automation facts
 
-Previous account inspection did not establish a currently configured MeepSheep Cloudflare production deployment. Do not assume a zone, Worker, Pages project, D1 database, or DNS route exists. Reinspect the active account and domain before deployment.
+- [x] Repository identity and default branch confirmed.
+- [x] README and AI operating-document structure exist.
+- [x] Automated test suite exists.
+- [x] CI workflow exists.
+- [x] Wellness Doctor Python script and unit tests exist.
+- [x] Four-level health status and README marker contract exist.
+- [ ] Branch protection/rulesets verified.
+- [ ] Scheduled and manual Wellness Doctor executions independently observed after latest changes.
 
-## Current documentation baseline
+## Latest verified documentation checkpoint
 
-- [x] Root README rewritten and verified.
-- [x] `AI/WF.md` created and verified.
-- [x] `AI/PROJECT.md` created and verified.
-- [x] `AI/ARCHITECTURE.md` created and verified.
-- [x] `AI/DECISIONS.md` created and verified.
-- [x] `AI/SECURITY.md` created and verified.
-- [x] `AI/RESEARCH.md` created and verified.
-- [x] `AI/INTEGRATIONS.md` created and verified.
-- [x] `AI/STATE.md` created and verified.
+- Pull request: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
+- Branch: `docs/ai-interoperability-foundation`
+- Tested PR head: `68fa91739ad5fade181b1984b26cbb366ed44068`
+- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41248222272
+- Unit tests: 10 passed.
+- Repository Doctor: 102 passed, 0 warnings, 0 errors, 0 critical.
+- Both GitHub Actions workflow YAML files parsed successfully.
+- An earlier run found 10 warnings; all eight missing README links and both stale state-ledger checks were corrected. The follow-up run reported zero findings.
+- This is repository/documentation/workflow verification only. It does not certify production services or live AI connections.
 
-All listed documentation files were committed on `main` and fetched back from GitHub. Their existence, Markdown headings, substantial content, and expected file paths were verified. A byte-for-byte comparison against local source drafts was not performed because those drafts were not saved as local files.
+## Current implementation state
+
+- [ ] Application source code for the MCP server exists.
+- [ ] Outbound MCP client is implemented.
+- [ ] Agent registry and connection manager are implemented.
+- [ ] Authentication and per-agent grants are implemented.
+- [ ] Canonical message/task persistence is implemented.
+- [ ] A mock MCP server integration test exists.
+- [ ] Live AI client-to-MeepSheep-to-remote-agent round trip is demonstrated.
+- [ ] Production deployment, DNS, and TLS are verified.
+
+No live AI connection, production endpoint, or deployed application is claimed.
+
+## Infrastructure
+
+A read-only inspection on 2026-10-31 returned one accessible Cloudflare account with zero zones, Worker scripts, D1 databases, Durable Object namespaces, and Queues. This is account-scoped and does not rule out another account or registrar. No resources were created, changed, or deleted.
+
+Do not deploy or change DNS until the correct account and domain zone are confirmed.
+
+## Next actions
+
+1. Review and merge the MCP-first documentation PR after its final CI run.
+2. Confirm the exact first requesting MCP client and remote MCP agent.
+3. Verify current MCP SDK, protocol revision, transport, and authentication compatibility.
+4. Confirm the correct Cloudflare account/domain and select one authoritative data/auth owner.
+5. Implement local inbound/outbound MCP contract tests and a deterministic mock server.
+6. Only after the mock round trip is verified, configure one live remote agent and prove a real round trip.
 
 ## Session handoff template
 
-For each substantial work session, append or update:
 - Date:
 - Objective:
-- Files or systems changed:
-- Decisions made:
+- Branch and exact commit SHA:
+- Files/systems changed:
 - Tests and verification performed:
 - Exact results:
-- Known failures or unresolved risks:
+- Known failures and unverified items:
 - Next action:
-- Workflow checkboxes changed:
 
-Do not record secrets, access tokens, private keys, or unnecessary personal data here.
-
-
-## Documentation verification record
-
-- Verification date: 2026-10-31.
-- Repository branch: `main`.
-- README update commit: `5114af5e5c5f9be2ce68558226d77b36835c711e`.
-- Master workflow verification update commit: `d2a3716d4d6f0f0e760f7709c0514eebef9a4eae`.
-- All ten expected Markdown paths (README plus nine files under AI/) were fetched successfully from GitHub.
-- Each fetched file had a Markdown heading and substantial content.
-- The README links to each AI document.
-- No application code, infrastructure, domain records, or deployment settings were changed.
-- Limitation: no byte-for-byte comparison to local authored drafts was possible in this session; the repository copies were checked for successful retrieval and expected structure.
-
-
-## 2026-10-31: Wellness Doctor and GitHub automation work
-
-- **Owner approval:** The four-icon Wellness Doctor and GitHub workflow design was approved.
-- **Repository baseline inspected:** Existing main branch tree and AI documents were fetched before changes.
-- **Added operating specifications:** `AI/GITHUB_RULES.md`, `AI/ACTIONS.md`, `AI/WELLNESS_DOCTOR.md`, `AI/STATUS_ICONS.md`, `AI/INCIDENTS.md`, `AI/AUTOMATION_LOG.md`, and `AI/WELLNESS_IMPLEMENTATION_PLAN.md`.
-- **README:** Added links to the automation documents and a delimited generated health region.
-- **Implementation status:** Implemented and verified by successful push-triggered GitHub Actions runs. The Python doctor, unit tests, README updater, read-only quality workflow, and trusted write-enabled wellness workflow are present on main.
-- **Not verified:** Branch protection/rulesets, production website uptime, DNS, Cloudflare/Supabase/GitLab external service health.
-
-
-## Wellness Doctor verification checkpoint (2026-10-31)
-
-- **Verified source checkpoint:** `9aad4dca4ddf49a239f8b2ade0c2751cbe05794e` on `main` before this state-ledger update.
-- **Repository inventory:** 21 files in the inspected Git tree, including 16 AI operating documents, two workflow definitions, one doctor script, one test file, and README.
-- **Unit tests:** 9 tests passed in the latest GitHub Actions run.
-- **Doctor checks:** 82 passed, 0 warnings, 0 errors, 0 critical findings.
-- **README:** Current generated health indicator is 🟢 Healthy (`OK`), with all four category rows green.
-- **Quality workflow:** [Run 41245444264](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41245444264) completed successfully. Unit tests, read-only doctor, and both workflow YAML syntax checks passed.
-- **Wellness workflow:** [Run 41245444455](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41245444455) completed successfully. Nine tests passed; doctor reported 82 passed checks and no findings; README was unchanged, so no health-only commit was created.
-- **TDD evidence:** A stub implementation produced the expected `NotImplementedError` failures before implementation. The implemented doctor then passed the focused suite.
-- **Additional verification:** Local CLI JSON smoke test returned valid JSON and exit code 1 for an empty repository, correctly classifying it as critical. Tests cover all four status levels, severity precedence, missing files, broken links, encoded paths with fragments, traversal outside repository root, empty workflow directory, unbalanced fences, malformed/duplicate markers, and idempotent README updates.
-- **Workflow syntax:** Both GitHub Actions YAML files parsed successfully using Ruby/Psych in the quality workflow.
-- **Action runtime:** Workflows now pin the verified upstream v6 commits for checkout and setup-python. The latest inspected logs contain no Node.js 20 deprecation warning.
-- **No-op behavior:** A successful push-triggered Wellness Doctor run confirmed that unchanged health output does not create a commit.
-- **Still unverified:** Scheduled cron event execution and manual dispatch execution have not yet been observed. The workflow definitions include both. No branch protection/ruleset settings were changed or verified. Production uptime, DNS, Cloudflare, Supabase, GitLab, external providers, and MCP-client health are outside this doctor version.
-
-
-## Site Doctor repair checkpoint (2026-10-31)
-
-- **Merged fix:** PR [#1](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/1) merged to `main` as `046e92739a5bd4b3f1aa5803a922551e052d7167`.
-- **Regression:** The doctor previously missed stale unchecked state-ledger entries even when the corresponding test suite and CI workflow were present. The state ledger now correctly marks both as present, and the doctor reports future drift as 🟡.
-- **TDD evidence:** The new regression test failed before implementation with `AssertionError: 0 != 2`; after implementation, all 10 tests passed.
-- **Quality run:** [Run 41246535939](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41246535939) completed successfully on the merge commit. Tests, read-only doctor, and YAML syntax validation passed.
-- **Wellness run:** [Run 41246535992](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41246535992) completed successfully on the merge commit. README now reports 🟢 Healthy, 84 passed, 0 warnings, 0 errors, 0 critical.
-- **Queue reliability:** Quality workflow now queues overlapping pushes instead of cancelling in-progress checks. The earlier cancelled runs were caused by the previous concurrency setting, not by doctor findings.
-- **Still unverified:** Scheduled cron execution, manual dispatch execution, branch protection/rulesets, production uptime, DNS, and external integrations remain outside this verified checkpoint.
+Never store secrets, access tokens, private keys, or unnecessary personal data here.

@@ -1,98 +1,67 @@
-# MeepSheep Integrations and Tool Strategy
+# MeepSheep Integration Strategy
 
-This document tracks candidate external services and development tools. Availability in the owner's ChatGPT workspace does not mean every integration is connected, authorized, or appropriate for every task.
+**Primary integration:** MCP.  
+**Product goal:** Let independently operated AI agents communicate through one secure relay.
 
-## 1. Product integrations
+## 1. Core connection pattern
 
-### Search and retrieval
-Candidate categories:
-- Web search providers.
-- URL fetching and readable-content extraction.
-- Specialized academic, technical, public-record, and community sources where lawful and useful.
+MeepSheep needs both MCP roles:
 
-Provider names, current prices, quotas, capabilities, and terms must be rechecked before selection. Do not commit to a vendor based on stale pricing.
+- **Inbound MCP server:** requesting AI clients connect to MeepSheep and call its agent discovery, messaging, delegation, and task tools.
+- **Outbound MCP client:** MeepSheep connects to separately configured remote MCP servers and invokes only owner-approved tools.
 
-### AI assistant interoperability
-Primary protocol candidate: remote MCP.
+A remote MCP server may expose an AI agent, a tool service, or both. MeepSheep must not assume that every MCP server is an autonomous AI agent. The owner explicitly classifies the connection and approves the tools/capabilities that may be called.
 
-Potential client families include:
-- ChatGPT.
-- Grok.
-- Claude.
-- Other clients that support the selected MCP transport and authentication model.
+## 2. Optional adapters
 
-Support is client-, plan-, platform-, and policy-dependent. Verify current official documentation for each target before promising availability. A working MCP server does not automatically mean an integration is listed in an app directory or available on every mobile client.
+- **A2A:** Add when a concrete remote agent exposes A2A and the integration is useful.
+- **Provider APIs:** Add only for documented agent APIs with permitted authentication and use.
+- **Webhooks/custom endpoints:** Add only when the owner controls or explicitly authorizes the endpoint and a secure request/response contract exists.
 
-### Infrastructure candidates
-- Cloudflare Workers, Static Assets, D1, KV, R2, Queues, and related services.
-- Supabase for authentication, database, storage, or related capabilities if justified.
-- GitHub as the canonical source repository.
-- GitLab as an optional mirror or CI environment only if a specific workflow needs it.
+Do not build an adapter simply to claim support for a vendor. Every adapter uses the same identity, authorization, canonical message/task model, task state, budget, and audit core.
 
-Avoid duplicating infrastructure roles without a clear reason.
+## 3. Compatibility matrix
 
-## 2. Owner's connected development toolbox
+For every target record:
+- Vendor and exact product.
+- Surface: consumer UI, developer API, CLI, desktop app, or agent runtime.
+- Account plan and platform/OS.
+- Protocol and exact version.
+- Transport and authentication.
+- Whether the endpoint accepts inbound calls or only makes outbound tool calls.
+- Available operations and tool scopes.
+- Async, streaming, timeout, and cancellation behavior.
+- Payload and rate limits.
+- Test date, exact scenario, result, and evidence.
 
-The owner has identified a broad set of connected or available tools, including:
-- Cloudflare
-- Supabase
-- GitLab (Beta)
-- Codex and Codex-related workflow/engineering tools
-- Superpowers and Skillquiver
-- Codelit
-- CodeRabbit and Qodo
-- Vercel
-- HTML/CSS to Image API
-- Figma and design/code conversion tools
-- Browser automation and web research tools
-- Website and mobile app builders
-- Security review and code analysis tools
-- Other plugins and integrations
+Never label an entire vendor brand as supported based on one API or CLI. A working remote MCP server does not mean every ChatGPT or Grok consumer interface can connect to it.
 
-The exact list and connection state can change. Before a task:
-1. Inspect the tools actually available in the current session.
-2. Read required tool skills and usage instructions.
-3. Check whether the integration is connected and authorized.
-4. Prefer a tool when it materially improves the work.
-5. Do not invoke tools merely because they exist.
-6. Report which tools were actually used, if that matters to the task.
+## 4. First integration sequence
 
-## 3. Tool selection principles
+1. Build a local MeepSheep MCP server.
+2. Build a local outbound MCP client connection.
+3. Connect a deterministic mock remote MCP server.
+4. Prove discovery, approved tool invocation, response normalization, and error handling.
+5. Connect one real independently operated MCP agent.
+6. Connect one real requesting MCP client.
+7. Prove a live round trip and record the exact tested surfaces.
 
-- GitHub is the source of truth for repository state unless explicitly changed.
-- Use Cloudflare tools for Cloudflare account and deployment work.
-- Use Supabase tools only when Supabase is part of the selected architecture.
-- Use Figma for editable design artifacts when required.
-- Use browser automation for real user-directed website workflows, not as a substitute for testing APIs.
-- Use code review/security tools as independent checks, not as proof by themselves.
-- Use automated tests and actual runtime checks for behavior verification.
-- Keep provider credentials in secret stores.
+## 5. Official documentation references
 
-## 4. Integration acceptance checklist
+- MCP specification: https://modelcontextprotocol.io/specification
+- Cloudflare Agents SDK MCP: https://developers.cloudflare.com/agents/model-context-protocol/
+- OpenAI remote MCP: https://developers.openai.com/api/docs/guides/tools-connectors-mcp
+- xAI MCP: https://docs.x.ai/build/features/mcp-servers
+- A2A specification, for optional future adapter: https://a2a-protocol.org/latest/specification/
 
-- [ ] Official documentation reviewed for each launch integration.
-- [ ] Authentication and scopes documented.
-- [ ] User consent and revocation behavior understood.
-- [ ] Rate limits, pricing, and terms checked.
-- [ ] Failure and timeout behavior tested.
-- [ ] Sensitive data exposure reviewed.
-- [ ] Mobile and desktop support verified separately.
-- [ ] Public directory/app submission requirements verified separately from protocol compatibility.
+Recheck specifications, SDK versions, pricing, plans, and terms immediately before implementation. These links do not prove MeepSheep has connected to any provider.
 
-## 5. No false integration claims
+## 6. Infrastructure candidates
 
-Do not claim MeepSheep is connected to, approved by, listed in, or available through an AI platform until the actual integration has been configured and its real behavior verified.
+Cloudflare Workers/Agents SDK, Workflows, Durable Objects, D1, Queues, KV, R2, and Static Assets are candidates only. The accessible Cloudflare account inspected on 2026-10-31 returned no zones, Workers, D1 databases, Durable Object namespaces, or Queues. Confirm the correct account and domain before deployment.
 
+Supabase remains an alternative candidate for selected identity/data responsibilities. Avoid two competing authoritative databases.
 
-## 6. GitHub automation integrations
+## 7. Development tools
 
-GitHub Actions is the first automation host for repository integrity checks.
-
-- `quality.yml`: read-only validation on pull requests and pushes to main.
-- `wellness-doctor.yml`: trusted main-branch, scheduled, and manual health inspection with conditional README update.
-- `scripts/wellness_doctor.py`: deterministic repository inspector.
-- `tests/test_wellness_doctor.py`: unit tests for status mapping, inspection findings, and safe README updates.
-
-The connected GitHub integration can inspect and modify repository files, but available tool permissions do not automatically include repository settings administration or workflow dispatch. Use the actual Actions UI/API or a specifically authorized tool to verify execution and settings. Never infer that a workflow ran because its YAML exists.
-
-GitLab, CodeRabbit, Qodo, Codex, Superpowers, Skillquiver, security reviewers, and other tools remain optional supporting tools. Select them per task, inspect actual availability, and do not duplicate CI responsibilities without a documented reason.
+Use tools actually available and authorized in the current session. GitHub is the source of truth for repository state. Cloudflare tools are used for Cloudflare account/deployment work. Supabase tools are used only if that architecture is selected. Security and code-review tools supplement, but do not replace, automated tests and live behavior verification.

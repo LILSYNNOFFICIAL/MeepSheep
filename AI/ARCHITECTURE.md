@@ -1,219 +1,109 @@
 # MeepSheep Architecture
 
-**Status:** Proposed target architecture. No application runtime has been verified as deployed.
+**Status:** Proposed target architecture. No application runtime or production infrastructure is verified as deployed.  
+**Primary product:** MCP-first AI-to-AI relay and coordination service.
 
 ## 1. Architecture goals
 
-- One research engine powers the website and MCP interface.
-- Provider integrations are replaceable adapters.
-- Stateless request handling is preferred for the first release.
-- Persistence is introduced only where product requirements justify it.
-- Every external request has explicit limits, timeouts, and error handling.
-- The design can begin on low-cost/free tiers without assuming those tiers are unlimited.
+- Give compatible AI clients one MCP endpoint for agent discovery, messaging, delegation, and task retrieval.
+- Connect remote agents through their actual supported interfaces, beginning with outbound MCP connections.
+- Normalize all inbound and outbound traffic through one canonical internal envelope.
+- Centralize identity, grants, routing, task state, budgets, audit, and provenance.
+- Keep each agent's own intelligence, tools, and research capabilities on the agent side.
+- Support durable asynchronous tasks and a synchronous fast path.
+- Add A2A or vendor-specific adapters only when a concrete connection requires them.
 
-## 2. Proposed high-level topology
-
-```text
-Desktop / Mobile Browser                 MCP-compatible AI clients
-          |                                        |
-          v                                        v
-   MeepSheep Web App                         Remote MCP endpoint
-          |                                        |
-          +-------------------+--------------------+
-                              |
-                              v
-                    Shared application layer
-                              |
-             +----------------+----------------+
-             |                |                |
-             v                v                v
-       Research core     Source pipeline   Policy / quotas
-             |                |
-             v                v
-       Provider adapters  Fetch / parse / normalize
-             |
-      +------+------+------+
-      |             |      |
-    Search A     Search B  Future providers
-
-       Optional persistence and artifacts:
-          D1 / KV / R2 (Cloudflare)
-```
-
-This is a conceptual boundary diagram, not a claim that these services are configured.
-
-## 3. Candidate hosting and data platform
-
-### Cloudflare
-Candidate responsibilities:
-- Workers: API, MCP endpoint, orchestration, and server-side request controls.
-- Workers Static Assets: delivery of the web client where suitable.
-- D1: relational records such as users, saved research, jobs, and source metadata.
-- KV: short-lived cache and lightweight lookup data where consistency requirements permit.
-- R2: optional report exports, uploaded documents, and larger artifacts.
-
-Do not add every service by default. Validate current product limits, pricing, bindings, regional behavior, and deployment compatibility before selecting each one.
-
-### Supabase
-Supabase is available as an alternative or complementary backend, not an automatic dependency. Before choosing it, compare the actual needs for authentication, relational storage, row-level security, storage, realtime, operational complexity, and cost against a Cloudflare-native design.
-
-Avoid splitting ownership of the same records between D1 and Supabase without a documented reason and clear source of truth.
-
-## 4. Application boundaries
-
-### Web client
-Responsibilities:
-- Research input and configuration.
-- Research progress and status.
-- Evidence and source presentation.
-- Report viewing, saving, and export.
-- Account and privacy controls when authentication exists.
-- Accessible responsive layouts.
-
-The client must not contain provider secrets or privileged credentials.
-
-### API/application layer
-Responsibilities:
-- Validate requests and enforce schemas.
-- Authenticate users and clients.
-- Apply quotas, rate limits, and request budgets.
-- Coordinate research jobs.
-- Normalize errors and outputs.
-- Apply retention and privacy rules.
-- Record operational telemetry without leaking sensitive content.
-
-### Research core
-Responsibilities:
-- Parse and normalize the research question.
-- Generate a bounded research plan.
-- Route queries to selected providers.
-- Merge, normalize, and deduplicate results.
-- Retrieve and extract allowed public sources.
-- Build evidence records.
-- Assess support, contradiction, context, and gaps.
-- Produce a traceable report object.
-
-The research core must be independent of the website framework and MCP transport.
-
-### Provider adapters
-Each adapter should implement a shared internal contract:
-- Capability declaration.
-- Request construction.
-- Authentication through server-side secrets.
-- Timeout and retry policy.
-- Provider-specific quota handling.
-- Normalized results.
-- Attribution and terms metadata.
-- Health and error reporting.
-
-Do not assume all providers support the same operators, freshness, content depth, or rights.
-
-### MCP adapter
-Expose a narrow, stable set of tools backed by the shared application layer. Initial candidate tools:
-- `research`
-- `verify_claim`
-- `fetch_source`
-
-MCP schemas must be explicit, bounded, and documented. Avoid exposing arbitrary internal functions or unrestricted fetch operations.
-
-## 5. Data flow
-
-1. Client submits a question or source URL.
-2. API authenticates and validates the request.
-3. Policy layer checks permissions, quotas, and budgets.
-4. Research planner creates a bounded plan.
-5. Provider adapters retrieve candidate sources.
-6. Normalizer canonicalizes URLs and source metadata.
-7. Deduplication groups repeated or syndicated material.
-8. Source pipeline fetches permitted pages with SSRF and size protections.
-9. Extractor captures text and metadata while preserving source attribution.
-10. Evidence analysis classifies support, contradiction, context, and gaps.
-11. Report builder produces structured findings and citations.
-12. API returns results and optionally persists them under the user's retention settings.
-
-A failure in one provider should not silently invalidate all results. Partial results must be labeled.
-
-## 6. Candidate report schema
-
-The exact schema must be versioned and validated before implementation. Initial conceptual fields:
-
-- `report_id`
-- `schema_version`
-- `question`
-- `created_at`
-- `completed_at`
-- `research_scope`
-- `methodology`
-- `sources[]`
-- `claims[]`
-- `evidence_items[]`
-- `findings[]`
-- `contradictions[]`
-- `limitations[]`
-- `provider_status[]`
-- `cost_and_usage`
-
-Every evidence item should reference a source record and preserve excerpt boundaries or a reproducible locator where possible.
-
-## 7. Hosting and endpoint candidates
-
-Candidate public addresses:
-- Web app: `https://meepsheep.com`
-- MCP endpoint: `https://mcp.meepsheep.com/mcp`
-
-These are proposed routing choices only. DNS, domain ownership in the active Cloudflare account, certificates, Workers routes, and endpoint health must be verified before claiming availability.
-
-## 8. Deployment architecture decisions still required
-
-- Vite + React PWA versus a framework with server rendering.
-- Cloudflare Workers native implementation versus framework adapter.
-- Cloudflare D1 versus Supabase as primary relational store.
-- Authentication provider and OAuth design.
-- Provider shortlist and benchmark winner.
-- Queue/job model for long-running research.
-- Retention defaults and user-controlled deletion.
-- Whether report exports require R2 in the first release.
-
-## 9. Architecture constraints
-
-- No local GPU requirement.
-- No API keys in browser bundles.
-- No unbounded fan-out across search providers.
-- No unrestricted URL fetching.
-- No hidden use of sources whose terms prohibit the intended use.
-- No claim of unlimited free usage.
-- No dependency on a single search provider for the product's core value.
-
-
-## 10. Repository health and automation architecture
-
-The repository maintenance layer is separate from the MeepSheep application runtime.
+## 2. Target topology
 
 ```text
-GitHub push / pull request ──> Read-only quality workflow
-                                      |
-                                      v
-                                Unit tests + doctor
-                                      |
-                                      v
-                                YAML validation
-
-Trusted main push / schedule / manual dispatch
-                    |
-                    v
-          Wellness Doctor (Python)
-                    |
-          +---------+----------+
-          |                    |
-          v                    v
-    Findings + severity   README marker updater
-                               |
-                               v
-                        Conditional bot commit
+AI client / assistant
+       |
+       | MCP client
+       v
+MeepSheep MCP server
+       |
+       v
+Authentication + tenant + grants
+       |
+       +---- Agent registry / capability directory
+       |
+       v
+Canonical message + task router
+       |
+       +---- Outbound MCP client ------> Remote MCP agent/server
+       |
+       +---- Optional A2A adapter -----> A2A agent
+       |
+       +---- Optional provider adapter -> Documented agent API
+       |
+       +---- Optional webhook adapter --> Authorized endpoint
+       |
+       v
+Durable task state / messages / events / audit / usage
+       |
+       v
+Structured response to original MCP caller
 ```
 
-The doctor inspects repository files, Markdown integrity, required project documents, and workflow contracts. It uses no production secrets and makes no network requests. GitHub Actions handles workflow YAML parsing and supplies the run history.
+The MCP server and outbound MCP client are separate roles. MeepSheep must implement both sides when it is acting as a relay: it accepts tool calls from the requesting AI client, then independently connects to the target agent's MCP server.
 
-The README updater owns only the content between `MEEPSHEEP_HEALTH_START` and `MEEPSHEEP_HEALTH_END` markers. It must preserve all other content and avoid no-op commits.
+## 3. MCP is the primary interface, not magic connectivity
 
-This subsystem does not monitor production HTTP availability, Cloudflare resources, Supabase databases, external search providers, or MCP clients. Those require separate authenticated probes and explicit product decisions.
+MCP provides a standardized client/server protocol. MeepSheep exposes tools to a compatible caller and uses an MCP client to invoke tools on remote MCP servers. This allows one agent to ask MeepSheep to interact with another agent, provided the target exposes a suitable MCP server and the connection is configured and authorized.
+
+MCP does not:
+- Make a closed consumer chat UI remotely callable.
+- Automatically register every AI product.
+- Grant access to private chats, hidden prompts, memory, or tools.
+- Guarantee that two assistants can initiate messages to each other without an exposed endpoint.
+- Define MeepSheep's tenant model, agent registry, routing policy, or durable orchestration.
+
+MeepSheep supplies those product-level capabilities.
+
+## 4. Shared coordination core
+
+### Identity and policy
+Authenticate the MCP caller and derive principal and tenant from trusted credentials. Resolve target grants server-side. Enforce separate permissions for discovery, message send, task dispatch, status read, cancellation, artifact read, and administration.
+
+### Agent registry
+Store stable agent ID, owner/tenant, connection type, endpoint reference, protocol/version, declared capabilities, supported tools, auth method, limits, health, trust state, and last verified time. Capability declarations are metadata, not authorization.
+
+### Connection manager
+Store encrypted credential references, scopes, owner, endpoint, health, connection test results, and revocation state. Never expose credentials to model-callable tools or browser code.
+
+### MCP gateway
+Expose a small, predictable set of tools. Validate every input and output against schemas, enforce caller scopes and payload limits, and return sanitized structured errors.
+
+### Outbound MCP client
+Create authenticated client sessions to registered remote MCP servers. Discover their tools, retain only owner-approved tool mappings, invoke permitted tools, enforce timeouts, and normalize results. A target MCP server may represent an AI agent, a tool service, or a mixed system. The owner must explicitly classify and approve the connection.
+
+### Router and orchestrator
+Resolve target and adapter, reserve budget, create durable task state, dispatch idempotently, process progress and results, and preserve provenance. Child tasks can only narrow parent permissions, deadline, and budget.
+
+### Optional protocol adapters
+A2A and vendor API adapters are plugins to the same core. They must not create a second registry, authorization system, or task model.
+
+### Web console
+A protected owner interface manages connections, credentials, capabilities, grants, task history, and audit. Model-callable MCP tools do not perform privileged administration by default.
+
+## 5. Canonical task lifecycle
+
+Internal states: `queued`, `dispatching`, `working`, `input_required`, `completed`, `failed`, `canceled`, `rejected`, and `expired`.
+
+Every task binds task ID, trace ID, caller, tenant, target, connection, grant, deadline, budget, idempotency key, context policy, and provenance. State transitions are validated and append-only. Short tasks may return synchronously. Long tasks return a task ID and are retrieved through MCP tools. Streaming is optional; durable status/result retrieval is mandatory.
+
+## 6. Data and storage boundaries
+
+Use one authoritative relational data owner. D1 versus Supabase remains open until current account, auth, cost, and runtime needs are compared. Do not split authoritative task and grant state across stores. Keep secrets in platform secret storage or a dedicated secret manager. Store large artifacts separately with scoped expiring references. Define retention and deletion before public launch.
+
+## 7. Hosting candidates
+
+Cloudflare Workers/Agents SDK, Workflows, Durable Objects, D1, Queues, R2, and Static Assets remain candidates, not final selections. Verify account access, pricing, runtime support, and service limits before committing. No local GPU is required; remote agents/providers perform inference.
+
+The connected Cloudflare account inspection on 2026-10-31 returned no zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues. This was account-scoped. Do not deploy or change DNS until the correct account and domain zone are confirmed.
+
+## 8. Security boundaries
+
+Treat remote MCP tool descriptions, tool outputs, agent metadata, callbacks, and artifacts as untrusted. Enforce tenant isolation, least privilege, SSRF protections for remote endpoint validation, redirect revalidation, authenticated callbacks, replay protection, bounded delegation, budget ceilings, payload limits, and privacy-safe audit. Do not pass hidden reasoning, private prompts, or unapproved chat history.
+
+See [SECURITY.md](SECURITY.md), [API_SPEC.md](API_SPEC.md), and [COST_MODEL.md](COST_MODEL.md).
