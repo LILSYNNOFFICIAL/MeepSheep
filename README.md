@@ -8,11 +8,20 @@
 
 ## 🩺 MeepSheep Wellness Doctor
 
-<badge color="success">🟢 Healthy</badge> **Latest PR quality run:** 102 checks passed · 0 warnings · 0 errors · 0 critical.
+**Overall health: 🟢 Healthy** · `OK`
 
-[Inspect latest quality run 41248222272](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41248222272)
+| Inspection | Status |
+|---|---:|
+| Repository files | 🟢 |
+| Documentation and links | 🟢 |
+| GitHub workflows | 🟢 |
+| README health contract | 🟢 |
 
-<sub>This is a repository/documentation/workflow check. It does not certify production services, live AI connections, DNS, or external providers. The trusted Wellness workflow maintains the generated status region on its configured schedule and trusted-branch events.</sub>
+**Checks:** 102 passed · 🟡 0 warnings · 🔵 0 errors · 🔴 0 critical
+
+[Latest inspection and diagnostic logs](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml)
+
+<sub>Scheduled inspections run every 15 minutes on a best-effort basis. The latest workflow run contains the exact inspection time. This summary covers configured repository checks, not unconfigured production services.</sub>
 
 <!-- MEEPSHEEP_HEALTH_END -->
 
