@@ -139,3 +139,43 @@ Convenience must never silently weaken the URL-fetching boundary, credential bou
 - Do not let bot-authored health commits recursively trigger another write cycle.
 - Treat workflow logs and artifacts as potentially visible repository data. Never include private user queries or source contents.
 - The doctor is not a security scanner or production monitor. Do not use a green repository status as proof that production infrastructure is secure or available.
+
+
+## 12. Agent interoperability threat model
+
+The primary product connects independently operated agents. Add these risks to the existing security baseline:
+
+- **Confused deputy:** a caller tricks MeepSheep into using its own connection credentials for an action the caller is not authorized to perform.
+- **Cross-tenant agent discovery or dispatch:** identifiers, registry filters, task IDs, or artifact references expose another tenant's agents or results.
+- **Credential substitution and leakage:** credentials are attached to the wrong agent, exposed in traces, or reused across connections.
+- **Malicious Agent Cards and callback URLs:** remote metadata points to internal/private addresses, metadata services, or unsafe redirects.
+- **Replay and duplicate side effects:** retries or repeated callbacks cause an external action to run more than once.
+- **Delegation amplification:** recursive or parallel agent calls create runaway cost, traffic, or authority.
+- **Context exfiltration:** task payloads contain conversation history or attachments beyond the user's intended sharing scope.
+- **Malicious or compromised agents:** remote responses contain prompt injection, false completion claims, hostile links, or requests for secrets and additional tools.
+- **Task confusion:** out-of-order events, reused remote IDs, or forged callbacks alter the wrong task.
+
+Required controls:
+- Bind every task to an authenticated caller, tenant, target, connection, grant, deadline, and idempotency key.
+- Resolve permissions server-side on every dispatch, status read, cancellation, and artifact fetch.
+- Separate agent discovery from permission to invoke it.
+- Treat agent capability declarations as untrusted metadata, not authorization grants.
+- Validate every endpoint and redirect against SSRF policy; never fetch arbitrary Agent Card URLs without the same protections as user-supplied URLs.
+- Verify callback signatures or use authenticated polling; reject stale, duplicate, and out-of-order events safely.
+- Use per-connection credentials, least privilege, encryption at rest, rotation, and immediate revocation.
+- Apply hard caps to depth, fan-out, concurrency, retries, task duration, payload size, and total budget. Child tasks may narrow but never expand parent permissions or budget.
+- Require explicit approval for sensitive actions and do not expose administrative tools to ordinary model-callable scopes.
+- Treat remote content as data, never as instructions that can modify MeepSheep policy or tool permissions.
+- Share only explicitly selected context. Never transmit hidden reasoning or private system prompts.
+- Keep audit provenance without logging full private payloads or credentials.
+
+### Additional release gates
+
+- [ ] Cross-tenant agent, task, message, and artifact isolation tests pass.
+- [ ] Confused-deputy and privilege-escalation tests pass.
+- [ ] Replay, duplicate delivery, forged callback, and out-of-order event tests pass.
+- [ ] Malicious Agent Card and callback SSRF tests pass for IPv4 and IPv6.
+- [ ] Recursive delegation and parallel fan-out limits are enforced.
+- [ ] Credential rotation and revocation are verified against a live test adapter.
+- [ ] Context-sharing controls are tested with adversarial prompts and sensitive fixtures.
+- [ ] A compromised remote agent cannot change MeepSheep authorization or invoke unrelated tools.
