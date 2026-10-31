@@ -180,7 +180,7 @@ Research documents are retained as optional future agent-side capability referen
 - [x] Inbound MCP server handler implemented in the local lab (not deployed).
 - [x] Outbound MCP client implemented against a mock MCP server in the local lab.
 - [~] In-memory agent registry and approved-tool checks implemented; persistent connection management remains open.
-- [x] Deterministic MCP mock-agent round-trip tests pass, including a separate-process loopback HTTP case.
+- [x] Deterministic MCP mock-agent round-trip tests pass, including a separate-process loopback HTTP case and authentication-boundary checks.
 - [ ] Network-separated live independent-agent round trip demonstrated.
 - [ ] Production hosting and domain verified.
 
