@@ -21,6 +21,8 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [x] PR #2 merged to main: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
 - [x] Merge commit: `d0bec625eb191d71781ab3e1d239245e54dd9594`
 - [x] README, product, architecture, interoperability, security, API, build, and workflow docs aligned around the MCP relay.
+- [x] Automated test suite exists.
+- [x] CI workflow exists.
 
 ## Local MCP relay laboratory
 
