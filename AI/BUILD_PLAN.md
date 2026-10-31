@@ -1,146 +1,134 @@
 # MeepSheep Build Plan
 
-**Status:** Proposed execution plan. No application implementation is claimed by this document.
-**Product priority:** AI-to-AI interoperability, agent discovery, delegation, and coordination.
+**Status:** Proposed plan. No application implementation is claimed.  
+**Priority:** MCP-first AI-to-AI communication.
 
-## Delivery principles
+## Principles
 
-- Build the smallest end-to-end interoperability path before a large dashboard.
-- Prefer open protocols and adapters over vendor-specific coupling.
-- Use asynchronous task orchestration as the default, with an optimized synchronous path for short calls.
-- Keep model inference outside MeepSheep. The service routes and coordinates authorized agents; it does not need to host a foundation model.
-- Keep the web console, MCP interface, A2A interface, and future adapters on one shared application core.
-- Every integration must be explicitly configured, authenticated, authorized, and tested.
-- No platform is considered connected merely because a protocol is theoretically compatible.
+- Build a working relay before building a large dashboard.
+- MCP is the primary inbound interface and first outbound agent connection type.
+- MeepSheep supplies routing, registry, authorization, task state, and provenance.
+- Remote agents perform their own work with their own models, tools, and skills.
+- A2A and provider APIs are optional adapters, not MVP prerequisites.
+- Every integration must be explicit, authenticated, authorized, and actually tested.
+- Use one canonical message/task model across every adapter.
 
-## Phase 0: Product correction and protocol baseline
+## Phase 0: Product direction
 
-- [x] Owner clarified that the primary purpose is AI systems communicating with other AI systems.
-- [x] Reframe the product around interoperability and coordination, not research as the primary use case.
-- [x] Identify MCP as the AI-tool interface and A2A as the agent-to-agent task protocol.
-- [x] Review current released MCP and A2A specifications and record reviewed baseline versions in AI/API_SPEC.md.
-- [ ] Confirm initial target client surfaces and their real connection requirements.
-- [ ] Freeze MVP scope and acceptance scenarios.
+- [x] Confirm AI-to-AI communication is the primary purpose.
+- [x] Reframe MeepSheep as an MCP-first relay and coordination service.
+- [x] Clarify inbound MCP server and outbound MCP client roles.
+- [x] Move research-engine functionality out of the MVP.
+- [ ] Merge and verify the documentation correction.
 
-**Exit:** The product brief, protocol strategy, constraints, and target integration matrix agree.
+## Phase 1: Lock the contracts
 
-## Phase 1: Contracts and threat boundaries
+- [ ] Finalize agent, connection, grant, message, task, event, and response schemas.
+- [ ] Finalize inbound MCP tools and JSON Schemas.
+- [ ] Define outbound MCP connection lifecycle and tool allowlisting.
+- [ ] Define identity, tenant, owner, caller, and agent permissions.
+- [ ] Define explicit context-sharing policy.
+- [ ] Define sync response and async task behavior.
+- [ ] Define idempotency, deadlines, retries, cancellation, and error mapping.
+- [ ] Define payload, concurrency, fan-out, depth, and budget ceilings.
+- [ ] Define admin-only actions and owner approval.
+- [ ] Add positive and negative contract fixtures.
 
-- [ ] Finalize agent identity, registration, discovery, and capability schemas.
-- [ ] Finalize message envelope and task lifecycle.
-- [ ] Finalize MCP tool schemas and A2A interoperability boundary.
-- [ ] Define connection ownership, credentials, scopes, and consent.
-- [ ] Define context-sharing and data-retention defaults.
-- [ ] Define idempotency, retries, timeouts, cancellation, and concurrency.
-- [ ] Review SSRF, confused-deputy, prompt-injection, replay, and cross-tenant threats.
-- [ ] Add contract fixtures and negative security tests.
+**Exit:** A developer can implement the relay without guessing at protocol or security behavior.
 
-**Exit:** An implementation can be built against stable contracts without choosing a specific AI vendor.
+## Phase 2: Validate actual environment and first endpoints
 
-## Phase 2: Provider and hosting validation
+- [ ] Confirm the correct Cloudflare account and meepsheep.com zone.
+- [ ] Inspect available Workers/Agents SDK, Workflows, Durable Objects, storage, and limits.
+- [ ] Select one authoritative database and authentication owner.
+- [ ] Pin MCP specification revision, SDK, transport, and auth behavior.
+- [ ] Select one remote MCP agent endpoint and verify it independently.
+- [ ] Select one requesting MCP client surface and verify its actual connection requirements.
+- [ ] Record pricing, quotas, rate limits, and terms.
+- [ ] Do not configure DNS or deploy until the correct account/domain is confirmed.
 
-- [ ] Inspect the active Cloudflare account and confirm domain zone access.
-- [ ] Verify current Workers, Durable Objects, Queues, D1, KV, R2, and Static Assets capabilities and limits.
-- [ ] Compare Cloudflare-native and Supabase responsibilities; select one owner per data domain.
-- [ ] Confirm a suitable async orchestration primitive and durable task storage.
-- [ ] Verify current MCP and A2A SDK support in the chosen runtime.
-- [ ] Validate official connection paths for ChatGPT, Grok, Claude, and other selected clients.
-- [ ] Record current quotas, pricing, auth requirements, and terms.
-- [ ] Build a cost model for short calls and multi-minute tasks.
+## Phase 3: Engineering foundation
 
-**Exit:** Hosting and protocol choices are backed by current account and vendor evidence.
+- [ ] Select runtime and package manager.
+- [ ] Pin runtime/tool versions.
+- [ ] Add formatting, lint, typecheck, and test framework.
+- [ ] Add environment schema and safe example config.
+- [ ] Add secret scanning and dependency checks.
+- [ ] Add reproducible local setup and CI.
+- [ ] Verify a clean checkout can install, test, and build.
 
-## Phase 3: Minimal working interoperability core
+## Phase 4: Minimal MCP relay
 
-- [ ] Implement canonical internal agent and connection models.
-- [ ] Implement one authenticated outbound adapter.
-- [ ] Implement the task/message router.
-- [ ] Implement durable task state and idempotency.
-- [ ] Implement one MCP server exposing discovery and delegation tools.
-- [ ] Implement one A2A client adapter or a controlled test agent endpoint.
-- [ ] Implement a mock agent for deterministic integration tests.
-- [ ] Demonstrate one assistant request being delegated to a second agent and returned.
-- [ ] Preserve trace IDs, task IDs, origin, permissions, and structured outputs.
+- [ ] Implement one authoritative persistence layer and migrations.
+- [ ] Implement agent registry and connection manager.
+- [ ] Implement inbound MCP server.
+- [ ] Implement outbound MCP client.
+- [ ] Discover remote tools and require owner-approved allowlists.
+- [ ] Implement shared authentication and authorization service.
+- [ ] Implement canonical router and message/task services.
+- [ ] Implement `discover_agents`, `get_agent`, `send_message`, `delegate_task`, `get_task`, `wait_task`, `cancel_task`, and `list_my_connections`.
+- [ ] Implement sync request/response path.
+- [ ] Implement durable async task path.
+- [ ] Implement deterministic mock MCP agent.
+- [ ] Add contract tests and local integration tests.
 
-**Exit:** A complete AI-to-AI round trip works in an automated test and a real supported client path.
+**Exit:** A local MCP caller can communicate through MeepSheep with a separate mock MCP server. This is not yet a live external AI integration.
 
-## Phase 4: Reliability, safety, and observability
+## Phase 5: First real AI-to-AI proof
 
-- [ ] Add cancellation, deadline propagation, bounded retries, and dead-letter handling.
-- [ ] Add per-tenant and per-agent quotas and concurrency limits.
-- [ ] Add credential encryption, rotation, and revocation.
-- [ ] Add audit events and privacy-safe logs.
-- [ ] Add prompt-injection and malicious-agent fixtures.
-- [ ] Add cross-tenant isolation and authorization tests.
-- [ ] Add provider health and circuit breakers.
-- [ ] Add usage and cost accounting.
-- [ ] Add monitoring for API, MCP, A2A, queue, and task completion.
+- [ ] Configure a real remote agent endpoint and credential.
+- [ ] Configure a real compatible MCP client to connect to MeepSheep.
+- [ ] Submit a unique request through the actual MeepSheep MCP endpoint.
+- [ ] Verify the remote agent received and processed the request.
+- [ ] Verify the response came from the remote endpoint.
+- [ ] Verify identity, authorization, trace, task status, and provenance.
+- [ ] Test unauthorized access, expired/revoked credential, timeout, malformed output, replay, and duplicate delivery.
+- [ ] Record exact product surface, account plan, OS, protocol/SDK versions, date, and evidence.
 
-**Exit:** Failures are bounded, diagnosable, and cannot silently expand permissions or cost.
+**Exit:** One genuine independently operated agent round trip succeeds. A mock, hardcoded reply, or two model calls in one process does not qualify.
 
-## Phase 5: Multi-agent orchestration
+## Phase 6: Reliability and collaboration
 
-- [ ] Support sequential delegation.
-- [ ] Support parallel fan-out with explicit limits.
-- [ ] Support result aggregation and conflict presentation.
-- [ ] Support human approval gates for sensitive actions.
-- [ ] Support task handoff and resumable state.
-- [ ] Support context minimization and per-agent context filters.
-- [ ] Benchmark latency, reliability, and cost across agent combinations.
+- [ ] Add progress events and resumable tasks.
+- [ ] Add deadline propagation and bounded retries.
+- [ ] Add cancellation where supported.
+- [ ] Add sequential agent handoff.
+- [ ] Add bounded parallel delegation.
+- [ ] Add result aggregation and per-agent provenance.
+- [ ] Add human approval/input-required state.
+- [ ] Add circuit breakers, quotas, and concurrency controls.
+- [ ] Add cost reservation and usage reconciliation.
+- [ ] Test worker restart, queue redelivery, partial failure, and out-of-order events.
 
-**Exit:** Multi-agent workflows are reproducible, bounded, and user-controllable.
+## Phase 7: Optional adapters
 
-## Phase 6: Console and public onboarding
+- [ ] Add A2A only for a real target requiring it.
+- [ ] Add vendor APIs only where documented and authorized.
+- [ ] Add webhook adapters only with explicit endpoint ownership, authentication, signatures, and replay defense.
+- [ ] Reuse the same registry, permissions, envelopes, and task lifecycle.
+- [ ] Test each adapter independently and end-to-end.
 
-- [ ] Build responsive web console for connections, agents, tasks, and audit history.
-- [ ] Add connection setup guides per supported client.
-- [ ] Add capability registry and discovery UI.
-- [ ] Add task timeline and message inspection with secret redaction.
-- [ ] Add user data export and deletion.
-- [ ] Add accessible mobile and desktop layouts.
-- [ ] Publish setup docs and integration compatibility matrix.
+## Phase 8: Owner console and onboarding
 
-**Exit:** A user can configure agents and understand exactly what can communicate and what data is shared.
+- [ ] Configure agents and credentials securely.
+- [ ] Review discovered tools and approve allowlists.
+- [ ] Manage grants, scopes, limits, revoke, and disconnect.
+- [ ] Inspect task timeline, results, errors, and provenance.
+- [ ] Inspect usage and audit events with secret redaction.
+- [ ] Test responsive desktop/mobile UI and accessibility.
+- [ ] Publish connection instructions and a truthful compatibility matrix.
 
-## Phase 7: Release readiness
+## Phase 9: Security and release
 
-- [ ] Complete security review and abuse testing.
-- [ ] Verify branch protections and required checks.
-- [ ] Verify staging deployment and rollback.
-- [ ] Verify production DNS, TLS, MCP and A2A endpoints.
-- [ ] Test supported clients individually on their actual plans/platforms.
-- [ ] Publish privacy, retention, acceptable-use, and service-limit documentation.
-- [ ] Complete incident response and credential-rotation drills.
-- [ ] Label all supported integrations by verified maturity.
+- [ ] Pass cross-tenant isolation and confused-deputy tests.
+- [ ] Pass SSRF, prompt injection, replay, duplicate, and malicious-agent tests.
+- [ ] Verify credential rotation and revocation.
+- [ ] Verify budgets, payload limits, timeouts, and fan-out ceilings.
+- [ ] Verify privacy, retention, export, and deletion.
+- [ ] Verify staging, monitoring, alerts, backups, and rollback.
+- [ ] Confirm actual DNS/TLS and live endpoint health.
+- [ ] Obtain explicit owner approval before public launch.
 
-**Exit:** Public claims match actual end-to-end behavior.
+## Deferred
 
-## First end-to-end acceptance scenario
-
-1. A user asks an AI client to consult another AI through MeepSheep.
-2. The client invokes MeepSheep's MCP delegation tool.
-3. MeepSheep authenticates the caller and checks its delegated-agent permission.
-4. MeepSheep resolves a registered target agent and checks its declared capabilities.
-5. MeepSheep creates a durable task with an idempotency key and deadline.
-6. The appropriate protocol adapter sends the bounded request to the target.
-7. The target returns a result or asynchronous task state.
-8. MeepSheep validates the response, records provenance, and returns a structured result to the caller.
-9. The caller can inspect the target, task status, and any limitations.
-10. Unauthorized agents, expired credentials, oversized payloads, timeouts, and malicious responses are rejected safely.
-
-## Explicit non-goals for the first release
-
-- Hosting or training foundation models.
-- Bypassing consumer product restrictions or private interfaces.
-- Scraping or controlling AI websites through unofficial automation as a default integration.
-- Giving one agent unrestricted access to another agent's tools, memory, or credentials.
-- Autonomous financial, destructive, or external side effects without explicit policy and approval.
-- Unlimited fan-out or unbounded recursive agent delegation.
-
-
-## Cloudflare orchestration research note (2026-10-31)
-
-Cloudflare Workflows are the leading candidate for durable multi-step task execution because official docs describe persisted steps, automatic retries, external-event waits, and long-running execution. Durable Objects are candidates for real-time per-agent coordination and strongly consistent state. The Agents SDK documents MCP server/client capabilities. These are candidates, not accepted infrastructure decisions; verify account access, pricing, limits, and runtime compatibility before selecting.
-
-
-Cost and abuse-budget requirements are specified in AI/COST_MODEL.md. Implement budget reservation before dispatch, per-tenant/per-connection limits, bounded fan-out, and usage reconciliation before enabling live external agents.
+A standalone research engine, model hosting, broad protocol catalog, and native apps are not MVP requirements. Research is performed by connected agents when their owner-configured capabilities support it.
