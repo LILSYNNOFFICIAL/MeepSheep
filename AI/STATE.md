@@ -116,3 +116,17 @@ Do not record secrets, access tokens, private keys, or unnecessary personal data
 - **Wellness run:** [Run 41246535992](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41246535992) completed successfully on the merge commit. README now reports 🟢 Healthy, 84 passed, 0 warnings, 0 errors, 0 critical.
 - **Queue reliability:** Quality workflow now queues overlapping pushes instead of cancelling in-progress checks. The earlier cancelled runs were caused by the previous concurrency setting, not by doctor findings.
 - **Still unverified:** Scheduled cron execution, manual dispatch execution, branch protection/rulesets, production uptime, DNS, and external integrations remain outside this verified checkpoint.
+
+
+## 2026-10-31: AI interoperability scope correction
+
+- **Owner clarification:** MeepSheep is primarily intended to let AI systems communicate with other AI systems.
+- **Product direction:** AI interoperability, discovery, delegation, and coordination are now the primary product. Research-first scope is superseded as the MVP focus and may return as an optional agent capability.
+- **Protocol direction:** MCP is the client-to-MeepSheep tool interface; A2A is the agent-to-agent task protocol; documented vendor APIs and webhooks are explicit adapters.
+- **Execution direction:** Async-first durable task orchestration, with a synchronous fast path for short interactions.
+- **Accepted decisions:** D-007 through D-011 recorded in AI/DECISIONS.md.
+- **New documents:** AI/INTEROPERABILITY.md, AI/API_SPEC.md, AI/DATA_MODEL.md, AI/BUILD_PLAN.md, AI/TEST_STRATEGY.md, AI/QUALITY_BENCHMARKS.md, AI/DEPLOYMENT.md, AI/ENVIRONMENT.md, and AI/CHANGELOG.md.
+- **Updated documents:** README.md, AI/PROJECT.md, AI/ARCHITECTURE.md, AI/DECISIONS.md, AI/WF.md, AI/SECURITY.md, and AI/INTEGRATIONS.md.
+- **Implementation state:** Documentation-only change. No application code, credentials, Cloudflare resources, DNS, or production deployment changed. No live AI-to-AI integration is claimed.
+- **Current branch:** docs/ai-interoperability-foundation. Changes await independent review and merge.
+- **Next gates:** Review protocol versions and client compatibility; inspect hosting account; settle datastore and auth; implement schemas and mock-agent round-trip tests; then build the first real supported connection.
