@@ -35,7 +35,7 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [x] Remote tool invocation requires an approved tool name and verifies that the tool is still listed.
 - [x] Successful responses include message ID, trace ID, caller principal, target agent, output, and MCP provenance.
 - [x] Remote tool errors are sanitized before returning to the caller.
-- [x] Eight MCP integration tests pass in CI, including one separate-process loopback TCP test.
+- [x] Nine MCP integration tests pass in CI, including a separate-process loopback TCP test and trusted-auth boundary checks.
 
 **Important boundary:** The test uses the MCP SDK's Streamable HTTP transport with a custom in-process fetch bridge. It exercises MCP protocol messages between separate handler/client instances, but it does not yet prove socket-level networking, separate-process operation, production authentication, persistence, or a live external AI system.
 
@@ -43,9 +43,9 @@ This ledger distinguishes verified implementation from planned or unverified cap
 
 - PR #3: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3
 - Active branch: `feat/mcp-relay-lab`
-- Tested implementation head: `d57610d9d979b6ba8d4cc858d5f88abf1ddb54ff`
-- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253637578
-- Node MCP tests: 8 passed, 0 failed.
+- Tested implementation head: `b40a0e1a8499e7db66fd194bc9cdfda0fcb3b9f8`
+- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253712934
+- Node MCP tests: 9 passed, 0 failed.
 - Python Wellness Doctor unit tests: 10 passed.
 - Repository Doctor: 112 passed, 0 warnings, 0 errors, 0 critical.
 - Both GitHub Actions workflow YAML files parsed successfully.
