@@ -166,3 +166,12 @@ Do not claim branch protection, deployment health, domain health, external provi
 - The cron and manual-dispatch triggers are configured but have not yet been observed executing.
 - Branch protection and rulesets remain owner-side configuration and were not changed.
 - The doctor currently inspects repository inventory, required files, Markdown links/fences, README health markers, and workflow contracts. It is not a production uptime or external-service monitor.
+
+
+## Follow-up: state-ledger consistency regression (2026-10-31)
+
+- [x] Add a regression test proving stale unchecked test-suite and CI entries are detected when the files exist.
+- [x] Observe the new test fail before the implementation: 10 tests ran; the new assertion failed with `AssertionError: 0 != 2` because no findings were emitted.
+- [x] Implement stable `STATE_LEDGER_STALE_CHECKBOX` warning findings and include them in the documentation health category.
+- [x] Correct the state ledger to mark the existing test suite and CI workflow as present.
+- [ ] Verify the complete PR quality workflow and merged-main Wellness Doctor update.
