@@ -81,3 +81,7 @@ The workflow files pin these upstream release commits:
 - `actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1` (v6 tag).
 
 The previous v4/v5 pins generated Node.js 20 deprecation warnings on the current GitHub runner. The v6 pins were selected after resolving the upstream v6 tag refs and were used in the subsequent successful runs with no Node.js deprecation warning in the inspected job log. Recheck upstream release/tag provenance before future upgrades.
+
+## Quality-run queueing and cancellation policy
+
+The quality workflow uses the concurrency group `quality-${{ github.workflow }}-${{ github.ref }}` with `cancel-in-progress: false`. This intentionally queues overlapping pushes instead of cancelling an in-progress validation run. Earlier rollout runs were marked cancelled because rapid documentation commits collided with the former `cancel-in-progress: true` setting; those were cancellations, not failed doctor findings. The latest post-change quality and Wellness Doctor runs both completed successfully on commit `472626c3063353e8790c2f41ce4410ff8b6be557`.
