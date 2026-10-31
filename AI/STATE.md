@@ -3,73 +3,82 @@
 **Last updated:** 2026-10-31  
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
-**Documentation correction branch:** `docs/ai-interoperability-foundation`
+**Active implementation branch:** `feat/mcp-relay-lab`
 
-This ledger records verified repository and project state. A proposed design is not an implemented feature.
+This ledger distinguishes verified implementation from planned or unverified capabilities.
 
 ## Product direction
 
 - [x] Owner-confirmed primary purpose: AI agents communicate with other AI agents.
-- [x] MCP-first product direction documented.
-- [x] Inbound MCP server is the primary interface for compatible requesting AI clients.
-- [x] Outbound MCP client is the first remote-agent connection type.
-- [x] MeepSheep is the relay, registry, permission boundary, task coordinator, and response path.
-- [x] Remote agents perform research, coding, browsing, and other work using their own configured capabilities.
-- [x] A2A, provider APIs, and webhooks are optional adapters, not MVP prerequisites.
+- [x] MCP-first product direction documented and merged to main.
+- [x] Inbound MCP server and outbound MCP client roles documented.
+- [x] Remote agents perform their own work using their own models, tools, and capabilities.
+- [x] A2A, provider APIs, and webhooks remain optional adapters.
 - [x] MeepSheep-owned research-engine functionality is deferred from the MVP.
 
-## Repository and automation facts
+## Documentation foundation
 
-- [x] Repository identity and default branch confirmed.
-- [x] README and AI operating-document structure exist.
-- [x] Automated test suite exists.
-- [x] CI workflow exists.
-- [x] Wellness Doctor Python script and unit tests exist.
-- [x] Four-level health status and README marker contract exist.
-- [ ] Branch protection/rulesets verified.
-- [ ] Scheduled and manual Wellness Doctor executions independently observed after latest changes.
+- [x] PR #2 merged to main: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
+- [x] Merge commit: `d0bec625eb191d71781ab3e1d239245e54dd9594`
+- [x] README, product, architecture, interoperability, security, API, build, and workflow docs aligned around the MCP relay.
 
-## Latest verified documentation checkpoint
+## Local MCP relay laboratory
 
-- Pull request: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
-- Branch: `docs/ai-interoperability-foundation`
-- Tested PR head: `68fa91739ad5fade181b1984b26cbb366ed44068`
-- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41248222272
-- Unit tests: 10 passed.
-- Repository Doctor: 102 passed, 0 warnings, 0 errors, 0 critical.
+- [x] Node.js 26.13.0 local-lab runtime pinned in `.nvmrc`.
+- [x] Official MCP TypeScript SDK v2.4.0 client/server packages pinned.
+- [x] Zod 4.6.7 pinned.
+- [x] Inbound MCP handler exposes `discover_agents` and `send_message`.
+- [x] Outbound MCP client initializes against a separately instantiated mock MCP handler.
+- [x] In-memory registry enforces same-tenant discovery and message permission.
+- [x] Remote tool invocation requires an approved tool name and verifies that the tool is still listed.
+- [x] Successful responses include message ID, trace ID, caller principal, target agent, output, and MCP provenance.
+- [x] Remote tool errors are sanitized before returning to the caller.
+- [x] Seven MCP integration tests pass in CI.
+
+**Important boundary:** The test uses the MCP SDK's Streamable HTTP transport with a custom in-process fetch bridge. It exercises MCP protocol messages between separate handler/client instances, but it does not yet prove socket-level networking, separate-process operation, production authentication, persistence, or a live external AI system.
+
+## Latest verification
+
+- PR #3: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3
+- Active branch: `feat/mcp-relay-lab`
+- Tested head: `d25aca6310861e8d6cd4226abd5e32b21275af24`
+- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253359267
+- Node MCP tests: 7 passed, 0 failed.
+- Python Wellness Doctor unit tests: 10 passed.
+- Repository Doctor: 103 passed, 0 warnings, 0 errors, 0 critical.
 - Both GitHub Actions workflow YAML files parsed successfully.
-- An earlier run found 10 warnings; all eight missing README links and both stale state-ledger checks were corrected. The follow-up run reported zero findings.
-- This is repository/documentation/workflow verification only. It does not certify production services or live AI connections.
+- TDD red evidence: earlier run 41253274558 failed because `src/relay/agent-registry.mjs` did not yet exist. After implementation, run 41253320195 passed the first six MCP tests; run 41253359267 passed the expanded seven-test suite.
 
-## Current implementation state
+## Not implemented or not verified
 
-- [ ] Application source code for the MCP server exists.
-- [ ] Outbound MCP client is implemented.
-- [ ] Agent registry and connection manager are implemented.
-- [ ] Authentication and per-agent grants are implemented.
-- [ ] Canonical message/task persistence is implemented.
-- [ ] A mock MCP server integration test exists.
-- [ ] Live AI client-to-MeepSheep-to-remote-agent round trip is demonstrated.
-- [ ] Production deployment, DNS, and TLS are verified.
+- [ ] Persistent database, migrations, durable tasks, or message history.
+- [ ] Production authentication/OAuth and a trusted real caller identity provider.
+- [ ] Owner console for registering endpoints and approving tools.
+- [ ] Full tool-schema fingerprint/version drift detection.
+- [ ] Network-separated remote MCP process and socket-level round trip.
+- [ ] Real external AI agent and real requesting client round trip.
+- [ ] A2A/provider/webhook adapters.
+- [ ] Production Cloudflare deployment, DNS, TLS, or hosting.
+- [ ] Dependency lockfile, lint, typecheck, secret scanning, and supply-chain audit.
+- [ ] Branch protection/rulesets verified.
 
-No live AI connection, production endpoint, or deployed application is claimed.
+No production credentials, Cloudflare resources, DNS, or deployment have been changed.
 
 ## Infrastructure
 
-A read-only inspection on 2026-10-31 returned one accessible Cloudflare account with zero zones, Worker scripts, D1 databases, Durable Object namespaces, and Queues. This is account-scoped and does not rule out another account or registrar. No resources were created, changed, or deleted.
-
-Do not deploy or change DNS until the correct account and domain zone are confirmed.
+A read-only inspection on 2026-10-31 returned one accessible Cloudflare account with zero zones, Worker scripts, D1 databases, Durable Object namespaces, and Queues. This is account-scoped and does not rule out another account or registrar. Do not deploy or change DNS until the correct account and domain zone are confirmed.
 
 ## Next actions
 
-1. Review and merge the MCP-first documentation PR after its final CI run.
-2. Confirm the exact first requesting MCP client and remote MCP agent.
-3. Verify current MCP SDK, protocol revision, transport, and authentication compatibility.
-4. Confirm the correct Cloudflare account/domain and select one authoritative data/auth owner.
-5. Implement local inbound/outbound MCP contract tests and a deterministic mock server.
-6. Only after the mock round trip is verified, configure one live remote agent and prove a real round trip.
+1. Extend the lab to a network-separated remote MCP process and socket-level HTTP test.
+2. Generate and commit a dependency lockfile, then change CI to `npm ci`.
+3. Add full tool-schema fingerprint verification and tests.
+4. Confirm the first real requesting MCP client and target remote agent.
+5. Verify the correct Cloudflare account/domain and decide the single authoritative database/auth owner.
+6. Design production authentication, endpoint validation, persistence, async tasks, and budgets before adding live credentials.
+7. Prove a genuine independent-agent round trip before claiming provider support.
 
-## Session handoff template
+## Session handoff
 
 - Date:
 - Objective:
