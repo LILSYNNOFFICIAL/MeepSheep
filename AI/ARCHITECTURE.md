@@ -217,3 +217,56 @@ The doctor inspects repository files, Markdown integrity, required project docum
 The README updater owns only the content between `MEEPSHEEP_HEALTH_START` and `MEEPSHEEP_HEALTH_END` markers. It must preserve all other content and avoid no-op commits.
 
 This subsystem does not monitor production HTTP availability, Cloudflare resources, Supabase databases, external search providers, or MCP clients. Those require separate authenticated probes and explicit product decisions.
+
+
+## 11. Owner-approved architecture direction: AI interoperability
+
+This section supersedes the earlier research-first topology as the primary product architecture. Research and evidence handling may later be exposed as an agent capability, but it is not the first-release core.
+
+### Target topology
+
+```text
+AI clients / assistants
+       | MCP
+       v
+MeepSheep MCP Gateway ---------------------+
+       |                                    |
+       v                                    v
+Identity + Policy + Capability Registry   Web Console
+       |
+       v
+Task Router / Orchestrator
+       |
+       +---- A2A adapter ----> A2A agents
+       |
+       +---- Vendor API adapters -> documented agent/model APIs
+       |
+       +---- Webhook adapter ---> explicitly configured endpoints
+       |
+       v
+Durable task state + events + audit + usage
+```
+
+### Architectural rules
+
+- MCP is the primary client-facing tool interface; A2A is the primary agent-to-agent protocol candidate.
+- Both protocols map into a canonical internal task/message envelope defined in AI/API_SPEC.md.
+- Use asynchronous task orchestration as the default, with a synchronous fast path for short tasks.
+- Keep provider-specific SDKs and credentials inside adapters.
+- A capability registry is not an authorization system. Discovery and invocation permissions are separate.
+- Each agent connection has its own credentials, scopes, owner, health state, and revocation path.
+- The caller explicitly controls what conversation context and attachments may be shared.
+- Never transfer hidden reasoning, private system prompts, or unapproved conversation history.
+- Bound task deadlines, retries, payload sizes, concurrency, fan-out, and aggregate cost.
+- Preserve caller/target identity, remote task IDs, trace IDs, timestamps, status transitions, and result provenance.
+- Do not allow unbounded recursive delegation.
+
+### Asynchronous execution
+
+Use durable task records and a validated queue/coordination primitive. Persist state transitions and make dispatch idempotent. Support queued, dispatching, working, input-required, completed, failed, canceled, rejected, and expired states. Streaming is optional; polling and durable retrieval must remain correct without it.
+
+### Candidate Cloudflare topology
+
+Workers may host the API, MCP endpoint, A2A endpoint, and adapters. Durable Objects and Queues are candidates for coordination and dispatch; D1 is a candidate relational store; R2 is optional artifact storage; KV is non-authoritative cache only. Validate current account access, pricing, limits, and runtime support before selecting services. No production infrastructure is claimed to exist.
+
+See AI/INTEROPERABILITY.md, AI/API_SPEC.md, AI/DATA_MODEL.md, AI/DEPLOYMENT.md, and AI/BUILD_PLAN.md for the detailed contracts and plan.
