@@ -71,3 +71,13 @@ GitHub scheduled workflows can be delayed and are not a continuous monitoring se
 - Review third-party action versions and pin SHAs.
 - Inspect actual workflow runs after changing workflow files.
 - Record workflow run URLs and commit SHAs in `AI/AUTOMATION_LOG.md` and `AI/STATE.md`.
+
+
+## Pinned action versions used by the initial workflows
+
+The workflow files pin these upstream release commits:
+
+- `actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803` (v6 tag).
+- `actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1` (v6 tag).
+
+The previous v4/v5 pins generated Node.js 20 deprecation warnings on the current GitHub runner. The v6 pins were selected after resolving the upstream v6 tag refs and were used in the subsequent successful runs with no Node.js deprecation warning in the inspected job log. Recheck upstream release/tag provenance before future upgrades.
