@@ -48,3 +48,10 @@ Keep the last known-good deployment artifact. Roll back application code indepen
 - A2A: https://agents.meepsheep.com (candidate only; exact path follows selected A2A SDK/spec)
 
 These are proposed addresses. DNS, TLS, routes, and service health must be verified before use.
+
+
+## 7. Cloudflare orchestration candidates
+
+Official Cloudflare documentation reviewed on 2026-10-31 describes Workflows as durable multi-step execution with persisted state, retries, and waits for external events or approvals. Treat Workflows as the leading candidate for the long-running task lifecycle. Durable Objects are candidates for real-time per-agent coordination and strongly consistent state; Queues may be useful for decoupled fan-out. The Cloudflare Agents SDK documents MCP server and client capabilities. These are candidate services only; verify current limits, pricing, SDK compatibility, and active account access before choosing or deploying.
+
+References: https://developers.cloudflare.com/workflows/ ; https://developers.cloudflare.com/durable-objects/ ; https://developers.cloudflare.com/agents/model-context-protocol/ .
