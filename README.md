@@ -88,7 +88,25 @@ MeepSheep/
     ├── RESEARCH.md
     ├── INTEGRATIONS.md
     ├── STATE.md
-    └── CONTRIBUTING.md
+    ├── CONTRIBUTING.md
+    ├── GITHUB_RULES.md
+    ├── ACTIONS.md
+    ├── WELLNESS_DOCTOR.md
+    ├── STATUS_ICONS.md
+    ├── INCIDENTS.md
+    ├── AUTOMATION_LOG.md
+    └── WELLNESS_IMPLEMENTATION_PLAN.md
+
+.github/
+└── workflows/
+    ├── quality.yml
+    └── wellness-doctor.yml
+
+scripts/
+└── wellness_doctor.py
+
+tests/
+└── test_wellness_doctor.py
 ```
 
 ### Project memory and operating documents
@@ -121,6 +139,16 @@ For every substantial task:
 8. Update the workflow and state ledger only with verified outcomes.
 
 A checkbox is not completed because code was written or a tool returned success. It is completed when the intended result has been checked.
+
+## 🩺 Automated repository health
+
+<!-- MEEPSHEEP_HEALTH_START -->
+
+**🟡 Initializing Wellness Doctor** · The first automated inspection will publish the verified status.
+
+<!-- MEEPSHEEP_HEALTH_END -->
+
+The generated health section is maintained by GitHub Actions. The status mapping is defined in [AI/STATUS_ICONS.md](AI/STATUS_ICONS.md). Scheduled inspections run every 15 minutes on a best-effort basis; the latest workflow execution contains the exact inspection timestamp and diagnostic logs.
 
 ## Current status
 
