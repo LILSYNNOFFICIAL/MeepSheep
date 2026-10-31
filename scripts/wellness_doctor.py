@@ -148,7 +148,7 @@ def inspect_repository(root: Path | str) -> dict:
             ]
             for label, artifact, message in state_expectations:
                 entry = re.search(
-                    r"^\\s*-\\s*\\[([ xX])\\]\\s*" + re.escape(label) + r"\\s*$",
+                    r"^\s*-\s*\[([ xX])\]\s*" + re.escape(label) + r"\s*$",
                     state_text,
                     re.MULTILINE,
                 )
