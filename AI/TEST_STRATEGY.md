@@ -55,9 +55,9 @@ Mocks prove contract behavior only. They do not establish that a real provider o
 
 ## 3.1 Verified local lab coverage
 
-The current suite in `tests/mcp-relay.integration.test.mjs` exercises seven cases through the MCP SDK's Streamable HTTP client/server interfaces: same-tenant discovery without secret leakage, successful outbound tool invocation with provenance, cross-tenant hiding/denial, unapproved-tool denial, missing remote tool rejection, caller permission denial, and sanitized remote failure. The mock target is implemented in `tests/fixtures/mock-agent.mjs`.
+The current suite in `tests/mcp-relay.integration.test.mjs` exercises eight cases through the MCP SDK's Streamable HTTP client/server interfaces: same-tenant discovery without secret leakage, successful outbound tool invocation with provenance, cross-tenant hiding/denial, unapproved-tool denial, missing remote tool rejection, caller permission denial, and sanitized remote failure. The mock target is implemented in `tests/fixtures/mock-agent.mjs`; `tests/fixtures/mock-agent-process.mjs` runs a separate socket-served target process.
 
-The suite currently uses a custom in-process `fetch` bridge to separately instantiated MCP handlers. It does not prove socket-level networking, production authentication, persistence, real AI inference, async task recovery, OAuth, SSRF defenses, or actual provider compatibility. Do not mark those release gates complete based on these tests.
+Seven cases use a custom in-process `fetch` bridge; an eighth launches a separate Node process and calls its MCP endpoint over loopback TCP. It does not prove public network deployment, production authentication, persistence, real AI inference, async task recovery, OAuth, SSRF defenses, or actual provider compatibility. Do not mark those release gates complete based on these tests.
 
 **Latest CI evidence:** PR #3 run 41253359267: 7 Node tests passed; 10 Python Wellness Doctor tests passed; Repository Doctor 103 passed, 0 warnings, 0 errors, 0 critical; both workflow YAML files parsed successfully.
 
