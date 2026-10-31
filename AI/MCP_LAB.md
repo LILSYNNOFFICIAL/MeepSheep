@@ -109,7 +109,7 @@ Nine verified cases:
 - After implementing the registry and MCP handler, run 41253320195 passed the initial six tests.
 - After adding remote failure sanitization coverage, run 41253359267 passed all seven tests.
 
-Latest CI run 41253712934 passed all 9 Node MCP tests and the existing 10 Python Wellness Doctor unit tests, reported 112 repository checks with zero warnings/errors/critical findings, and parsed both GitHub Actions workflow YAML files. [Inspect the run](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253712934).
+Latest CI run 41253769189 passed all 9 Node MCP tests and the existing 10 Python Wellness Doctor unit tests, reported 112 repository checks with zero warnings/errors/critical findings, and parsed both GitHub Actions workflow YAML files. [Inspect the run](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253769189).
 
 ## Important limitations
 
