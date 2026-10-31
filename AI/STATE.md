@@ -29,18 +29,17 @@ This ledger records verified repository and project state. A proposed design is 
 - [ ] Branch protection/rulesets verified.
 - [ ] Scheduled and manual Wellness Doctor executions independently observed after latest changes.
 
-## Latest correction-branch verification
+## Latest verified documentation checkpoint
 
 - Pull request: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
 - Branch: `docs/ai-interoperability-foundation`
-- Tested PR merge revision: `0a9a5ccce8eaaa4e4418571738a510ed5705bf36` (merge of PR head `49904a04d371db48a12e67a1a76f73405b08a620` into current main base).
-- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41248058263
+- Tested PR head: `a94b3e13855db03d07ebe8611b0d4fbc6a9fc3a1`
+- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41248144309
 - Unit tests: 10 passed.
-- Workflow YAML: both workflow files parsed successfully.
-- Wellness Doctor: 83 passed, 10 warnings, 0 errors, 0 critical.
-- Warnings found: two stale state-ledger wording checks and eight missing README links to operating documents.
-- **Status:** warnings are being corrected. Do not report the branch as 🟢 Healthy until a fresh run reports zero findings.
-- This was documentation-only. No application code, credentials, Cloudflare resources, DNS, or production deployment changed.
+- Repository Doctor: 102 passed, 0 warnings, 0 errors, 0 critical.
+- Both GitHub Actions workflow YAML files parsed successfully.
+- The first run exposed 10 warnings; all eight missing README links and both stale state-ledger checks were corrected, then the follow-up run reported zero findings.
+- This is repository/documentation/workflow verification only. It does not certify production services or live AI connections.
 
 ## Current implementation state
 
@@ -63,7 +62,7 @@ Do not deploy or change DNS until the correct account and domain zone are confir
 
 ## Next actions
 
-1. Resolve all Wellness Doctor warnings and rerun CI.
+1. Review and merge the MCP-first documentation PR after its final CI run.
 2. Confirm the exact first requesting MCP client and remote MCP agent.
 3. Verify current MCP SDK, protocol revision, transport, and authentication compatibility.
 4. Confirm the correct Cloudflare account/domain and select one authoritative data/auth owner.
