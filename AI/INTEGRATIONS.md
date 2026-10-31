@@ -117,3 +117,17 @@ These references establish documented protocol/API paths only. No MeepSheep conn
 For each target, record product name, exact surface (consumer UI, developer API, CLI, or agent runtime), account plan, OS/platform, supported protocol, authentication, read/write/delegation scope, streaming/async support, setup steps, test date, and actual end-to-end result.
 
 Never label an entire brand as supported when only one API, CLI, or plan has been tested. Do not promise ChatGPT-to-Grok consumer-chat bridging unless both endpoints expose supported, authorized interfaces and the round trip has been demonstrated.
+
+
+## 8. Cloudflare platform research checkpoint (2026-10-31)
+
+The connected Cloudflare documentation search was used to inspect the current developer platform.
+
+- Cloudflare Workflows are documented as durable multi-step execution with persisted state, automatic retries, and the ability to wait for external events or approvals for minutes, hours, or weeks. This is a strong candidate for MeepSheep's async task lifecycle.
+- Durable Objects provide globally unique coordination and strongly consistent transactional storage, making them a candidate for per-agent coordination or live connections rather than the sole general-purpose workflow engine.
+- The Cloudflare Agents SDK documents MCP server and MCP client support. This may reduce custom transport work for the MCP surface.
+- No A2A support in the Agents SDK was established by this documentation search. Treat A2A as a separately implemented adapter unless further official evidence changes that conclusion.
+
+References: https://developers.cloudflare.com/workflows/ ; https://developers.cloudflare.com/durable-objects/ ; https://developers.cloudflare.com/agents/model-context-protocol/ ; https://developers.cloudflare.com/agents/tools/mcp/ .
+
+The active connected Cloudflare account was inspected read-only on 2026-10-31. The account list returned one accessible account; its zones, Worker scripts, D1 databases, Durable Object namespaces, and Queues lists were all empty. This does not prove the domain is not owned elsewhere or that another account cannot contain resources. Do not deploy or change DNS until the correct zone/account is confirmed.
