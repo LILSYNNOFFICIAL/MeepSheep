@@ -133,7 +133,7 @@ Expected: local caller-to-relay-to-separate-process HTTP agent test passes; fail
 
 Run: `npm test && python -m unittest discover -s tests -v && python scripts/wellness_doctor.py`
 
-Expected: all 8 MCP tests, 10 Python tests, and repository checks pass with 0 warnings/errors/critical findings.
+Expected: all 9 MCP tests, 10 Python tests, and repository checks pass with 0 warnings/errors/critical findings.
 
 - [x] **Step 6: Commit**
 
