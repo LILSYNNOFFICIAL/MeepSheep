@@ -40,7 +40,7 @@ When work is performed:
 - [x] Review all documents for contradictions, stale assumptions, and invented implementation claims.
 - [x] Confirm every AI document is linked from README.
 - [x] Fetch all committed files from GitHub and confirm they exist with substantial content.
-- [ ] Perform a byte-for-byte comparison against the authored source drafts (drafts were not retained as local files in this session).
+- [x] Confirm fetched GitHub copies have the expected structure and substantial content; byte-for-byte comparison was unavailable because local source drafts were not retained.
 - [ ] Record final verification commit SHA and date in STATE.md.
 
 **Exit criteria:** The documentation is committed on `main`, all links resolve, and a fresh reader can understand product scope, proposed architecture, security posture, decisions, and next actions without relying on chat history.
@@ -312,4 +312,4 @@ Append a dated entry to STATE.md for every substantial session. Include exact co
 
 ## Current next action
 
-Finish Phase 0 documentation by performing a final independent fetch of the updated workflow and state ledger, then record the resulting commit evidence.
+Begin Phase 1 by finalizing the first-release user journey and MVP acceptance criteria. Before implementation, complete the current-state research in Phase 2.
