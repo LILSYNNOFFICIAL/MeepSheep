@@ -84,10 +84,10 @@ The current candidate is a Cloudflare-first deployment, subject to current accou
 | Agent-to-agent protocol | A2A | Proposed |
 | Vendor connectivity | Documented APIs and webhooks | Adapter candidates |
 | Task execution | Async-first durable orchestration | Proposed |
-| Source retrieval | Provider-independent adapters | Proposed |
+| Agent connectivity | MCP, A2A, documented vendor APIs/webhooks | Proposed |
 | Repository | GitHub | Confirmed |
 
-No local GPU is required for the proposed cloud-hosted architecture. The browser is the user interface; research processing and provider requests run on hosted infrastructure. Free tiers can help start the project, but they do not mean unlimited usage or zero marginal cost.
+No local GPU is required for the relay architecture. Connected AI providers perform model inference; MeepSheep handles routing, authentication, task coordination, and result delivery on hosted infrastructure. Free tiers can help start the project, but they do not mean unlimited usage or zero marginal cost.
 
 See [AI/ARCHITECTURE.md](AI/ARCHITECTURE.md) and [AI/DECISIONS.md](AI/DECISIONS.md) for the current reasoning and unresolved choices.
 
@@ -152,7 +152,8 @@ tests/
 | [AI/TEST_STRATEGY.md](AI/TEST_STRATEGY.md) | Unit, contract, integration, end-to-end, and security tests |
 | [AI/QUALITY_BENCHMARKS.md](AI/QUALITY_BENCHMARKS.md) | Interoperability reliability, quality, latency, and cost metrics |
 | [AI/DEPLOYMENT.md](AI/DEPLOYMENT.md) | Environment separation, deployment, monitoring, and rollback |
-| [AI/ENVIRONMENT.md](AI/ENVIRONMENT.md) | Runtime configuration and secret lifecycle
+| [AI/ENVIRONMENT.md](AI/ENVIRONMENT.md) | Runtime configuration and secret lifecycle |
+| [AI/CHANGELOG.md](AI/CHANGELOG.md) | Significant project and architecture changes |
 | [AI/ARCHITECTURE.md](AI/ARCHITECTURE.md) | Proposed system boundaries, data flow, and technology choices |
 | [AI/DECISIONS.md](AI/DECISIONS.md) | Accepted decisions, proposals, and open questions |
 | [AI/SECURITY.md](AI/SECURITY.md) | Threat model and required security controls |
