@@ -141,3 +141,6 @@ Do not record secrets, access tokens, private keys, or unnecessary personal data
 - No resources were created, updated, or deleted.
 - This is an account-scoped snapshot, not proof that the domain is not owned or configured in another Cloudflare account or registrar.
 - Deployment remains blocked until the correct domain zone/account and access are confirmed.
+
+
+- **Additional preparation:** Added AI/COST_MODEL.md to define cost ownership, pre-dispatch budget reservation, bounded fan-out, retries, and usage reconciliation. This is design guidance; no numerical provider prices or cost estimates have been invented.
