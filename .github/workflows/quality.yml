@@ -1,0 +1,39 @@
+name: MeepSheep Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Tests, repository doctor, and workflow syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out event revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Run Wellness Doctor unit tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Inspect repository health (read-only)
+        run: python scripts/wellness_doctor.py
+
+      - name: Validate GitHub Actions YAML syntax
+        run: |
+          ruby -e 'require "yaml"; Dir.glob(".github/workflows/*.{yml,yaml}").sort.each { |file| YAML.load_file(file); puts "YAML OK: #{file}" }'
