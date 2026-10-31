@@ -3,7 +3,8 @@
 **Last updated:** 2026-10-31  
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
-**Documentation correction branch:** `docs/ai-interoperability-foundation`
+**Documentation correction branch:** `docs/ai-interoperability-foundation`  
+**Latest recorded branch commit before this ledger update:** `b389faf4293b823ba48b7c76387ea93ae04f1b2f`
 
 This ledger records verified repository and project state. A proposed design is not an implemented feature.
 
@@ -16,7 +17,7 @@ This ledger records verified repository and project state. A proposed design is 
 - [x] MeepSheep is the relay, registry, permission boundary, task coordinator, and response path.
 - [x] Remote agents perform their own research, coding, browsing, and other work using their own configured capabilities.
 - [x] A2A, provider APIs, and webhooks are optional adapters, not MVP prerequisites.
-- [x] Research-engine work is deferred from the MeepSheep MVP.
+- [x] MeepSheep-owned research-engine functionality is deferred from the MVP.
 
 ## Repository and automation facts
 
@@ -28,6 +29,7 @@ This ledger records verified repository and project state. A proposed design is 
 - [x] Prior verified automation run: 10 unit tests passed; Repository Doctor reported 104 passed, 0 warnings, 0 errors, 0 critical; both workflow YAML files parsed successfully. See https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41247189279.
 - [ ] Branch protection/rulesets verified.
 - [ ] Scheduled and manual Wellness Doctor executions independently observed after latest changes.
+- [ ] New MCP-first documentation commits verified by a fresh CI run.
 
 ## Current implementation state
 
@@ -44,9 +46,9 @@ No live AI connection, production endpoint, or deployed application is claimed.
 
 ## Documentation correction
 
-The owner clarified that MeepSheep is an MCP-based relay so agents can communicate with other agents. The previous documentation overemphasized research and gave A2A too central a role. The documentation correction makes MCP the first implementation path and treats A2A/API/webhook support as optional adapters.
+The owner clarified that MeepSheep is an MCP-based relay so agents can communicate with other agents. The previous documentation overemphasized research and gave A2A too central a role. The corrected documents make MCP the first implementation path and treat A2A/API/webhook support as optional adapters.
 
-Documents rewritten on the correction branch:
+Rewritten or corrected:
 - `README.md`
 - `AI/PROJECT.md`
 - `AI/ARCHITECTURE.md`
@@ -63,16 +65,16 @@ Documents rewritten on the correction branch:
 - `AI/CHANGELOG.md`
 - `AI/STATE.md`
 
-The README links to the primary product and operating documents. Research documents remain historical/optional references and do not define MVP scope.
+The README now explicitly distinguishes the inbound MCP server from the outbound MCP client and lists the planned model-callable tools. Research documents remain historical/optional references and do not define MVP scope.
 
 ## Pull request and verification boundary
 
 - Pull request: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
 - Branch: `docs/ai-interoperability-foundation`
-- The previous inspected head was `e5fb023e833dfde68193c1f22f65c909fdfdd176`; subsequent documentation commits were pushed to the same branch.
-- The previous inspected head had a successful quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41247189279.
-- **The latest documentation edits have not yet been verified by a new CI run.**
-- PR merge status must be rechecked live. Do not assume the PR is merged.
+- Latest documentation commit recorded before this ledger update: `b389faf4293b823ba48b7c76387ea93ae04f1b2f`.
+- The previous inspected head `e5fb023e833dfde68193c1f22f65c909fdfdd176` had a successful quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41247189279.
+- The latest documentation edits have not yet been verified by a new CI run.
+- PR merge status must be rechecked live. Do not assume it is merged.
 - Branch protection access was previously denied by the connected GitHub integration (HTTP 403); settings remain unverified.
 
 ## Infrastructure
@@ -83,7 +85,7 @@ Do not deploy or change DNS until the correct account and domain zone are confir
 
 ## Next actions
 
-1. Review this MCP-first documentation branch and run the full repository quality workflow.
+1. Review the MCP-first documentation branch and run the full repository quality workflow.
 2. Confirm the exact first requesting MCP client and remote MCP agent.
 3. Verify current MCP SDK, protocol revision, transport, and authentication compatibility.
 4. Confirm the correct Cloudflare account/domain and select one authoritative data/auth owner.
