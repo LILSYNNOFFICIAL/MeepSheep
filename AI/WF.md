@@ -95,11 +95,11 @@ Never infer implementation from documentation, a successful API response, or a m
 
 ## Phase 4: Minimal relay implementation
 
-- [~] Establish Node 26.13.0, npm, pinned direct dependencies, and tests; lockfile/lint/typecheck remain open.
+- [~] Establish Node 26.13.0, npm, pinned dependencies, package lock, and tests; lint/typecheck remain open.
 - [ ] Implement authoritative persistence layer and migrations.
 - [~] Implement in-memory agent registry; persistent connection management remains open.
 - [x] Implement inbound MCP server handler in the local lab.
-- [x] Implement outbound MCP client to an independent mock MCP server handler.
+- [x] Implement outbound MCP client to an independent mock MCP server handler, including a separate-process loopback TCP test.
 - [x] Discover remote tools and enforce owner-approved tool-name allowlists.
 - [~] Implement synchronous `send_message` routing and response provenance; full canonical task router remains open.
 - [ ] Implement durable asynchronous task path.
@@ -108,7 +108,7 @@ Never infer implementation from documentation, a successful API response, or a m
 - [x] Add local MCP integration tests and run them in GitHub Actions.
 - [x] Add local lab setup and verification notes in `AI/MCP_LAB.md`.
 
-**Current evidence:** Seven local MCP integration tests pass. Caller, relay, and mock target are separate SDK handler/client instances using Streamable HTTP with an in-process fetch bridge. This proves MCP protocol and relay policy behavior, not a network-separated deployment or live external AI connection.
+**Current evidence:** Eight local MCP integration tests pass. Seven use an in-process fetch bridge; one connects over loopback TCP to a mock MCP agent running in a separate Node process. This proves local socket-level MCP transport, not a public deployment or live external AI connection.
 
 ## Phase 5: First real AI-to-AI round trip
 
