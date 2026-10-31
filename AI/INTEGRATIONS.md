@@ -65,3 +65,10 @@ Supabase remains an alternative candidate for selected identity/data responsibil
 ## 7. Development tools
 
 Use tools actually available and authorized in the current session. GitHub is the source of truth for repository state. Cloudflare tools are used for Cloudflare account/deployment work. Supabase tools are used only if that architecture is selected. Security and code-review tools supplement, but do not replace, automated tests and live behavior verification.
+
+
+## 8. Current local MCP lab evidence
+
+The first local integration uses the official TypeScript SDK v2.4.0. The caller connects to the MeepSheep inbound MCP handler; MeepSheep's outbound MCP client connects to a separately instantiated mock-agent handler. Tests use the SDK Streamable HTTP transport with a custom in-process fetch bridge. Seven tests pass for discovery, authorized dispatch, tenant isolation, allowlisting, remote tool presence, permission denial, and sanitized remote failures.
+
+This is not socket-level/network-separated operation and does not establish compatibility with ChatGPT, Grok, Claude, or any other live product surface. See [MCP_LAB.md](MCP_LAB.md) and PR #3. The official SDK references and pinned versions must be rechecked before production implementation.
