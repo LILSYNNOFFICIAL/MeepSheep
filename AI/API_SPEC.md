@@ -98,3 +98,11 @@ Pin protocol versions in implementation and fixtures. Keep public schema changes
 - xAI MCP: https://docs.x.ai/build/features/mcp-servers
 
 Recheck released versions and target-client compatibility before implementation. This contract does not replace the protocol specifications.
+
+
+## 12. Protocol research snapshot (2026-10-31)
+
+- **A2A:** The official project documentation identifies version 1.0.0 as the latest released specification at the time checked. Use the released 1.0.0 specification as the implementation baseline unless a compatibility test or a newer release changes the decision: https://a2a-protocol.org/latest/specification/ .
+- **MCP:** The official specification repository contains the 2026-07-28 protocol revision, including Streamable HTTP changes. Treat 2026-07-28 as the reviewed baseline for planning, then pin the exact supported protocol revision and SDK version in the implementation lockfile: https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/docs/specification/2026-07-28 .
+
+These are research snapshots, not a claim that MeepSheep has implemented either protocol. Confirm current SDK compatibility and client behavior immediately before coding.
