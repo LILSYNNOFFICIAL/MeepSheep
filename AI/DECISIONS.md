@@ -30,10 +30,10 @@ This file records decisions, proposals, and unresolved questions. Update it when
 - **Reason:** The repository should carry project context across sessions and tools.
 - **Rule:** Read the AI documents before substantial work and update them after verified changes.
 
-### D-004: Dual product surface
-- **Status:** Accepted as product direction
-- **Decision:** MeepSheep is both a standalone web product and a reusable AI-tool service. The two surfaces share one research core.
-- **Reason:** The product must be useful outside an AI assistant and consistent inside one.
+### D-004: Dual product surface (historical framing)
+- **Status:** Superseded by D-007
+- **Decision:** The original framing described a standalone research product and a reusable AI-tool service sharing one research core.
+- **Reason:** This captured the initial concept before the owner clarified the primary AI-to-AI interoperability mission.
 
 ## Proposed decisions
 
@@ -44,9 +44,9 @@ This file records decisions, proposals, and unresolved questions. Update it when
 - **Validation needed:** Current account access, domain zone, runtime compatibility, quotas, pricing, observability, and deployment workflow.
 
 ### P-002: MCP as the first AI integration protocol
-- **Status:** Proposed
-- **Proposal:** Implement a remote MCP endpoint backed by the same API and research core as the web application.
-- **Validation needed:** Current client support, transport requirements, authentication, app review requirements, and plan/platform restrictions for each target assistant.
+- **Status:** Superseded by D-008
+- **Proposal:** The initial proposal was to implement MCP as the sole first AI integration protocol.
+- **Replacement:** D-008 establishes the combined strategy: MCP for AI-client tool access, A2A for agent-to-agent tasks, and explicit vendor adapters where supported.
 
 ### P-003: Provider-independent search
 - **Status:** Proposed
