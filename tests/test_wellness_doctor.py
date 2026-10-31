@@ -73,6 +73,46 @@ class RepositoryInspectionTests(unittest.TestCase):
             self.assertTrue(critical)
             self.assertEqual(critical[0]["severity"], "critical")
 
+    def test_resolves_encoded_relative_link_with_fragment(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.make_repo(root)
+            (root / "AI" / "Guide With Space.md").write_text("# Intro\\n", encoding="utf-8")
+            (root / "README.md").write_text(
+                "# Example\\n[guide](AI/Guide%20With%20Space.md#intro)\\n"
+                "<!-- MEEPSHEEP_HEALTH_START -->\\nx\\n<!-- MEEPSHEEP_HEALTH_END -->\\n",
+                encoding="utf-8",
+            )
+            report = inspect_repository(root)
+            broken = [f for f in report["findings"] if f["id"] == "MARKDOWN_LINK_BROKEN"]
+            self.assertFalse(broken)
+
+    def test_rejects_links_that_escape_repository_root(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "repo"
+            root.mkdir()
+            self.make_repo(root)
+            (Path(temp) / "outside.md").write_text("# Outside\\n", encoding="utf-8")
+            (root / "README.md").write_text(
+                "# Example\\n[outside](../outside.md)\\n"
+                "<!-- MEEPSHEEP_HEALTH_START -->\\nx\\n<!-- MEEPSHEEP_HEALTH_END -->\\n",
+                encoding="utf-8",
+            )
+            report = inspect_repository(root)
+            self.assertIn("MARKDOWN_LINK_BROKEN", {f["id"] for f in report["findings"]})
+
+    def test_empty_workflow_directory_reports_missing_workflows(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            self.make_repo(root)
+            for workflow in (root / ".github" / "workflows").glob("*.yml"):
+                workflow.unlink()
+            report = inspect_repository(root)
+            missing = [f for f in report["findings"] if f["id"] == "REQUIRED_FILE_MISSING"]
+            paths = {f["path"] for f in missing}
+            self.assertIn(".github/workflows/quality.yml", paths)
+            self.assertIn(".github/workflows/wellness-doctor.yml", paths)
+
 
 class ReadmeUpdateTests(unittest.TestCase):
     def test_updates_only_marked_region_and_is_idempotent(self):
