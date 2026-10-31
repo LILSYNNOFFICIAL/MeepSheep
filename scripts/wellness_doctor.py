@@ -128,6 +128,43 @@ def inspect_repository(root: Path | str) -> dict:
     markdown_files = _markdown_files(root)
     for path in markdown_files:
         passed += _check_markdown(root, path, findings)
+
+    # Keep the project state ledger aligned with verified repository artifacts.
+    state_path = root / "AI" / "STATE.md"
+    if state_path.is_file():
+        try:
+            state_text = state_path.read_text(encoding="utf-8")
+            state_expectations = [
+                (
+                    "Automated test suite exists.",
+                    root / "tests" / "test_wellness_doctor.py",
+                    "State ledger says the automated test suite does not exist, but tests/test_wellness_doctor.py is present.",
+                ),
+                (
+                    "CI workflow exists.",
+                    root / ".github" / "workflows" / "quality.yml",
+                    "State ledger says CI does not exist, but .github/workflows/quality.yml is present.",
+                ),
+            ]
+            for label, artifact, message in state_expectations:
+                entry = re.search(
+                    r"^\\s*-\\s*\\[([ xX])\\]\\s*" + re.escape(label) + r"\\s*$",
+                    state_text,
+                    re.MULTILINE,
+                )
+                if entry and entry.group(1).lower() == "x" and artifact.is_file():
+                    passed += 1
+                else:
+                    _add(
+                        findings,
+                        "STATE_LEDGER_STALE_CHECKBOX",
+                        "warning",
+                        message if entry else f"State ledger is missing the required entry: {label}",
+                        "AI/STATE.md",
+                    )
+        except (OSError, UnicodeError):
+            _add(findings, "STATE_LEDGER_UNREADABLE", "error", "Project state ledger cannot be read as UTF-8.", "AI/STATE.md")
+
     readme = root / "README.md"
     if readme.is_file():
         try:
@@ -182,7 +219,7 @@ def render_health_block(report: dict) -> str:
     status, counts = report["status"], report["counts"]
     findings = report.get("findings", [])
     repo_ids = ("REQUIRED_FILE_", "REPOSITORY_")
-    doc_ids = ("MARKDOWN_", "README_AI_LINK_", "README_UNREADABLE")
+    doc_ids = ("MARKDOWN_", "README_AI_LINK_", "README_UNREADABLE", "STATE_LEDGER_")
     workflow_ids = ("QUALITY_WORKFLOW_", "WELLNESS_WORKFLOW_")
     readme_ids = ("README_HEALTH_MARKERS_",)
     rows = [
