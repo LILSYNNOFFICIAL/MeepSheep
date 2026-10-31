@@ -56,6 +56,8 @@ Exit behavior:
 - Scheduled/manual triggers and concurrency behavior must match `AI/ACTIONS.md`.
 
 ### Documentation contract
+- Confirm the project state ledger does not mark the automated test suite or CI workflow as absent when their required files exist.
+- Report stale state-ledger checkboxes as 🟡 warnings with stable finding IDs.
 - Confirm README contains exactly one start and end marker in the correct order.
 - Confirm README links to all required AI operating documents.
 - Report broken links and missing documents with stable finding IDs.
