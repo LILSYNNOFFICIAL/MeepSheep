@@ -41,7 +41,7 @@ When work is performed:
 - [x] Confirm every AI document is linked from README.
 - [x] Fetch all committed files from GitHub and confirm they exist with substantial content.
 - [x] Confirm fetched GitHub copies have the expected structure and substantial content; byte-for-byte comparison was unavailable because local source drafts were not retained.
-- [ ] Record final verification commit SHA and date in STATE.md.
+- [x] Record the verified automation checkpoint SHA and date in STATE.md.
 
 **Exit criteria:** The documentation is committed on `main`, all links resolve, and a fresh reader can understand product scope, proposed architecture, security posture, decisions, and next actions without relying on chat history.
 
@@ -320,17 +320,17 @@ Begin Phase 1 by finalizing the first-release user journey and MVP acceptance cr
 - [x] Approve the four-level health icon model and automation design.
 - [x] Create the GitHub rules, Actions, Wellness Doctor, status icon, incident, and automation-log specifications.
 - [x] Add the README health marker region and links to the automation documents.
-- [ ] Implement the deterministic Python Wellness Doctor.
-- [ ] Add unit tests for status precedence, file inventory, Markdown links/fences, malformed markers, and safe idempotent README updates.
-- [ ] Add read-only pull-request/push quality workflow.
-- [ ] Add trusted-branch scheduled/manual wellness workflow.
-- [ ] Validate workflow YAML and run unit tests.
-- [ ] Inspect actual GitHub Actions runs and job logs.
-- [ ] Verify README status changes only when the generated health block changes.
-- [ ] Verify a no-change scheduled run creates no commit.
-- [ ] Record workflow run URLs, commit SHAs, and final limitations in STATE.md and AUTOMATION_LOG.md.
+- [x] Implement the deterministic Python Wellness Doctor.
+- [x] Add unit tests for status precedence, file inventory, Markdown links/fences, malformed markers, and safe idempotent README updates.
+- [x] Add read-only pull-request/push quality workflow.
+- [x] Add trusted-branch scheduled/manual wellness workflow definitions.
+- [x] Validate workflow YAML and run unit tests.
+- [x] Inspect actual GitHub Actions runs and job logs.
+- [x] Verify README status transitions from warning to healthy after repairing missing links, and remains unchanged when health output is unchanged.
+- [x] Verify a no-change Wellness Doctor run creates no commit (push-triggered no-op verified; scheduled no-op event not yet observed).
+- [x] Record workflow run URLs, commit SHAs, and final limitations in STATE.md and AUTOMATION_LOG.md.
 
-**Exit criteria:** The doctor runs in GitHub Actions, detects configured repository/documentation/workflow defects, publishes the correct icon without overwriting README content outside its markers, and has passing tests plus observed successful workflow runs.
+**Exit criteria:** The doctor runs in GitHub Actions, detects configured repository/documentation/workflow defects, publishes the correct icon without overwriting README content outside its markers, and has passing tests plus observed successful push-triggered workflow runs. Scheduled and manual event execution remain to be observed.
 
 ## Permanent GitHub operating rules
 
