@@ -124,3 +124,18 @@ A release must not be called production-ready until:
 ## 10. Security rule
 
 Convenience must never silently weaken the URL-fetching boundary, credential boundary, user-data boundary, or tool-permission boundary.
+
+
+## 11. GitHub Actions and automation security
+
+- Separate read-only PR validation from any workflow that has `contents: write`.
+- Never expose write-enabled tokens to untrusted fork or pull-request code.
+- Pin third-party actions to immutable commit SHAs where practical; review action updates deliberately.
+- Declare explicit workflow permissions instead of relying on broad defaults.
+- Do not pass secrets to the Wellness Doctor. It must operate on repository files only.
+- Do not print environment variables, tokens, authorization headers, or secret values in logs.
+- Restrict the README updater to the exact delimited health block. Missing, duplicate, or reversed markers must fail without modifying README.
+- Use concurrency controls to prevent simultaneous health commits.
+- Do not let bot-authored health commits recursively trigger another write cycle.
+- Treat workflow logs and artifacts as potentially visible repository data. Never include private user queries or source contents.
+- The doctor is not a security scanner or production monitor. Do not use a green repository status as proof that production infrastructure is secure or available.
