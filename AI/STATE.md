@@ -105,3 +105,14 @@ Do not record secrets, access tokens, private keys, or unnecessary personal data
 - **Action runtime:** Workflows now pin the verified upstream v6 commits for checkout and setup-python. The latest inspected logs contain no Node.js 20 deprecation warning.
 - **No-op behavior:** A successful push-triggered Wellness Doctor run confirmed that unchanged health output does not create a commit.
 - **Still unverified:** Scheduled cron event execution and manual dispatch execution have not yet been observed. The workflow definitions include both. No branch protection/ruleset settings were changed or verified. Production uptime, DNS, Cloudflare, Supabase, GitLab, external providers, and MCP-client health are outside this doctor version.
+
+
+## Site Doctor repair checkpoint (2026-10-31)
+
+- **Merged fix:** PR [#1](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/1) merged to `main` as `046e92739a5bd4b3f1aa5803a922551e052d7167`.
+- **Regression:** The doctor previously missed stale unchecked state-ledger entries even when the corresponding test suite and CI workflow were present. The state ledger now correctly marks both as present, and the doctor reports future drift as 🟡.
+- **TDD evidence:** The new regression test failed before implementation with `AssertionError: 0 != 2`; after implementation, all 10 tests passed.
+- **Quality run:** [Run 41246535939](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41246535939) completed successfully on the merge commit. Tests, read-only doctor, and YAML syntax validation passed.
+- **Wellness run:** [Run 41246535992](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41246535992) completed successfully on the merge commit. README now reports 🟢 Healthy, 84 passed, 0 warnings, 0 errors, 0 critical.
+- **Queue reliability:** Quality workflow now queues overlapping pushes instead of cancelling in-progress checks. The earlier cancelled runs were caused by the previous concurrency setting, not by doctor findings.
+- **Still unverified:** Scheduled cron execution, manual dispatch execution, branch protection/rulesets, production uptime, DNS, and external integrations remain outside this verified checkpoint.
