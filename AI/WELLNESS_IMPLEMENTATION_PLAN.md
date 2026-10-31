@@ -174,4 +174,7 @@ Do not claim branch protection, deployment health, domain health, external provi
 - [x] Observe the new test fail before the implementation: 10 tests ran; the new assertion failed with `AssertionError: 0 != 2` because no findings were emitted.
 - [x] Implement stable `STATE_LEDGER_STALE_CHECKBOX` warning findings and include them in the documentation health category.
 - [x] Correct the state ledger to mark the existing test suite and CI workflow as present.
-- [ ] Verify the complete PR quality workflow and merged-main Wellness Doctor update.
+- [x] Verify the complete PR quality workflow and merged-main Wellness Doctor update.
+
+
+**Verified follow-up outcome:** PR #1 merged as `046e92739a5bd4b3f1aa5803a922551e052d7167`. The merged-main quality and Wellness Doctor workflows both passed. Ten unit tests passed; the doctor reported 84 passed checks and zero findings; both workflow YAML files parsed successfully; README health is 🟢 Healthy.
