@@ -86,5 +86,22 @@ Do not record secrets, access tokens, private keys, or unnecessary personal data
 - **Repository baseline inspected:** Existing main branch tree and AI documents were fetched before changes.
 - **Added operating specifications:** `AI/GITHUB_RULES.md`, `AI/ACTIONS.md`, `AI/WELLNESS_DOCTOR.md`, `AI/STATUS_ICONS.md`, `AI/INCIDENTS.md`, `AI/AUTOMATION_LOG.md`, and `AI/WELLNESS_IMPLEMENTATION_PLAN.md`.
 - **README:** Added links to the automation documents and a delimited generated health region.
-- **Implementation status:** Python doctor, unit tests, and GitHub Actions workflows are being added and must be verified by actual workflow execution before being marked operational.
+- **Implementation status:** Implemented and verified by successful push-triggered GitHub Actions runs. The Python doctor, unit tests, README updater, read-only quality workflow, and trusted write-enabled wellness workflow are present on main.
 - **Not verified:** Branch protection/rulesets, production website uptime, DNS, Cloudflare/Supabase/GitLab external service health.
+
+
+## Wellness Doctor verification checkpoint (2026-10-31)
+
+- **Verified source checkpoint:** `9aad4dca4ddf49a239f8b2ade0c2751cbe05794e` on `main` before this state-ledger update.
+- **Repository inventory:** 21 files in the inspected Git tree, including 16 AI operating documents, two workflow definitions, one doctor script, one test file, and README.
+- **Unit tests:** 9 tests passed in the latest GitHub Actions run.
+- **Doctor checks:** 82 passed, 0 warnings, 0 errors, 0 critical findings.
+- **README:** Current generated health indicator is 🟢 Healthy (`OK`), with all four category rows green.
+- **Quality workflow:** [Run 41245444264](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41245444264) completed successfully. Unit tests, read-only doctor, and both workflow YAML syntax checks passed.
+- **Wellness workflow:** [Run 41245444455](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41245444455) completed successfully. Nine tests passed; doctor reported 82 passed checks and no findings; README was unchanged, so no health-only commit was created.
+- **TDD evidence:** A stub implementation produced the expected `NotImplementedError` failures before implementation. The implemented doctor then passed the focused suite.
+- **Additional verification:** Local CLI JSON smoke test returned valid JSON and exit code 1 for an empty repository, correctly classifying it as critical. Tests cover all four status levels, severity precedence, missing files, broken links, encoded paths with fragments, traversal outside repository root, empty workflow directory, unbalanced fences, malformed/duplicate markers, and idempotent README updates.
+- **Workflow syntax:** Both GitHub Actions YAML files parsed successfully using Ruby/Psych in the quality workflow.
+- **Action runtime:** Workflows now pin the verified upstream v6 commits for checkout and setup-python. The latest inspected logs contain no Node.js 20 deprecation warning.
+- **No-op behavior:** A successful push-triggered Wellness Doctor run confirmed that unchanged health output does not create a commit.
+- **Still unverified:** Scheduled cron event execution and manual dispatch execution have not yet been observed. The workflow definitions include both. No branch protection/ruleset settings were changed or verified. Production uptime, DNS, Cloudflare, Supabase, GitLab, external providers, and MCP-client health are outside this doctor version.
