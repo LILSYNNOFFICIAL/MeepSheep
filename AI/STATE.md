@@ -35,7 +35,7 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [x] Remote tool invocation requires an approved tool name and verifies that the tool is still listed.
 - [x] Successful responses include message ID, trace ID, caller principal, target agent, output, and MCP provenance.
 - [x] Remote tool errors are sanitized before returning to the caller.
-- [x] Seven MCP integration tests pass in CI.
+- [x] Eight MCP integration tests pass in CI, including one separate-process loopback TCP test.
 
 **Important boundary:** The test uses the MCP SDK's Streamable HTTP transport with a custom in-process fetch bridge. It exercises MCP protocol messages between separate handler/client instances, but it does not yet prove socket-level networking, separate-process operation, production authentication, persistence, or a live external AI system.
 
@@ -43,11 +43,11 @@ This ledger distinguishes verified implementation from planned or unverified cap
 
 - PR #3: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3
 - Active branch: `feat/mcp-relay-lab`
-- Tested head: `d25aca6310861e8d6cd4226abd5e32b21275af24`
-- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253359267
-- Node MCP tests: 7 passed, 0 failed.
+- Tested implementation head: `d57610d9d979b6ba8d4cc858d5f88abf1ddb54ff`
+- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253637578
+- Node MCP tests: 8 passed, 0 failed.
 - Python Wellness Doctor unit tests: 10 passed.
-- Repository Doctor: 103 passed, 0 warnings, 0 errors, 0 critical.
+- Repository Doctor: 112 passed, 0 warnings, 0 errors, 0 critical.
 - Both GitHub Actions workflow YAML files parsed successfully.
 - TDD red evidence: earlier run 41253274558 failed because `src/relay/agent-registry.mjs` did not yet exist. After implementation, run 41253320195 passed the first six MCP tests; run 41253359267 passed the expanded seven-test suite.
 
@@ -61,7 +61,8 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [ ] Real external AI agent and real requesting client round trip.
 - [ ] A2A/provider/webhook adapters.
 - [ ] Production Cloudflare deployment, DNS, TLS, or hosting.
-- [ ] Dependency lockfile, lint, typecheck, secret scanning, and supply-chain audit.
+- [x] Dependency lockfile committed and CI uses `npm ci`.
+- [ ] Lint, typecheck, secret scanning, and supply-chain audit.
 - [ ] Branch protection/rulesets verified.
 
 No production credentials, Cloudflare resources, DNS, or deployment have been changed.
