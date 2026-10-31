@@ -1,108 +1,160 @@
-# MeepSheep API and Protocol Contract
+# MeepSheep MCP API and Relay Contract
 
-**Status:** Initial design contract. Schemas must be implemented and validated before production use.
+**Status:** Design contract. Not implemented or deployed.  
+**Primary interface:** Remote MCP server.  
+**Core behavior:** Route authorized messages and tasks between independently connected agents.
 
-## 1. Protocol roles
+## 1. Protocol model
 
-- **MCP:** Lets a compatible AI client discover and invoke tools exposed by MeepSheep. This is the main integration surface for assistants that can connect to remote MCP servers.
-- **A2A:** Lets independent agents discover capabilities and exchange messages and long-running tasks using a standard agent-to-agent model.
-- **Provider adapters:** Bridge supported vendor APIs, webhooks, and other documented interfaces into MeepSheep's internal contract.
-- **Internal API:** Owns identity, authorization, routing, task state, budgets, audit events, and normalized results.
+MeepSheep exposes an MCP server to requesting AI clients and uses outbound MCP clients to connect to remote MCP servers. The coordination core provides identity, agent discovery, grants, routing, task state, budgets, audit, and provenance.
 
-MCP is not a universal agent registry or a guarantee that one consumer chat UI can directly call another. A2A does not grant access to closed assistants that expose no authorized endpoint.
+Optional A2A, provider API, and webhook adapters may be added for specific targets. They are not required for the first MCP relay.
 
-## 2. Core interaction model
+MCP standardizes client/server tool communication. It does not create endpoints for closed consumer assistants or automatically grant access to their chats, memory, tools, or hidden prompts.
 
-A caller submits a task to MeepSheep. MeepSheep authenticates the caller, resolves an explicitly connected target, checks policy, creates a durable task, dispatches through the target's supported adapter, tracks progress, validates the response, and returns the result.
+## 2. Initial MCP tool surface
 
-Short requests may complete in one request/response cycle. Longer requests use a task ID and status/result retrieval. Streaming is an optional transport optimization, not a requirement for correctness.
+The first public model-callable tool set should be narrow:
 
-## 3. Canonical task envelope
+- `discover_agents`: list agents the caller is allowed to discover, optionally filtered by capability.
+- `get_agent`: inspect a visible agent's profile, connection type, declared capabilities, and health.
+- `send_message`: send a bounded one-shot message to an authorized target agent and return its response when completed synchronously.
+- `delegate_task`: create a task for an authorized target agent; return a result or durable task ID.
+- `get_task`: retrieve status and result fields for a task visible to the caller.
+- `wait_task`: wait for a bounded interval for a task state change.
+- `cancel_task`: request cancellation when authorized and supported by the target.
+- `list_my_connections`: show the caller's permitted connection metadata and health, never credentials.
+
+Tool names and JSON Schemas must be versioned and validated. Do not expose credential writes, arbitrary endpoint registration, policy edits, tenant administration, or destructive actions to ordinary model-callable tools. Those operations belong in a separately authenticated owner console/API.
+
+## 3. Canonical message envelope
+
+Required logical fields:
+
+- `schema_version`
+- `message_id`
+- `trace_id`
+- `caller_principal_id` (derived from authentication, never trusted from body input)
+- `tenant_id` (derived server-side)
+- `source_agent_id` (when a registered source agent is acting)
+- `target_agent_id`
+- `created_at` (server timestamp)
+- `message_type` (`message`, `task`, `task_update`, `task_result`, `cancel`)
+- `content` (bounded text or structured payload)
+- `content_type`
+- `context_policy` (explicitly authorized context and size limits)
+- `idempotency_key`
+
+The caller identity, tenant, grants, and connection credentials are server-derived. Never accept a caller's assertion of authorization as proof.
+
+## 4. Canonical task envelope
 
 Required fields:
-- `schema_version`: contract version.
-- `task_id`: MeepSheep-generated opaque identifier.
-- `trace_id`: correlation identifier across agents and adapters.
-- `caller_id`: authenticated principal, never trusted from user-supplied body text.
-- `target_agent_id`: registered target identity.
-- `created_at`: server timestamp.
-- `deadline_at`: server-enforced deadline.
-- `intent`: bounded task description.
-- `input`: structured payload or text content.
-- `input_mime_type`: declared payload type.
-- `context_policy`: explicit context-sharing mode and limits.
-- `requested_capabilities`: capability IDs required for the task.
-- `authorization_context`: server-derived grants and scopes, not caller assertions.
-- `idempotency_key`: retry key.
 
-Secrets and raw provider credentials are never included in task envelopes.
+- `schema_version`
+- `task_id`
+- `trace_id`
+- `caller_principal_id`
+- `tenant_id`
+- `target_agent_id`
+- `connection_id`
+- `created_at`
+- `deadline_at`
+- `intent`
+- `input`
+- `input_mime_type`
+- `context_policy`
+- `requested_capabilities`
+- `idempotency_key`
 
-## 4. Task lifecycle
+No raw credentials, access tokens, hidden reasoning, or unapproved conversation history may appear in the envelope.
 
-Canonical internal states: `queued`, `dispatching`, `working`, `input_required`, `completed`, `failed`, `canceled`, `rejected`, and `expired`.
+## 5. Response envelope
 
-Terminal states are completed, failed, canceled, rejected, and expired. State transitions are validated and recorded as append-only events. Provider-specific states are mapped into this lifecycle without losing raw provider status in diagnostic metadata.
+- `schema_version`
+- `message_id` or `task_id`
+- `trace_id`
+- `source_agent_id` and `target_agent_id`
+- `status`
+- `created_at`, `started_at`, `completed_at`
+- `output` and `output_mime_type`
+- `artifacts[]` using scoped references
+- `warnings[]`
+- sanitized `error`
+- `provenance` (connection, adapter, remote request/task ID, and timestamps)
+- `usage` where reported by the remote provider
 
-## 5. Canonical response envelope
+An agent's response is an assertion from that agent, not independently verified fact. Preserve the distinction.
 
-Fields: `schema_version`, `task_id`, `trace_id`, `target_agent_id`, `status`, `started_at`, `completed_at`, `output`, `output_mime_type`, `artifacts[]`, `warnings[]`, sanitized `error`, `provenance`, and `usage`.
+## 6. Task lifecycle
 
-Responses distinguish an agent's assertion from independently verified facts. Do not imply that an answer has been validated merely because it came from another model.
+Internal states: `queued`, `dispatching`, `working`, `input_required`, `completed`, `failed`, `canceled`, `rejected`, `expired`.
 
-## 6. Initial MCP tool surface
+Terminal states: completed, failed, canceled, rejected, expired. Validate every state transition and append an event. Remote protocol states map into this lifecycle while retaining sanitized raw status metadata.
 
-- `list_agents`: list only agents visible to the authenticated caller.
-- `get_agent`: inspect a visible agent's profile, supported protocols, declared skills, and connection health.
-- `send_task`: create and dispatch a bounded task to an authorized target.
-- `get_task`: retrieve status and permitted result fields for a task owned by or shared with the caller.
-- `wait_task`: wait for a bounded period for a task state change; polling `get_task` remains available.
-- `cancel_task`: request cancellation where supported and authorized.
-- `list_connections`: show the caller's own configured connections and status, with credentials redacted.
+## 7. Outbound MCP connection contract
 
-Administrative registration, credential management, policy changes, and connection deletion are not ordinary model-callable tools by default. They belong in an authenticated owner console or separately scoped administrative API.
+Each remote connection records:
+- Owner and tenant.
+- Endpoint URL and transport.
+- Authentication method and secret reference.
+- Protocol/SDK version.
+- Owner-approved tool allowlist.
+- Declared capabilities and limits.
+- Timeout, concurrency, and payload limits.
+- Health state and last successful connection test.
+- Created, rotated, revoked, and last-used timestamps.
 
-Every tool needs explicit input/output JSON Schemas, size limits, scope requirements, and safe error codes.
+On connection setup:
+1. Validate the endpoint and transport.
+2. Validate authentication and TLS requirements.
+3. Initialize an MCP client session.
+4. Discover remote tools.
+5. Present discovered tools for owner approval.
+6. Store only approved tool names/schema snapshots and a secret reference.
+7. Revalidate tool schema changes before invoking newly changed behavior.
 
-## 7. A2A interoperability
+Never expose all remote tools to every caller by default. MeepSheep authorizes a specific remote tool for a specific tenant/caller/agent.
 
-- Support A2A Agent Cards for agents that expose the protocol.
-- Validate advertised endpoints and authentication requirements before connection.
-- Implement the released A2A version selected in the decision record.
-- Map A2A messages, tasks, artifacts, and state updates to the canonical internal envelope.
-- Preserve remote task IDs and protocol version in provenance.
-- Treat Agent Cards and remote responses as untrusted metadata.
-- Do not fetch arbitrary URLs embedded in cards without SSRF validation.
-- Do not assume an A2A endpoint is trustworthy because it is discoverable.
+## 8. Authorization rules
 
-MeepSheep may expose its own A2A Agent Card and endpoint when the server implementation and security model are ready. This is separate from its MCP server.
+- Authenticate the inbound MCP caller.
+- Resolve tenant and principal from trusted credentials.
+- Check discovery and invocation as separate permissions.
+- Check target connection ownership, active status, tool allowlist, and grant on every dispatch.
+- Check task ownership on status, wait, cancel, and artifact retrieval.
+- Propagate or narrow parent grants, deadlines, and budgets to child tasks.
+- Keep owner/admin operations outside the ordinary model-callable tool surface.
 
-## 8. Adapter contract
+## 9. Error codes
 
-Each adapter declares protocol/version, authentication, supported capabilities/modalities, sync/async/streaming support, payload limits, timeout/cancellation support, idempotency semantics, rate/concurrency limits, and data-handling constraints.
+`AUTH_REQUIRED`, `AUTH_INVALID`, `PERMISSION_DENIED`, `AGENT_NOT_FOUND`, `AGENT_UNAVAILABLE`, `TOOL_NOT_ALLOWED`, `CAPABILITY_UNSUPPORTED`, `INVALID_REQUEST`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `BUDGET_EXCEEDED`, `DEADLINE_EXCEEDED`, `REMOTE_REJECTED`, `REMOTE_FAILED`, `REMOTE_TIMEOUT`, `CANCELED`, `CONNECTION_REVOKED`, `SCHEMA_CHANGED`, `INTERNAL_ERROR`.
 
-Adapters normalize outputs, map errors, enforce deadlines, redact credentials, and never broaden caller authorization.
+Errors must not reveal credentials, internal addresses, stack traces, or other tenants' data.
 
-## 9. Stable error codes
+## 10. Adapter interface
 
-`AUTH_REQUIRED`, `AUTH_INVALID`, `PERMISSION_DENIED`, `AGENT_NOT_FOUND`, `AGENT_UNAVAILABLE`, `CAPABILITY_UNSUPPORTED`, `INVALID_REQUEST`, `PAYLOAD_TOO_LARGE`, `RATE_LIMITED`, `BUDGET_EXCEEDED`, `DEADLINE_EXCEEDED`, `REMOTE_REJECTED`, `REMOTE_FAILED`, `REMOTE_TIMEOUT`, `CANCELED`, and `INTERNAL_ERROR`.
+Every adapter must declare:
+- Protocol and version.
+- Authentication and credential reference.
+- Supported request/response modes.
+- Tool/capability mapping.
+- Payload and artifact limits.
+- Timeout, cancellation, and idempotency behavior.
+- Rate and concurrency limits.
+- Data retention/handling constraints.
+- Error mapping and provenance fields.
 
-Errors must not disclose secrets, internal addresses, stack traces, or another tenant's data.
+All adapters use the same canonical envelope and shared authorization service. No adapter may broaden caller permissions.
 
-## 10. Versioning and references
+## 11. Versioning and implementation baseline
 
-Pin protocol versions in implementation and fixtures. Keep public schema changes backward-compatible within a major version. Record client and adapter versions for diagnostics, subject to privacy policy.
+Pin exact MCP protocol revision, SDK version, transport, and auth behavior in implementation dependencies and contract fixtures. Verify against the selected client and remote server before production.
 
-- MCP: https://modelcontextprotocol.io/specification
-- A2A: https://a2a-protocol.org/latest/specification/
-- OpenAI remote MCP: https://developers.openai.com/api/docs/guides/tools-connectors-mcp
-- xAI MCP: https://docs.x.ai/build/features/mcp-servers
+References:
+- https://modelcontextprotocol.io/specification
+- https://developers.cloudflare.com/agents/model-context-protocol/
+- https://developers.openai.com/api/docs/guides/tools-connectors-mcp
+- https://docs.x.ai/build/features/mcp-servers
 
-Recheck released versions and target-client compatibility before implementation. This contract does not replace the protocol specifications.
-
-
-## 12. Protocol research snapshot (2026-10-31)
-
-- **A2A:** The official project documentation identifies version 1.0.0 as the latest released specification at the time checked. Use the released 1.0.0 specification as the implementation baseline unless a compatibility test or a newer release changes the decision: https://a2a-protocol.org/latest/specification/ .
-- **MCP:** The official specification repository contains the 2026-07-28 protocol revision, including Streamable HTTP changes. Treat 2026-07-28 as the reviewed baseline for planning, then pin the exact supported protocol revision and SDK version in the implementation lockfile: https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/docs/specification/2026-07-28 .
-
-These are research snapshots, not a claim that MeepSheep has implemented either protocol. Confirm current SDK compatibility and client behavior immediately before coding.
+These references describe external capabilities, not a claim that MeepSheep is implemented or connected.
