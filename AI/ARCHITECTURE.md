@@ -270,3 +270,17 @@ Use durable task records and a validated queue/coordination primitive. Persist s
 Workers may host the API, MCP endpoint, A2A endpoint, and adapters. Durable Objects and Queues are candidates for coordination and dispatch; D1 is a candidate relational store; R2 is optional artifact storage; KV is non-authoritative cache only. Validate current account access, pricing, limits, and runtime support before selecting services. No production infrastructure is claimed to exist.
 
 See AI/INTEROPERABILITY.md, AI/API_SPEC.md, AI/DATA_MODEL.md, AI/DEPLOYMENT.md, and AI/BUILD_PLAN.md for the detailed contracts and plan.
+
+## 12. Cloudflare capability research checkpoint (2026-10-31)
+
+Official Cloudflare documentation reviewed for this planning pass identifies **Workflows** as a strong candidate for durable multi-step tasks: persisted steps, automatic retries, waiting for external events or approvals, and execution lasting minutes through weeks. This aligns more directly with multi-minute agent delegation than a hand-built queue/state machine alone.
+
+Candidate division of responsibilities:
+- **Workers / Agents SDK:** API, remote MCP server/client integration, routing, and adapter execution.
+- **Workflows:** durable task orchestration, retries, pauses, external callbacks, and human approval waits.
+- **Durable Objects:** per-agent or per-conversation coordination, strongly consistent state, and real-time connections where required.
+- **D1:** relational registry, grants, task metadata, audit indexes, and usage records if selected as primary database.
+- **Queues:** optional decoupled fan-out or background delivery where Workflows alone is not the right abstraction.
+- **R2:** optional larger artifacts.
+
+This is a leading candidate topology, not a final service selection. Validate pricing, limits, SDK/runtime compatibility, and account access before implementation. Cloudflare documentation: https://developers.cloudflare.com/workflows/ ; https://developers.cloudflare.com/durable-objects/ ; https://developers.cloudflare.com/agents/model-context-protocol/ .
