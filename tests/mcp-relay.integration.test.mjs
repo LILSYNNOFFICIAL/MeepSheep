@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { createInterface } from "node:readline";
 import { afterEach, test } from "node:test";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { AgentRegistry } from "../src/relay/agent-registry.mjs";
@@ -7,6 +9,7 @@ import { createMockAgent } from "./fixtures/mock-agent.mjs";
 
 const openHandlers = [];
 const openClients = [];
+const openProcesses = [];
 
 const principal = {
   principalId: "caller-1",
@@ -69,6 +72,16 @@ afterEach(async () => {
   while (openHandlers.length) {
     const handler = openHandlers.pop();
     await handler.close().catch(() => {});
+  }
+  while (openProcesses.length) {
+    const child = openProcesses.pop();
+    if (child.exitCode === null && child.signalCode === null) {
+      await new Promise((resolve) => {
+        child.once("exit", resolve);
+        child.kill("SIGTERM");
+        setTimeout(resolve, 2000).unref();
+      });
+    }
   }
 });
 
@@ -195,4 +208,61 @@ test("remote tool failures are sanitized before returning to the caller", async 
   assert.match(message, /REMOTE_FAILED/);
   assert.equal(message.includes("REMOTE SECRET"), false);
   assert.equal(message.includes("/private/path"), false);
+});
+
+test("send_message crosses a separately spawned remote MCP server over TCP", async () => {
+  const scriptPath = new URL("./fixtures/mock-agent-process.mjs", import.meta.url);
+  const child = spawn(process.execPath, [scriptPath.pathname], { stdio: ["ignore", "pipe", "pipe"] });
+  openProcesses.push(child);
+  const lines = createInterface({ input: child.stdout });
+  const remoteUrl = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("Mock MCP process startup timed out.")), 5000);
+    lines.once("line", (line) => {
+      clearTimeout(timer);
+      if (line.startsWith("READY ")) resolve(line.slice(6));
+      else reject(new Error("Mock MCP process did not report a ready URL."));
+    });
+    child.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+    child.once("exit", (code) => {
+      clearTimeout(timer);
+      reject(new Error("Mock MCP process exited before ready with code " + code));
+    });
+  });
+
+  const remoteClient = new Client({ name: "meepsheep-outbound-test", version: "0.1.0" });
+  await remoteClient.connect(new StreamableHTTPClientTransport(new URL(remoteUrl)));
+  openClients.push(remoteClient);
+
+  const registry = new AgentRegistry();
+  registry.register({
+    id: "agent-process",
+    name: "Separate process agent",
+    tenantId: "tenant-1",
+    discoverable: true,
+    capabilities: ["message-review"],
+    approvedTools: ["review_message"],
+    client: remoteClient
+  });
+  const relayHandler = createRelayHandler({
+    registry,
+    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null
+  });
+  openHandlers.push(relayHandler);
+  const caller = await connectClient(relayHandler, "relay-process", makeAuthInfo());
+  const uniqueMessage = "tcp-proof-" + Date.now();
+  const result = await caller.callTool({
+    name: "send_message",
+    arguments: {
+      targetAgentId: "agent-process",
+      toolName: "review_message",
+      arguments: { message: uniqueMessage }
+    }
+  });
+
+  assert.equal(result.isError, undefined);
+  assert.equal(result.structuredContent.output.reply, "REMOTE RECEIVED: " + uniqueMessage);
+  assert.equal(result.structuredContent.targetAgentId, "agent-process");
 });
