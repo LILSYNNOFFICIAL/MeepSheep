@@ -1,8 +1,14 @@
 # MeepSheep MCP API and Relay Contract
 
-**Status:** Design contract. Not implemented or deployed.  
+**Status:** Design contract with a verified local-lab subset. Not deployed; production authentication, persistence, and task lifecycle remain unimplemented.  
 **Primary interface:** Remote MCP server.  
 **Core behavior:** Route authorized messages and tasks between independently connected agents.
+
+## Lab implementation status
+
+The local laboratory currently implements two inbound tools: `discover_agents` and `send_message`. The outbound MCP client verifies that the requested remote tool is currently listed and that its name is present in the owner-configured allowlist before invocation. The caller identity and tenant are resolved from trusted `authInfo` supplied by the hosting layer; they are not accepted in tool arguments. Successful responses include message ID, trace ID, source principal, target agent, status, remote output, and MCP tool provenance. Remote failures are mapped to `REMOTE_FAILED` without returning remote stack traces or raw error text.
+
+This is a test harness, not production auth. The registry is in-memory, the caller principal is injected by the test adapter, and the remote MCP handler is exercised through an in-process fetch bridge. The lab does not yet implement persistent tasks, a full schema fingerprint, credential onboarding, OAuth, production endpoint validation, or a live external agent. See [MCP_LAB.md](MCP_LAB.md).
 
 ## 1. Protocol model
 

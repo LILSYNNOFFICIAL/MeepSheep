@@ -21,3 +21,12 @@ Meaningful product, architecture, security, and release changes are recorded her
 - Updated product, architecture, interoperability, API, data model, build, security, testing, integration, decision, and benchmark documents.
 
 All entries describe product/documentation direction only. No application code, live MCP endpoint, remote AI connection, DNS, or production deployment is claimed.
+
+
+## 2026-10-31: First local MCP relay laboratory
+
+- Added a Node.js 26.13.0 local test harness with the official MCP TypeScript SDK v2.4.0.
+- Added inbound `discover_agents` and `send_message` tools, an in-memory tenant-aware registry, outbound MCP tool allowlisting, response provenance, and sanitized remote errors.
+- Added a deterministic mock MCP agent and seven CI integration tests.
+- CI now runs Node MCP tests alongside the existing Python Wellness Doctor checks.
+- This is a local protocol/relay proof only. It is not a live external AI connection or production deployment.

@@ -95,3 +95,10 @@ This file records accepted decisions, proposals, and open questions. Do not sile
 4. Add the new decision, rationale, and consequences.
 5. Update all affected product, architecture, API, security, and workflow documents.
 6. Verify implementation matches the decision before claiming it is live.
+
+
+### D-012: Local MCP lab SDK baseline
+- **Status:** Accepted for the local laboratory only.
+- **Decision:** Use Node.js 26.13.0, `@modelcontextprotocol/client@2.4.0`, `@modelcontextprotocol/server@2.4.0`, and `zod@4.6.7` for the first executable TypeScript MCP lab.
+- **Reason:** The official TypeScript SDK v2 is the current stable line for the 2026-07-28 MCP protocol revision. The lab needs both the MCP server and client roles.
+- **Boundary:** This does not decide the production hosting runtime, identity provider, database, or client-facing authentication profile. Revalidate package versions before production release.

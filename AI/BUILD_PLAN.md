@@ -1,6 +1,6 @@
 # MeepSheep Build Plan
 
-**Status:** Proposed plan. No application implementation is claimed.  
+**Status:** Partially implemented. The local MCP relay laboratory is running in CI; production runtime, persistence, and live provider integration are not implemented.  
 **Priority:** MCP-first AI-to-AI communication.
 
 ## Principles
@@ -19,7 +19,7 @@
 - [x] Reframe MeepSheep as an MCP-first relay and coordination service.
 - [x] Clarify inbound MCP server and outbound MCP client roles.
 - [x] Move research-engine functionality out of the MVP.
-- [ ] Merge and verify the documentation correction.
+- [x] Merge and verify the MCP-first documentation correction (PR #2, merge commit `d0bec625eb191d71781ab3e1d239245e54dd9594`).
 
 ## Phase 1: Lock the contracts
 
@@ -49,13 +49,13 @@
 
 ## Phase 3: Engineering foundation
 
-- [ ] Select runtime and package manager.
-- [ ] Pin runtime/tool versions.
-- [ ] Add formatting, lint, typecheck, and test framework.
-- [ ] Add environment schema and safe example config.
-- [ ] Add secret scanning and dependency checks.
-- [ ] Add reproducible local setup and CI.
-- [ ] Verify a clean checkout can install, test, and build.
+- [x] Select Node.js 26.13.0 for the local laboratory.
+- [x] Select npm and pin direct MCP SDK/Zod dependencies.
+- [x] Add Node's built-in test runner and GitHub Actions execution.
+- [x] Generate and commit `package-lock.json`; CI uses `npm ci`.
+- [ ] Add formatting, lint, and typecheck gates.
+- [ ] Add production environment schema, safe example config, secret scanning, and dependency auditing.
+- [x] Verify a clean CI checkout installs dependencies and runs the local MCP tests.
 
 ## Phase 4: Minimal MCP relay
 
@@ -72,7 +72,7 @@
 - [ ] Implement deterministic mock MCP agent.
 - [ ] Add contract tests and local integration tests.
 
-**Exit:** A local MCP caller can communicate through MeepSheep with a separate mock MCP server. This is not yet a live external AI integration.
+**Current evidence:** Eight contract cases exercise separate SDK handler/client instances through an in-process fetch bridge. A ninth test starts a separate mock-agent Node process and verifies an outbound MCP call over loopback TCP. This proves local socket-level transport and relay behavior. A public network deployment and live external AI agent are still required for the full phase exit.
 
 ## Phase 5: First real AI-to-AI proof
 
