@@ -39,17 +39,17 @@ Previous account inspection did not establish a currently configured MeepSheep C
 
 ## Current documentation baseline
 
-- [ ] Root README rewritten and verified.
-- [ ] `AI/WF.md` created and verified.
-- [ ] `AI/PROJECT.md` created and verified.
-- [ ] `AI/ARCHITECTURE.md` created and verified.
-- [ ] `AI/DECISIONS.md` created and verified.
-- [ ] `AI/SECURITY.md` created and verified.
-- [ ] `AI/RESEARCH.md` created and verified.
-- [ ] `AI/INTEGRATIONS.md` created and verified.
-- [ ] `AI/STATE.md` created and verified.
+- [x] Root README rewritten and verified.
+- [x] `AI/WF.md` created and verified.
+- [x] `AI/PROJECT.md` created and verified.
+- [x] `AI/ARCHITECTURE.md` created and verified.
+- [x] `AI/DECISIONS.md` created and verified.
+- [x] `AI/SECURITY.md` created and verified.
+- [x] `AI/RESEARCH.md` created and verified.
+- [x] `AI/INTEGRATIONS.md` created and verified.
+- [x] `AI/STATE.md` created and verified.
 
-These documentation checkboxes are intentionally left open until the files are committed and fetched back for independent verification.
+All listed documentation files were committed on `main` and fetched back from GitHub. Their existence, Markdown headings, substantial content, and expected file paths were verified. A byte-for-byte comparison against local source drafts was not performed because those drafts were not saved as local files.
 
 ## Session handoff template
 
@@ -65,3 +65,16 @@ For each substantial work session, append or update:
 - Workflow checkboxes changed:
 
 Do not record secrets, access tokens, private keys, or unnecessary personal data here.
+
+
+## Documentation verification record
+
+- Verification date: 2026-10-31.
+- Repository branch: `main`.
+- README update commit: `5114af5e5c5f9be2ce68558226d77b36835c711e`.
+- Master workflow verification update commit: `d2a3716d4d6f0f0e760f7709c0514eebef9a4eae`.
+- All ten expected Markdown paths (README plus nine files under AI/) were fetched successfully from GitHub.
+- Each fetched file had a Markdown heading and substantial content.
+- The README links to each AI document.
+- No application code, infrastructure, domain records, or deployment settings were changed.
+- Limitation: no byte-for-byte comparison to local authored drafts was possible in this session; the repository copies were checked for successful retrieval and expected structure.
