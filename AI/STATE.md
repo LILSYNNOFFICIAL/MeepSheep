@@ -13,8 +13,8 @@ This file is the compact handoff record. Update it after meaningful repository, 
 - [x] Existing README inspected before replacement.
 - [x] Initial repository was a clean slate with only a minimal README at the time of inspection.
 - [ ] Application source code exists.
-- [ ] Automated test suite exists.
-- [ ] CI workflow exists.
+- [x] Automated test suite exists.
+- [x] CI workflow exists.
 - [ ] Production deployment verified.
 - [ ] Domain routing and TLS verified.
 - [ ] MCP endpoint deployed and tested.
