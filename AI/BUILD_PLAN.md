@@ -141,3 +141,6 @@
 ## Cloudflare orchestration research note (2026-10-31)
 
 Cloudflare Workflows are the leading candidate for durable multi-step task execution because official docs describe persisted steps, automatic retries, external-event waits, and long-running execution. Durable Objects are candidates for real-time per-agent coordination and strongly consistent state. The Agents SDK documents MCP server/client capabilities. These are candidates, not accepted infrastructure decisions; verify account access, pricing, limits, and runtime compatibility before selecting.
+
+
+Cost and abuse-budget requirements are specified in AI/COST_MODEL.md. Implement budget reservation before dispatch, per-tenant/per-connection limits, bounded fan-out, and usage reconciliation before enabling live external agents.
