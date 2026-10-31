@@ -116,6 +116,7 @@ MeepSheep/
     ├── API_SPEC.md
     ├── DATA_MODEL.md
     ├── BUILD_PLAN.md
+    ├── COST_MODEL.md
     ├── TEST_STRATEGY.md
     ├── QUALITY_BENCHMARKS.md
     ├── DEPLOYMENT.md
@@ -158,6 +159,7 @@ tests/
 | [AI/API_SPEC.md](AI/API_SPEC.md) | Canonical task contract, MCP tools, A2A mapping, and errors |
 | [AI/DATA_MODEL.md](AI/DATA_MODEL.md) | Logical entities for agents, connections, grants, tasks, messages, and audit |
 | [AI/BUILD_PLAN.md](AI/BUILD_PLAN.md) | Phased implementation and first end-to-end acceptance target |
+| [AI/COST_MODEL.md](AI/COST_MODEL.md) | Per-task budgets, usage accounting, and abuse limits |
 | [AI/TEST_STRATEGY.md](AI/TEST_STRATEGY.md) | Unit, contract, integration, end-to-end, and security tests |
 | [AI/QUALITY_BENCHMARKS.md](AI/QUALITY_BENCHMARKS.md) | Interoperability reliability, quality, latency, and cost metrics |
 | [AI/DEPLOYMENT.md](AI/DEPLOYMENT.md) | Environment separation, deployment, monitoring, and rollback |
