@@ -136,3 +136,8 @@
 - Giving one agent unrestricted access to another agent's tools, memory, or credentials.
 - Autonomous financial, destructive, or external side effects without explicit policy and approval.
 - Unlimited fan-out or unbounded recursive agent delegation.
+
+
+## Cloudflare orchestration research note (2026-10-31)
+
+Cloudflare Workflows are the leading candidate for durable multi-step task execution because official docs describe persisted steps, automatic retries, external-event waits, and long-running execution. Durable Objects are candidates for real-time per-agent coordination and strongly consistent state. The Agents SDK documents MCP server/client capabilities. These are candidates, not accepted infrastructure decisions; verify account access, pricing, limits, and runtime compatibility before selecting.
