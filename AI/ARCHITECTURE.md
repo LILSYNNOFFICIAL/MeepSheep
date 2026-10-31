@@ -1,157 +1,109 @@
 # MeepSheep Architecture
 
-**Status:** Proposed target architecture. No application runtime or production infrastructure has been verified as deployed.
-**Primary mission:** AI interoperability, agent discovery, delegation, and coordination.
+**Status:** Proposed target architecture. No application runtime or production infrastructure is verified as deployed.  
+**Primary product:** MCP-first AI-to-AI relay and coordination service.
 
 ## 1. Architecture goals
 
-- Let independently operated AI clients and agents communicate through supported, authorized interfaces.
-- Use MCP for AI-client-to-MeepSheep tool access and A2A for agent-to-agent task exchange.
-- Bridge other documented provider APIs and webhooks through replaceable adapters.
-- Normalize every protocol into one canonical task/message model.
-- Use durable asynchronous orchestration by default, with a synchronous fast path.
-- Enforce identity, authorization, privacy, budgets, deadlines, and provenance at the shared core.
-- Keep model inference with connected AI providers. MeepSheep does not need to host a foundation model or local GPU.
+- Give compatible AI clients one MCP endpoint for agent discovery, messaging, delegation, and task retrieval.
+- Connect remote agents through their actual supported interfaces, beginning with outbound MCP connections.
+- Normalize all inbound and outbound traffic through one canonical internal envelope.
+- Centralize identity, grants, routing, task state, budgets, audit, and provenance.
+- Keep each agent's own intelligence, tools, and research capabilities on the agent side.
+- Support durable asynchronous tasks and a synchronous fast path.
+- Add A2A or vendor-specific adapters only when a concrete connection requires them.
 
 ## 2. Target topology
 
 ```text
-AI clients / assistants
-        | MCP
-        v
-MeepSheep MCP Gateway -------------------- Web Console
-        |
-        v
-Authentication + Tenant Policy + Grants
-        |
-        v
-Agent Registry + Capability Discovery
-        |
-        v
-Task Router / Orchestrator
-        |
-        +---- A2A adapter ----------> A2A-compatible agents
-        |
-        +---- Vendor API adapters --> documented agent/model APIs
-        |
-        +---- Webhook adapter ------> explicitly configured endpoints
-        |
-        v
-Durable task state + messages + events + audit + usage
+AI client / assistant
+       |
+       | MCP client
+       v
+MeepSheep MCP server
+       |
+       v
+Authentication + tenant + grants
+       |
+       +---- Agent registry / capability directory
+       |
+       v
+Canonical message + task router
+       |
+       +---- Outbound MCP client ------> Remote MCP agent/server
+       |
+       +---- Optional A2A adapter -----> A2A agent
+       |
+       +---- Optional provider adapter -> Documented agent API
+       |
+       +---- Optional webhook adapter --> Authorized endpoint
+       |
+       v
+Durable task state / messages / events / audit / usage
+       |
+       v
+Structured response to original MCP caller
 ```
 
-All product surfaces share the same application services. The web console is not a separate implementation of routing or authorization.
+The MCP server and outbound MCP client are separate roles. MeepSheep must implement both sides when it is acting as a relay: it accepts tool calls from the requesting AI client, then independently connects to the target agent's MCP server.
 
-## 3. Protocol responsibilities
+## 3. MCP is the primary interface, not magic connectivity
 
-### MCP
+MCP provides a standardized client/server protocol. MeepSheep exposes tools to a compatible caller and uses an MCP client to invoke tools on remote MCP servers. This allows one agent to ask MeepSheep to interact with another agent, provided the target exposes a suitable MCP server and the connection is configured and authorized.
 
-The remote MCP server exposes a narrow tool surface to compatible AI clients: list agents, inspect an agent, send a task, inspect/wait for a task, cancel a task where supported, and list the caller's own connections. Administrative credential and policy operations stay in a separately authenticated owner interface.
+MCP does not:
+- Make a closed consumer chat UI remotely callable.
+- Automatically register every AI product.
+- Grant access to private chats, hidden prompts, memory, or tools.
+- Guarantee that two assistants can initiate messages to each other without an exposed endpoint.
+- Define MeepSheep's tenant model, agent registry, routing policy, or durable orchestration.
 
-MCP makes MeepSheep capabilities available to an AI client. It does not automatically make the connected client itself an A2A agent.
+MeepSheep supplies those product-level capabilities.
 
-### A2A
-
-The A2A adapter discovers and communicates with agents that implement the protocol. It maps Agent Cards, messages, tasks, artifacts, and task states into the canonical MeepSheep model. MeepSheep may expose its own A2A endpoint and Agent Card for compatible peers.
-
-### Vendor APIs and webhooks
-
-Use official, documented interfaces for systems that do not expose A2A. A provider API integration is not the same as access to the provider's consumer chat UI. Never rely on unofficial browser automation as the default connector.
-
-## 4. Core application boundaries
+## 4. Shared coordination core
 
 ### Identity and policy
-
-Authenticate the caller, derive tenant and principal identity from trusted credentials, resolve grants server-side, and check permissions for discovery, dispatch, status reads, cancellation, artifact access, and administration. Discovery does not imply invocation permission.
+Authenticate the MCP caller and derive principal and tenant from trusted credentials. Resolve target grants server-side. Enforce separate permissions for discovery, message send, task dispatch, status read, cancellation, artifact read, and administration.
 
 ### Agent registry
+Store stable agent ID, owner/tenant, connection type, endpoint reference, protocol/version, declared capabilities, supported tools, auth method, limits, health, trust state, and last verified time. Capability declarations are metadata, not authorization.
 
-Store agent identity, owner, trust state, protocol/version, endpoint reference, declared capabilities, modalities, limits, health, and connection state. Capability declarations are untrusted metadata, not authorization.
+### Connection manager
+Store encrypted credential references, scopes, owner, endpoint, health, connection test results, and revocation state. Never expose credentials to model-callable tools or browser code.
 
-### Connection and credential manager
+### MCP gateway
+Expose a small, predictable set of tools. Validate every input and output against schemas, enforce caller scopes and payload limits, and return sanitized structured errors.
 
-Each connection has an isolated credential reference, auth method, scopes, owner, health state, and revocation path. Credentials remain server-side, encrypted at rest, redacted from logs, and never embedded in task envelopes.
+### Outbound MCP client
+Create authenticated client sessions to registered remote MCP servers. Discover their tools, retain only owner-approved tool mappings, invoke permitted tools, enforce timeouts, and normalize results. A target MCP server may represent an AI agent, a tool service, or a mixed system. The owner must explicitly classify and approve the connection.
 
-### Task router and orchestrator
+### Router and orchestrator
+Resolve target and adapter, reserve budget, create durable task state, dispatch idempotently, process progress and results, and preserve provenance. Child tasks can only narrow parent permissions, deadline, and budget.
 
-Validate requests, enforce budgets and deadlines, select an authorized adapter, create durable task state, dispatch idempotently, track progress, normalize results, and record provenance. Child tasks may narrow but never expand parent permissions, deadlines, or budgets.
-
-### Protocol adapters
-
-Each adapter declares protocol/version, auth method, capabilities, sync/async/streaming behavior, payload limits, timeout/cancellation support, idempotency semantics, rate limits, and data handling constraints. Adapters normalize responses and errors without broadening authority.
+### Optional protocol adapters
+A2A and vendor API adapters are plugins to the same core. They must not create a second registry, authorization system, or task model.
 
 ### Web console
-
-Manage connections, agent profiles, permissions, tasks, and audit history. Provide clear empty, loading, waiting, failed, canceled, and completed states. Do not expose secrets or privileged provider credentials to the browser.
+A protected owner interface manages connections, credentials, capabilities, grants, task history, and audit. Model-callable MCP tools do not perform privileged administration by default.
 
 ## 5. Canonical task lifecycle
 
 Internal states: `queued`, `dispatching`, `working`, `input_required`, `completed`, `failed`, `canceled`, `rejected`, and `expired`.
 
-State transitions are validated and recorded as append-only events. Every task has a task ID, trace ID, authenticated caller, target agent, connection, deadline, budget, idempotency identity, context-sharing policy, and provenance. Short tasks may return synchronously; long tasks are retrieved by task ID. Streaming is optional, and durable polling/result retrieval must work without it.
+Every task binds task ID, trace ID, caller, tenant, target, connection, grant, deadline, budget, idempotency key, context policy, and provenance. State transitions are validated and append-only. Short tasks may return synchronously. Long tasks return a task ID and are retrieved through MCP tools. Streaming is optional; durable status/result retrieval is mandatory.
 
-See AI/API_SPEC.md for the envelope, MCP tool contracts, error codes, and protocol baselines.
+## 6. Data and storage boundaries
 
-## 6. Asynchronous execution
+Use one authoritative relational data owner. D1 versus Supabase remains open until current account, auth, cost, and runtime needs are compared. Do not split authoritative task and grant state across stores. Keep secrets in platform secret storage or a dedicated secret manager. Store large artifacts separately with scoped expiring references. Define retention and deletion before public launch.
 
-Use durable task records and a validated orchestration primitive. Required behaviors include:
-- Deadline propagation and bounded retries.
-- Idempotent dispatch and duplicate-event handling.
-- Cancellation where supported.
-- Durable progress and result retrieval.
-- Input-required and human approval states.
-- Bounded concurrency, fan-out, delegation depth, and total cost.
-- Trace and provenance across every protocol boundary.
+## 7. Hosting candidates
 
-### Cloudflare candidates
+Cloudflare Workers/Agents SDK, Workflows, Durable Objects, D1, Queues, R2, and Static Assets remain candidates, not final selections. Verify account access, pricing, runtime support, and service limits before committing. No local GPU is required; remote agents/providers perform inference.
 
-- **Workers / Agents SDK:** API, MCP server/client integration, routing, and adapter execution.
-- **Workflows:** leading candidate for durable multi-step tasks, retries, pauses, external events, and approvals.
-- **Durable Objects:** candidate for per-agent coordination, strongly consistent state, and live connections.
-- **D1:** candidate relational store for registry, grants, task metadata, audit indexes, and usage.
-- **Queues:** optional decoupled fan-out or background delivery.
-- **R2:** optional artifact storage.
-- **KV:** non-authoritative cache only where consistency requirements allow it.
+The connected Cloudflare account inspection on 2026-10-31 returned no zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues. This was account-scoped. Do not deploy or change DNS until the correct account and domain zone are confirmed.
 
-Cloudflare's official docs describe Workflows as durable multi-step execution with persisted state, automatic retries, and waits for external events or approvals. Durable Objects provide globally unique coordination and strongly consistent transactional storage. The Agents SDK documents MCP server and client support. These are candidates, not a final service selection. Verify account access, pricing, limits, and SDK compatibility before implementation.
+## 8. Security boundaries
 
-References: https://developers.cloudflare.com/workflows/ ; https://developers.cloudflare.com/durable-objects/ ; https://developers.cloudflare.com/agents/model-context-protocol/ .
+Treat remote MCP tool descriptions, tool outputs, agent metadata, callbacks, and artifacts as untrusted. Enforce tenant isolation, least privilege, SSRF protections for remote endpoint validation, redirect revalidation, authenticated callbacks, replay protection, bounded delegation, budget ceilings, payload limits, and privacy-safe audit. Do not pass hidden reasoning, private prompts, or unapproved chat history.
 
-## 7. Data and storage boundaries
-
-See AI/DATA_MODEL.md for logical entities. Select one primary owner for relational records; do not split authoritative records between D1 and Supabase without an explicit decision. Store large artifacts separately with expiring authorized references. Store credentials in a secret manager, not in relational text fields. Retain task payloads only according to a published retention policy.
-
-## 8. Security and trust boundaries
-
-- Treat remote agents, Agent Cards, callbacks, messages, artifacts, and provider responses as untrusted.
-- Validate endpoints and redirects against SSRF protections.
-- Enforce tenant isolation and least privilege on every operation.
-- Verify callback authenticity and reject replayed or out-of-order events.
-- Bound task duration, retries, payload sizes, fan-out, delegation depth, concurrency, and budget.
-- Share only caller-authorized context.
-- Never transmit hidden reasoning, private system prompts, or unapproved conversation history.
-- Require explicit approval for sensitive actions.
-- Preserve audit evidence without logging secrets or full private payloads.
-
-See AI/SECURITY.md and AI/COST_MODEL.md.
-
-## 9. Deployment candidates and constraints
-
-Candidate endpoints:
-- Web: https://meepsheep.com
-- MCP: https://mcp.meepsheep.com/mcp
-- A2A: https://agents.meepsheep.com (exact path follows selected SDK/spec)
-
-These are proposed routes only. The connected Cloudflare account inventory inspected on 2026-10-31 returned no zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues. This is an account-scoped snapshot and does not rule out another account or registrar. Do not deploy or change DNS until the correct domain zone and account are confirmed.
-
-No local GPU is required for the relay architecture. Connected providers perform model inference; MeepSheep performs routing, authorization, orchestration, and result delivery. Free-tier availability does not mean unlimited usage or zero marginal cost.
-
-## 10. Related specifications
-
-- AI/INTEROPERABILITY.md: product interoperability strategy.
-- AI/API_SPEC.md: canonical task contract and protocol interfaces.
-- AI/DATA_MODEL.md: logical data entities.
-- AI/SECURITY.md: threat model and controls.
-- AI/COST_MODEL.md: usage budgets and cost ownership.
-- AI/DEPLOYMENT.md: environment and release operations.
-- AI/BUILD_PLAN.md: implementation phases and acceptance criteria.
+See [SECURITY.md](SECURITY.md), [API_SPEC.md](API_SPEC.md), and [COST_MODEL.md](COST_MODEL.md).
