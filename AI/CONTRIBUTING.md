@@ -48,3 +48,25 @@ Never describe an unverified deployment as live, an untested integration as supp
 ## Documentation maintenance
 
 The `AI/` directory is persistent project context, not disposable notes. Keep it accurate and concise enough to use. When documents conflict, record the resolution in DECISIONS.md and update affected documents. The current repository state and verified behavior take precedence over stale plans.
+
+
+## GitHub automation and Wellness Doctor rules
+
+Before changing workflows, repository settings, or the generated README health section, read:
+- `AI/GITHUB_RULES.md`
+- `AI/ACTIONS.md`
+- `AI/WELLNESS_DOCTOR.md`
+- `AI/STATUS_ICONS.md`
+- `AI/INCIDENTS.md`
+
+Rules:
+1. Keep pull-request validation read-only.
+2. Keep README-writing automation limited to trusted default-branch, scheduled, or manually dispatched runs.
+3. Never check out and execute an untrusted pull-request head in a write-enabled job.
+4. Use explicit least-privilege workflow permissions and bounded timeouts.
+5. Preserve README content outside the Wellness Doctor markers byte-for-byte.
+6. Do not create scheduled commits when the generated health summary has not changed.
+7. Do not treat a workflow file's existence as proof the workflow ran.
+8. Inspect workflow runs, jobs, and logs before marking automation operational.
+9. Do not claim branch protection or rulesets are enabled unless actual repository settings confirm them.
+10. Add or update tests whenever health severity, file inventory, README mutation, or workflow behavior changes.
