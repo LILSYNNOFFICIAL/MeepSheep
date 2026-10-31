@@ -112,6 +112,15 @@ MeepSheep/
 └── AI/
     ├── WF.md
     ├── PROJECT.md
+    ├── INTEROPERABILITY.md
+    ├── API_SPEC.md
+    ├── DATA_MODEL.md
+    ├── BUILD_PLAN.md
+    ├── TEST_STRATEGY.md
+    ├── QUALITY_BENCHMARKS.md
+    ├── DEPLOYMENT.md
+    ├── ENVIRONMENT.md
+    ├── CHANGELOG.md
     ├── ARCHITECTURE.md
     ├── DECISIONS.md
     ├── SECURITY.md
