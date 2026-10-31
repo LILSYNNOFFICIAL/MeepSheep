@@ -114,13 +114,16 @@ test("send_message forwards through an outbound MCP client and returns provenanc
     arguments: {
       targetAgentId: "agent-alpha",
       toolName: "review_message",
-      arguments: { message: "Analyze this request." }
+      arguments: { message: "Analyze this request." },
+      callerPrincipalId: "attacker-controlled",
+      tenantId: "tenant-2"
     }
   });
   assert.equal(result.isError, undefined);
   assert.equal(received.message, "Analyze this request.");
   assert.equal(result.structuredContent.status, "completed");
   assert.equal(result.structuredContent.targetAgentId, "agent-alpha");
+  assert.equal(result.structuredContent.sourceAgentId, "caller-1");
   assert.equal(result.structuredContent.provenance.protocol, "mcp");
   assert.equal(result.structuredContent.provenance.remoteToolName, "review_message");
   assert.ok(result.structuredContent.traceId);
@@ -265,4 +268,16 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
   assert.equal(result.isError, undefined);
   assert.equal(result.structuredContent.output.reply, "REMOTE RECEIVED: " + uniqueMessage);
   assert.equal(result.structuredContent.targetAgentId, "agent-process");
+});
+
+test("requests without validated authentication context are rejected", async () => {
+  const registry = new AgentRegistry();
+  const relayHandler = createRelayHandler({
+    registry,
+    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null
+  });
+  openHandlers.push(relayHandler);
+  const caller = await connectClient(relayHandler, "unauthenticated-relay");
+  const result = await caller.callTool({ name: "discover_agents", arguments: {} });
+  assert.match(errorText(result), /AUTH_REQUIRED/);
 });
