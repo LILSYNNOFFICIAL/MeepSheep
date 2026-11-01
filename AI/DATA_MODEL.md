@@ -118,3 +118,9 @@ The provider-neutral task contract is defined in [TASK_EXECUTION.md](TASK_EXECUT
 
 Creating the task, initial event, and outbox record must be one atomic transaction. State transitions must compare-and-swap the expected version and append the matching event in the same transaction. Outbox leases must be claimed and completed atomically. The committed in-memory adapter is reference/test code only and does not satisfy these durability guarantees.
 
+## Per-principal agent access
+
+Every agent connection has one immutable owner principal. Registration grants access only to that owner by default. Additional same-tenant principals receive discovery and invocation access only after an explicit owner action through the internal registry grant operation. Revocation removes that principal from both discovery and invocation authorization. The owner's own grant cannot be revoked through the member-grant operation.
+
+The current in-memory registry provides owner-only defaults and owner-checked `grantAccess`/`revokeAccess` primitives. There is no public grant-management API, UI, or persistent grant repository yet. Production grants must be tenant-scoped database records checked on every discovery and invocation.
+
