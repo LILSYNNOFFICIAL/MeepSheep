@@ -51,7 +51,16 @@ function makeConnection() {
   };
 }
 
-function setup({ clock = () => 1000, createRemoteClient = async () => makeConnection(), vault = null } = {}) {
+function setup({
+  clock = () => 1000,
+  createRemoteClient = async () => makeConnection(),
+  vault = {
+    async withCredential(_input, callback) {
+      return callback({ type: "bearer", token: "test-token" });
+    },
+    async revoke() { return { status: "revoked" }; }
+  }
+} = {}) {
   const registry = new AgentRegistry();
   const manager = createAgentConnectionManager({
     registry,
@@ -107,6 +116,23 @@ test("preview requires connection:manage and rejects noncanonical endpoint/crede
       (error) => error.code === "CONNECTION_CONFIG_INVALID"
     );
   }
+});
+
+
+test("credential-backed connections require both vault load and revoke operations", async () => {
+  let clientFactoryCalls = 0;
+  const { manager } = setup({
+    vault: null,
+    createRemoteClient: async () => {
+      clientFactoryCalls += 1;
+      return makeConnection();
+    }
+  });
+  await assert.rejects(
+    manager.preview(owner, previewInput),
+    (error) => error.code === "CONNECTION_CONFIG_INVALID"
+  );
+  assert.equal(clientFactoryCalls, 0);
 });
 
 test("approval registers only owner-selected discovered tools with immutable matching fingerprints", async () => {
@@ -198,6 +224,9 @@ test("disconnect removes agent before closing client and revokes its credential"
   const connection = makeConnection();
   const revoked = [];
   const vault = {
+    async withCredential(_input, callback) {
+      return callback({ type: "bearer", token: "test-token" });
+    },
     async revoke(input) {
       revoked.push(input);
       return { status: "revoked" };
@@ -220,7 +249,12 @@ test("disconnect removes agent before closing client and revokes its credential"
 test("disconnect is tenant/owner scoped and requires connection:manage", async () => {
   const connection = makeConnection();
   const { registry, manager } = setup({
-    vault: { async revoke() { return { status: "revoked" }; } },
+    vault: {
+      async withCredential(_input, callback) {
+        return callback({ type: "bearer", token: "test-token" });
+      },
+      async revoke() { return { status: "revoked" }; }
+    },
     createRemoteClient: async () => connection
   });
   const preview = await manager.preview(owner, previewInput);
