@@ -39,11 +39,15 @@ function validateKey(key) {
   return Buffer.from(key);
 }
 
-function associatedData(credentialId, tenantId, version) {
-  return Buffer.from(
-    "meepsheep:credential:v" + SCHEMA_VERSION + ":" + tenantId + ":" + credentialId + ":" + version,
-    "utf8"
-  );
+function associatedData(credentialId, tenantId, keyId, version) {
+  return Buffer.from(JSON.stringify([
+    "meepsheep-credential",
+    SCHEMA_VERSION,
+    tenantId,
+    credentialId,
+    keyId,
+    version
+  ]), "utf8");
 }
 
 function serializeSecret(secret, maxBytes) {
@@ -66,7 +70,7 @@ function serializeSecret(secret, maxBytes) {
 function encrypt(plaintext, { key, keyId, credentialId, tenantId, version, createdAt, updatedAt }) {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
-  cipher.setAAD(associatedData(credentialId, tenantId, version));
+  cipher.setAAD(associatedData(credentialId, tenantId, keyId, version));
   const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
   const encodedCiphertext = ciphertext.toString("base64");
   ciphertext.fill(0);
@@ -217,7 +221,7 @@ export function createCredentialVault({
       authTag = decodeBase64(record.authTag, 16, 24);
       ciphertext = decodeBase64(record.ciphertext, undefined, Math.ceil(maxCredentialBytes / 3) * 4);
       const decipher = createDecipheriv("aes-256-gcm", key, iv);
-      decipher.setAAD(associatedData(credentialId, tenantId, record.version));
+      decipher.setAAD(associatedData(credentialId, tenantId, record.keyId, record.version));
       decipher.setAuthTag(authTag);
       return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
     } catch (error) {
