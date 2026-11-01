@@ -129,13 +129,15 @@ export function createBearerAuthenticator({
 
   function resolvePrincipal(authInfo) {
     const trusted = authInfo && typeof authInfo === "object" ? trustedPrincipals.get(authInfo) : undefined;
+    const nowMs = clock();
     if (
       !trusted ||
+      !Number.isFinite(nowMs) ||
       authInfo.token !== trusted.token ||
       authInfo.clientId !== trusted.clientId ||
       authInfo.expiresAt !== trusted.expiresAt ||
       authInfo.scopes !== trusted.scopes ||
-      Math.floor(clock() / 1000) > trusted.expiresAt + clockSkewSeconds
+      Math.floor(nowMs / 1000) > trusted.expiresAt + clockSkewSeconds
     ) {
       throw invalid();
     }
