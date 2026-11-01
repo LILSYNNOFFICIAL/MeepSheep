@@ -150,7 +150,8 @@ test("pinned fetch removes hop-by-hop, proxy, cookie, and connection-nominated h
       "proxy-authorization": "secret",
       "proxy-connection": "keep-alive",
       cookie: "sid=secret",
-      "content-type": "application/json"
+      "content-type": "application/json",
+      "accept-encoding": "gzip, br"
     },
     body: "{}"
   }));
@@ -158,6 +159,7 @@ test("pinned fetch removes hop-by-hop, proxy, cookie, and connection-nominated h
     assert.equal(headers.has(name), false, name);
   }
   assert.equal(headers.get("content-type"), "application/json");
+  assert.equal(headers.get("accept-encoding"), "identity");
 });
 
 test("pinned fetch returns redirects without following them", async () => {
