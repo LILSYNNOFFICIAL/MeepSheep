@@ -1,4 +1,5 @@
 import { RelayError } from "./agent-registry.mjs";
+import { createTaskCoordinator } from "./task-coordinator.mjs";
 import { fingerprintToolSchema } from "./tool-schema.mjs";
 
 function requireRegistry(registry) {
@@ -52,4 +53,29 @@ export function createRegistryTaskDispatcher({ registry } = {}) {
   }
 
   return Object.freeze({ authorizeTarget, dispatch });
+}
+
+
+export function createRegistryTaskCoordinator({
+  registry,
+  repository,
+  clock,
+  defaultTimeoutMs,
+  maxTaskDurationMs,
+  maxInputBytes,
+  maxOutputBytes,
+  outboxLeaseMs
+} = {}) {
+  const adapters = createRegistryTaskDispatcher({ registry });
+  return createTaskCoordinator({
+    repository,
+    authorizeTarget: adapters.authorizeTarget,
+    dispatch: adapters.dispatch,
+    ...(clock === undefined ? {} : { clock }),
+    ...(defaultTimeoutMs === undefined ? {} : { defaultTimeoutMs }),
+    ...(maxTaskDurationMs === undefined ? {} : { maxTaskDurationMs }),
+    ...(maxInputBytes === undefined ? {} : { maxInputBytes }),
+    ...(maxOutputBytes === undefined ? {} : { maxOutputBytes }),
+    ...(outboxLeaseMs === undefined ? {} : { outboxLeaseMs })
+  });
 }
