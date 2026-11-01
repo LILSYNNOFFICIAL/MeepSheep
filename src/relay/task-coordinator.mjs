@@ -2,7 +2,15 @@ import { createHash, randomUUID } from "node:crypto";
 
 const IDEMPOTENCY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$/;
 const IDENTIFIER_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
-const SAFE_REMOTE_ERRORS = new Set(["REMOTE_TIMEOUT", "REMOTE_UNAVAILABLE", "REMOTE_FAILED"]);
+const SAFE_REMOTE_ERRORS = new Set([
+  "REMOTE_TIMEOUT",
+  "REMOTE_UNAVAILABLE",
+  "REMOTE_FAILED",
+  "AGENT_NOT_FOUND",
+  "TOOL_NOT_ALLOWED",
+  "SCHEMA_CHANGED",
+  "PERMISSION_DENIED"
+]);
 const ACTIVE_STATES = new Set(["queued", "dispatching", "working"]);
 const TERMINAL_STATES = new Set(["completed", "failed", "canceled", "expired", "rejected"]);
 
