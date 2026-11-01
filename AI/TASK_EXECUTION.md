@@ -6,7 +6,7 @@
 
 The task subsystem turns a caller-authorized request into a server-identified task, schedules one outbound MCP dispatch, records state changes, and gives the original caller a bounded way to inspect, wait for, or cancel that task.
 
-The task coordinator does not expose credentials, endpoint URLs, registry internals, or remote MCP client handles. Owner connection operations remain separate and privileged.
+The task coordinator does not expose credentials, endpoint URLs, registry internals, or remote MCP client handles. Agent connections default to owner-only access; a task dispatch requires the caller's explicit principal grant in addition to `task:dispatch` and an approved tool. Owner connection operations remain separate and privileged.
 
 ## Optional inbound MCP tools
 
