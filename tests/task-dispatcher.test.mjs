@@ -43,7 +43,7 @@ function setup({ discoveredTool = tool, remoteResult = { structuredContent: { ac
     name: "Agent A",
     endpointRef: "endpoint://agent-a",
     credentialRef: null,
-    ownerPrincipalId: "owner-a",
+    ownerPrincipalId: "caller-a",
     approvedTools: ["review_message"],
     approvedToolSchemas: {
       review_message: fingerprintToolSchema(tool)
