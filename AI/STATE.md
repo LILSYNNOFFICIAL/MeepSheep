@@ -34,7 +34,7 @@ All three PRs were rechecked on 2026-11-01. They remain open and mergeable. The 
 |---|---|---|---|---|
 | [#3](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3) | Build MCP relay laboratory | `feat/mcp-relay-lab` at `ca56cbfcb82d0c19fcbf6b904c43ae1dc1579049` | `main` | Open, ready for review |
 | [#4](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4) | Require owner-approved MCP tool schema fingerprints | `feat/mcp-tool-schema-approval` at `1d76b9708d7102bbce7e18af3c3541cbc011755d` | `feat/mcp-relay-lab` | Open, stacked on #3 |
-| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at `cc36b11208e91942288bdf69c283258db2ddc7f4` (latest tested code checkpoint before docs update) | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
+| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` (documentation updates follow tested code checkpoint `cc36b11208e91942288bdf69c283258db2ddc7f4`) | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
 
 Required integration order is **#3 → #4 → #5**. PR #5 must not be merged directly to `main` while its base is PR #4's branch. After a parent merges, retarget/rebase its child as required, inspect the changed diff, rerun CI on the new exact head, and obtain review before proceeding. No PR was merged, retargeted, or closed in this work.
 
@@ -147,7 +147,7 @@ The task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb
 - [ ] Production hosting, domain/TLS/DNS configuration, monitoring, backups, restore, cost controls, and launch approval.
 - [ ] Formatting/lint/typecheck, secret scanning, dependency auditing, and repository branch-protection verification.
 
-No production credentials, project resources, DNS, deployments, or external AI connections were changed.
+No production credentials, application data, database schema, migrations, extensions, Cloudflare resources, DNS, deployments, or external AI connections were changed. The only project lifecycle mutation was the owner-authorized restore of `meepsheep-storage`.
 
 ## Next decision gate
 
