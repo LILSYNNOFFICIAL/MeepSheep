@@ -121,6 +121,7 @@ test("key rotation re-encrypts credentials with the current key and preserves th
   assert.equal(after.version, before.version + 1);
   assert.notEqual(after.iv, before.iv);
   assert.notEqual(after.ciphertext, before.ciphertext);
+  keyProvider.keys.delete("key-v1");
   assert.deepEqual(await vault.withCredential({
     credentialId: "rotating-credential",
     tenantId: "tenant-a"
@@ -190,6 +191,45 @@ test("key rotation and revocation use optimistic concurrency and reject stale wr
     (error) => error.code === "CREDENTIAL_CONFLICT"
   );
   store.compareAndSwap = originalCas;
+});
+
+
+test("authenticated data binds the tenant and storage version to the ciphertext", async () => {
+  const { store, vault } = setup();
+  await vault.put({
+    credentialId: "bound-credential",
+    tenantId: "tenant-a",
+    secret: { token: "bound-value" }
+  });
+  const stored = await store.get("bound-credential");
+  stored.version += 1;
+  store.records.set("bound-credential", stored);
+  await assert.rejects(
+    vault.withCredential({ credentialId: "bound-credential", tenantId: "tenant-a" }, async () => "must not run"),
+    (error) => error.code === "CREDENTIAL_CORRUPT"
+  );
+
+  const other = await store.get("bound-credential");
+  other.tenantId = "tenant-b";
+  store.records.set("bound-credential", other);
+  await assert.rejects(
+    vault.withCredential({ credentialId: "bound-credential", tenantId: "tenant-b" }, async () => "must not run"),
+    (error) => error.code === "CREDENTIAL_CORRUPT"
+  );
+});
+
+test("missing historical encryption key fails closed", async () => {
+  const { keyProvider, vault } = setup();
+  await vault.put({
+    credentialId: "missing-key",
+    tenantId: "tenant-a",
+    secret: { token: "not-recoverable" }
+  });
+  keyProvider.keys.delete("key-v1");
+  await assert.rejects(
+    vault.withCredential({ credentialId: "missing-key", tenantId: "tenant-a" }, async () => "must not run"),
+    (error) => error.code === "CREDENTIAL_KEY_UNAVAILABLE"
+  );
 });
 
 test("rejects invalid keys, malformed secrets, and oversize credentials before persistence", async () => {
