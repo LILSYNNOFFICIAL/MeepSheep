@@ -36,9 +36,39 @@ The local relay can be wrapped with `createBearerAuthenticator({ issuer, audienc
 - This code verifies access tokens. It does not issue tokens, run an OAuth authorization server, register OAuth clients, implement the PKCE flow, or configure key rotation/revocation. Those functions must be supplied by the selected identity provider and production integration.
 - Do not place private signing keys or bearer tokens in this repository. JWKS must contain public verification keys only.
 
-The local endpoint-security helper accepts an exact `allowedHosts` list and validates all DNS answers before creating the pinned fetch function. The repository does not currently load an endpoint allowlist or wire that helper into an owner-facing registration service. The production host must supply a trusted allowlist through server-side configuration, not through model-callable tool arguments.
+The local `createSecureRemoteMcpClient` factory accepts an exact `allowedHosts` list and validates every DNS answer before creating the MCP client. It uses the pinned HTTPS transport and can load a remote bearer credential from the vault for each HTTP request. The repository does not currently load an endpoint allowlist or expose an owner-facing endpoint registration/approval service. The production host must supply a trusted exact-host allowlist through server-side owner configuration, never through model-callable tool arguments.
 
 These names describe the intended configuration boundary. The current repository does not yet load these values at application startup.
+
+## 2.2 Local credential-vault contract
+
+The local vault is created with:
+
+```js
+createCredentialVault({
+  store,
+  keyProvider,
+  clock,
+  maxCredentialBytes
+})
+```
+
+The `store` adapter must implement:
+
+- `insert(record)`: atomic insert-if-absent; return `true` only when inserted and `false` when the credential ID already exists.
+- `get(credentialId)`: return one stored record or `null`.
+- `compareAndSwap(credentialId, expectedVersion, replacement)`: atomically replace only when the stored version matches; return a boolean.
+
+The `keyProvider` must implement:
+
+- `getCurrentKey()`: return an opaque `keyId` and a 32-byte AES key.
+- `getKey(keyId)`: return the historical 32-byte key used to decrypt an existing record.
+
+The local vault encrypts credential JSON with AES-256-GCM and authenticates the schema version, tenant, credential ID, key ID, and record version as associated data. It exposes `put`, `withCredential`, `describe`, `rotate`, and `revoke`. The connector currently supports a remote bearer credential payload of the shape `{ type: "bearer", token: "..." }`; other remote authentication methods are not enabled.
+
+Only the in-memory adapters in tests are present. No production D1, PostgreSQL, Supabase, KMS, Cloudflare secret binding, or other key-management adapter is selected or connected. A production key provider must keep old key versions available until every record encrypted with them has been rotated and all in-flight operations are safely drained. Revocation prevents subsequent fetches from loading a credential, but cannot cancel a remote request already sent with that credential.
+
+Do not put real credential values, encryption keys, key-provider output, or test fixtures containing real secrets in Git.
 
 ## 3. Local setup
 
