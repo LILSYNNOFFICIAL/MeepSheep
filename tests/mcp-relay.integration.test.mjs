@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { generateKeyPairSync } from "node:crypto";
 import { createInterface } from "node:readline";
 import { afterEach, test } from "node:test";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import * as z from "zod/v4";
+import { createLocalJWKSet, SignJWT } from "jose";
+import { createBearerAuthenticator } from "../src/relay/auth.mjs";
 import { AgentRegistry } from "../src/relay/agent-registry.mjs";
 import { createRelayHandler } from "../src/relay/mcp-handler.mjs";
 import { fingerprintToolSchema } from "../src/relay/tool-schema.mjs";
@@ -27,9 +30,13 @@ function makeAuthInfo(value = principal) {
   };
 }
 
-async function connectClient(handler, name, authInfo) {
+async function connectClient(handler, name, authInfo, bearerToken) {
   const transport = new StreamableHTTPClientTransport(new URL("http://" + name + ".test/mcp"), {
-    fetch: (url, init) => handler.fetch(new Request(url, init), authInfo ? { authInfo } : undefined)
+    fetch: (url, init) => {
+      const headers = new Headers(init?.headers);
+      if (bearerToken) headers.set("authorization", "Bearer " + bearerToken);
+      return handler.fetch(new Request(url, { ...init, headers }), authInfo ? { authInfo } : undefined);
+    }
   });
   const client = new Client({ name: name, version: "0.1.0" });
   await client.connect(transport);
@@ -37,7 +44,7 @@ async function connectClient(handler, name, authInfo) {
   return client;
 }
 
-async function setup({ agents = [], principalValue = principal } = {}) {
+async function setup({ agents = [], principalValue = principal, authenticator, bearerToken, callerAuthInfo } = {}) {
   const registry = new AgentRegistry();
   const remoteHandlers = [];
   for (const agent of agents) {
@@ -66,10 +73,16 @@ async function setup({ agents = [], principalValue = principal } = {}) {
   }
   const relayHandler = createRelayHandler({
     registry,
-    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null
+    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null,
+    ...(authenticator ? { authenticator } : {})
   });
   openHandlers.push(...remoteHandlers, relayHandler);
-  const caller = await connectClient(relayHandler, "relay", makeAuthInfo(principalValue));
+  const caller = await connectClient(
+    relayHandler,
+    "relay",
+    callerAuthInfo ?? makeAuthInfo(principalValue),
+    bearerToken
+  );
   return { caller, registry, relayHandler, remoteHandlers };
 }
 
@@ -311,6 +324,45 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
   assert.equal(result.isError, undefined);
   assert.equal(result.structuredContent.output.reply, "REMOTE RECEIVED: " + uniqueMessage);
   assert.equal(result.structuredContent.targetAgentId, "agent-process");
+});
+
+
+test("authenticated MCP requests use verified bearer-token identity instead of forged authInfo extras", async () => {
+  const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const jwks = createLocalJWKSet({
+    keys: [{ ...publicKey.export({ format: "jwk" }), use: "sig", alg: "RS256", kid: "integration-key" }]
+  });
+  const issuer = "https://identity.example.test/";
+  const audience = "https://meepsheep.example.test";
+  const authenticator = createBearerAuthenticator({ issuer, audience, jwks });
+  const now = Math.floor(Date.now() / 1000);
+  const bearerToken = await new SignJWT({
+    tenant_id: "tenant-1",
+    client_id: "external-mcp-client",
+    scope: "agent:discover agent:message",
+    jti: randomUUID()
+  })
+    .setProtectedHeader({ alg: "RS256", typ: "at+jwt", kid: "integration-key" })
+    .setIssuer(issuer)
+    .setAudience(audience)
+    .setSubject("trusted-caller")
+    .setIssuedAt(now)
+    .setExpirationTime(now + 300)
+    .sign(privateKey);
+  const forged = {
+    principalId: "attacker-controlled",
+    tenantId: "tenant-2",
+    permissions: ["*"]
+  };
+  const { caller } = await setup({
+    agents: [{ id: "agent-alpha" }],
+    authenticator,
+    bearerToken,
+    callerAuthInfo: { clientId: "forged-client", extra: { principal: forged } }
+  });
+  const result = await caller.callTool({ name: "discover_agents", arguments: {} });
+  assert.equal(result.isError, undefined);
+  assert.deepEqual(result.structuredContent.agents.map((agent) => agent.id), ["agent-alpha"]);
 });
 
 test("requests without validated authentication context are rejected", async () => {
