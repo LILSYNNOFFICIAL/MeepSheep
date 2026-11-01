@@ -108,7 +108,7 @@ Never infer implementation from documentation, a successful API response, or a m
 - [x] Add local MCP integration tests and run them in GitHub Actions.
 - [x] Add local lab setup and verification notes in `AI/MCP_LAB.md`.
 
-**Current evidence:** PR #5 feature head `b5904db4fdaf1d608e5264f86038a45380116fb5` passed exact-head CI run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297), checked out as merge revision `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`: all focused gates, 98/98 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with no warnings/errors/critical, and both workflow YAML files. The eight-case reusable task repository contract suite passed. The separate-process loopback TCP test proves local socket-level MCP transport, not a public deployment or live external AI connection.
+**Current evidence:** PR #5 task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5` passed run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297). Documentation checkpoint `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034` passed run [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348), checked out as merge revision `e60e52c301f3a98c3cf9dc64c0ddc2ca031b5941`: all focused gates, 98/98 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with no warnings/errors/critical, and all eight repository-contract cases. The separate-process loopback TCP test proves local socket-level MCP transport, not a public deployment or live external AI connection.
 
 ## Phase 4B: Asynchronous tasks
 

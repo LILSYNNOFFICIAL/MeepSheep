@@ -72,7 +72,7 @@
 - [ ] Implement deterministic mock MCP agent.
 - [ ] Add contract tests and local integration tests.
 
-**Current evidence:** PR #5 feature head `b5904db4fdaf1d608e5264f86038a45380116fb5` passed exact-head quality run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297): 98/98 Node tests, 10/10 Python tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML validations. The eight-case reusable task repository contract suite, including tenant-and-caller idempotency uniqueness, passed. CI checked out PR merge revision `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`. The local loopback TCP case does not prove a public network deployment or live external AI agent.
+**Current evidence:** PR #5 task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5` passed run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297). The current documentation checkpoint `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034` also passed run [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348): 98/98 Node tests, 10/10 Python tests, 117 Repository Doctor checks with zero warnings/errors/critical, eight shared repository-contract tests, and both workflow YAML validations. CI checked out merge revision `e60e52c301f3a98c3cf9dc64c0ddc2ca031b5941`. The local loopback TCP case does not prove a public network deployment or live external AI agent.
 
 ## Verified local security and connection lifecycle (PR #5, stacked on PR #4)
 

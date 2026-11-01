@@ -1,6 +1,6 @@
 # MeepSheep Task Execution Contract
 
-**Status:** Local task coordinator, in-memory reference repository, registry-backed dispatcher, and optional MCP task tools are implemented. Outbox completion now fences stale claims by worker ID, monotonically increasing claim attempt, exact lease deadline, and lease expiry. PR #5 feature head `b5904db4fdaf1d608e5264f86038a45380116fb5` passed quality run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297) (PR merge revision `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`). The reusable repository contract suite now defines eight shared tests for any future adapter, including tenant-and-caller-scoped idempotency. This remains an in-memory local implementation, not a durable production task system.
+**Status:** Local task coordinator, in-memory reference repository, registry-backed dispatcher, and optional MCP task tools are implemented. Outbox completion now fences stale claims by worker ID, monotonically increasing claim attempt, exact lease deadline, and lease expiry. Task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5` passed run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297). The subsequent documentation checkpoint `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034` passed run [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348) (PR merge revision `e60e52c301f3a98c3cf9dc64c0ddc2ca031b5941`). The reusable repository contract suite defines eight shared tests for any future adapter, including tenant-and-caller-scoped idempotency. This remains an in-memory local implementation, not a durable production task system.
 
 ## Purpose
 
@@ -99,11 +99,12 @@ No production credentials, database, queue, Cloudflare resources, DNS, or deploy
 
 ## Verification status
 
-The current PR #5 feature head and its PR merge revision passed the complete GitHub Actions quality workflow after stale-lease regression tests were added.
+The current task-contract implementation and its documentation checkpoint passed the complete GitHub Actions quality workflow. The implementation commit is `b5904db4fdaf1d608e5264f86038a45380116fb5`; the CI-tested documentation checkpoint is `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034`.
 
-- Feature branch commit: `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4`
-- CI run: [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297)
-- PR merge revision checked out by CI: `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`
+- Task-contract implementation commit: `b5904db4fdaf1d608e5264f86038a45380116fb5`
+- Documentation checkpoint commit: `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034`
+- CI run: [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348)
+- PR merge revision checked out by CI: `e60e52c301f3a98c3cf9dc64c0ddc2ca031b5941`
 - Task coordinator: 15/15.
 - Task dispatcher: 8/8.
 - Reusable task repository contract suite: 8/8.
