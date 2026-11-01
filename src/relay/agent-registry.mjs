@@ -44,10 +44,10 @@ export class AgentRegistry {
         throw new TypeError("Agent registration must use credentialRef and endpointRef, never raw credentials or endpoint URLs.");
       }
     }
-    if (agent.credentialRef !== undefined && !isOpaqueReference(agent.credentialRef, "credential://")) {
+    if (agent.credentialRef !== undefined && agent.credentialRef !== null && !isOpaqueReference(agent.credentialRef, "credential://")) {
       throw new TypeError("credentialRef must be an opaque credential:// reference.");
     }
-    if (agent.endpointRef !== undefined && !isOpaqueReference(agent.endpointRef, "endpoint://")) {
+    if (agent.endpointRef !== undefined && agent.endpointRef !== null && !isOpaqueReference(agent.endpointRef, "endpoint://")) {
       throw new TypeError("endpointRef must be an opaque endpoint:// reference.");
     }
     if (this.#agents.has(agent.id)) {
