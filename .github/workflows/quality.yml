@@ -38,6 +38,9 @@ jobs:
       - name: Run endpoint security boundary tests
         run: node --test tests/endpoint-security.test.mjs
 
+      - name: Run credential vault boundary tests
+        run: node --test tests/credential-vault.test.mjs
+
       - name: Run MCP relay integration and unit suite
         run: npm test
 
