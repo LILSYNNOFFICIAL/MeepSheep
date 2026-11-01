@@ -412,6 +412,8 @@ export function createTaskCoordinator({
       const completed = await repository.completeOutbox({
         outboxId: outbox.outboxId,
         workerId,
+        leaseAttempt: outbox.attempts,
+        leaseUntil: outbox.leaseUntil,
         completedAt: now()
       });
       if (completed !== true) throw fail("TASK_OUTBOX_LEASE_LOST");
