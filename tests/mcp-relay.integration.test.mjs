@@ -266,6 +266,73 @@ test("remote tool failures are sanitized before returning to the caller", async 
   assert.equal(message.includes("/private/path"), false);
 });
 
+
+test("delegate_task, get_task, and cancel_task use the trusted MCP principal", async () => {
+  const principals = [];
+  const calls = [];
+  const task = {
+    taskId: "task-1",
+    traceId: "trace-1",
+    targetAgentId: "agent-alpha",
+    toolName: "review_message",
+    state: "queued",
+    attemptCount: 0,
+    deadlineAt: 2000,
+    createdAt: 1000,
+    updatedAt: 1000,
+    startedAt: null,
+    completedAt: null,
+    output: null,
+    errorCode: null
+  };
+  const taskCoordinator = {
+    async createTask(principalValue, input) {
+      principals.push(principalValue);
+      calls.push({ operation: "create", input });
+      return { created: true, task };
+    },
+    async getTask(principalValue, taskId) {
+      principals.push(principalValue);
+      calls.push({ operation: "get", taskId });
+      return task;
+    },
+    async cancelTask(principalValue, taskId) {
+      principals.push(principalValue);
+      calls.push({ operation: "cancel", taskId });
+      return { ...task, state: "canceled" };
+    }
+  };
+  const { caller } = await setup({ taskCoordinator });
+  const created = await caller.callTool({
+    name: "delegate_task",
+    arguments: {
+      targetAgentId: "agent-alpha",
+      toolName: "review_message",
+      arguments: { message: "Review this task." },
+      idempotencyKey: "task-idempotency-0001"
+    }
+  });
+  assert.equal(created.isError, undefined);
+  assert.equal(created.structuredContent.created, true);
+  assert.equal(created.structuredContent.task.taskId, "task-1");
+
+  const status = await caller.callTool({
+    name: "get_task",
+    arguments: { taskId: "task-1" }
+  });
+  assert.equal(status.structuredContent.task.state, "queued");
+
+  const canceled = await caller.callTool({
+    name: "cancel_task",
+    arguments: { taskId: "task-1" }
+  });
+  assert.equal(canceled.structuredContent.task.state, "canceled");
+
+  assert.equal(principals.length, 3);
+  assert.ok(principals.every((item) => item.principalId === "caller-1" && item.tenantId === "tenant-1"));
+  assert.deepEqual(calls.map((call) => call.operation), ["create", "get", "cancel"]);
+});
+
 test("send_message crosses a separately spawned remote MCP server over TCP", async () => {
   const scriptPath = new URL("./fixtures/mock-agent-process.mjs", import.meta.url);
   const child = spawn(process.execPath, [scriptPath.pathname], { stdio: ["ignore", "pipe", "pipe"] });
@@ -307,7 +374,8 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
   });
   const relayHandler = createRelayHandler({
     registry,
-    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null
+    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null,
+    taskCoordinator
   });
   openHandlers.push(relayHandler);
   const caller = await connectClient(relayHandler, "relay-process", makeAuthInfo());
