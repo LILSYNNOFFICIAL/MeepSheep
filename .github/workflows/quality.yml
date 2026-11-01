@@ -44,6 +44,9 @@ jobs:
       - name: Run agent registry isolation tests
         run: node --test tests/agent-registry.test.mjs
 
+      - name: Run secure remote MCP connection tests
+        run: node --test tests/remote-mcp-connection.test.mjs
+
       - name: Run MCP relay integration and unit suite
         run: npm test
 
