@@ -1,6 +1,6 @@
 # MeepSheep Logical Data Model
 
-**Status:** Conceptual provider-neutral model. The local in-memory registry and owner connection manager implement only a small subset; no database, migrations, or persistent schema are selected or implemented.
+**Status:** Conceptual provider-neutral model. The local in-memory registry, owner connection manager, credential-vault logic, and async task coordinator implement a tested subset; no database, migrations, or persistent schema are selected or implemented.
 
 ## Design rules
 
