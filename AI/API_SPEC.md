@@ -1,14 +1,16 @@
 # MeepSheep MCP API and Relay Contract
 
-**Status:** Design contract with a verified local-lab subset. Not deployed; production authentication, persistence, and task lifecycle remain unimplemented.  
+**Status:** Design contract with CI-verified local relay, resource-server authentication, and outbound endpoint-security primitives. Not deployed; production identity issuance, endpoint onboarding, persistence, and task lifecycle remain unimplemented.  
 **Primary interface:** Remote MCP server.  
 **Core behavior:** Route authorized messages and tasks between independently connected agents.
 
 ## Lab implementation status
 
-The local laboratory currently implements two inbound tools: `discover_agents` and `send_message`. The outbound MCP client verifies that the requested remote tool is currently listed, owner-approved, and has an unchanged canonical SHA-256 fingerprint covering its name, description, input schema, and output schema before invocation. Any drift fails closed with `SCHEMA_CHANGED`. The caller identity and tenant are resolved from trusted `authInfo` supplied by the hosting layer; they are not accepted in tool arguments. Successful responses include message ID, trace ID, source principal, target agent, status, remote output, and MCP tool provenance. Remote failures are mapped to `REMOTE_FAILED` without returning remote stack traces or raw error text.
+The local laboratory implements two inbound tools: `discover_agents` and `send_message`. The outbound MCP client verifies that the requested remote tool is currently listed, owner-approved, and has an unchanged canonical SHA-256 fingerprint covering its name, description, input schema, and output schema before invocation. Any drift fails closed with `SCHEMA_CHANGED`. The normal test seam still supports an injected trusted principal for legacy tests. A separate RS256 bearer-token resource-server middleware now verifies access tokens through a configured JWKS resolver, validates issuer, audience, client ID, subject, tenant, scope, token type, time claims, and maximum lifetime, and derives identity only from verified claims. The middleware replaces caller-supplied MCP auth context before the relay resolves the principal. Successful relay responses retain message ID, trace ID, source principal, target agent, status, remote output, and MCP tool provenance.
 
-This is a test harness, not production auth. The registry is in-memory, the caller principal is injected by the test adapter, and the remote MCP handler is exercised through an in-process fetch bridge. The lab does not yet implement persistent tasks, a production owner onboarding and reapproval UI, OAuth, production endpoint validation, or a live external agent. See [MCP_LAB.md](MCP_LAB.md).
+A local endpoint-security module now accepts only exact allowlisted HTTPS hosts on port 443, resolves and validates every DNS answer, rejects mixed or non-public address sets, and exposes a fetch adapter that restricts origin/path/method, pins lookup to the validated DNS snapshot, preserves hostname TLS verification and SNI, removes unsafe request headers, limits request/response bytes, applies a timeout, and does not follow redirects. This module is not yet wired into an owner-facing endpoint-registration flow or the current in-memory registry's remote-client construction.
+
+This is still a local security implementation, not a production identity or hosting system. No OAuth authorization server/token issuer, production identity-provider configuration, key rotation/revocation service, persistent registry, credential vault, public egress policy, durable tasks, owner onboarding/reapproval UI, or live external agent is implemented. The focused security tests use deterministic local fixtures; the pinned transport's real external TLS/socket behavior still requires runtime integration testing. See [MCP_LAB.md](MCP_LAB.md).
 
 ## 1. Protocol model
 
@@ -121,6 +123,15 @@ On connection setup:
 7. Revalidate tool schema changes before invoking newly changed behavior.
 
 Never expose all remote tools to every caller by default. MeepSheep authorizes a specific remote tool for a specific tenant/caller/agent.
+
+### Local security helper contracts
+
+- `createBearerAuthenticator({ issuer, audience, jwks, clock, maxLifetimeSeconds, clockSkewSeconds })` verifies RS256 JWT access tokens with `typ: at+jwt` and returns MCP-compatible auth context only after checking the token against a configured JWKS resolver.
+- `withBearerAuthentication(handler, authenticator)` authenticates each inbound HTTP request and replaces any preexisting `authInfo`; invalid and missing credentials fail closed.
+- `validateRemoteEndpoint(endpoint, { allowedHosts, lookupAll })` returns a frozen, module-branded endpoint only when the URL is HTTPS/443, its hostname exactly matches an approved hostname, and every DNS answer is globally routable.
+- `createPinnedFetch({ validatedEndpoint, requestImpl, timeoutMs, maxRequestBytes, maxResponseBytes })` accepts only the validated endpoint's exact origin/path, uses the saved DNS addresses for connection lookup, keeps the original host for TLS validation, and does not follow redirects.
+
+These are reusable local primitives, not a token issuer, persistent owner-approved endpoint registry, credential manager, or evidence of live outbound TLS connectivity.
 
 ## 8. Authorization rules
 
