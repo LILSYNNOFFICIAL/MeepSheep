@@ -2,6 +2,14 @@
 
 Meaningful product, architecture, security, and release changes are recorded here. Dates use YYYY-MM-DD. This log does not replace Git history.
 
+## 2026-11-01: Task outbox lease fencing (draft PR #5)
+
+- Added regression coverage proving that an expired worker claim cannot complete an outbox item and that an old claim cannot complete after the same worker ID has reclaimed it.
+- Updated the in-memory reference repository to require the current worker ID, monotonically increasing claim attempt, exact claimed lease deadline, and completion before expiry; the coordinator now forwards the claim metadata.
+- TDD red run [41288627434](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288627434) failed exactly the two new assertions on the unfixed implementation. Green run [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098) passed 92 Node tests, 10 Python Wellness Doctor tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML validations on feature commit `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4`.
+- The persistent adapter contract now explicitly requires atomic claim-generation checks and authoritative database-clock expiry. The in-memory adapter remains non-durable; the suspended-worker race immediately before an external MCP call remains a production release blocker.
+- No provider was selected, no database was resumed or changed, and no Cloudflare resources, DNS, credentials, or deployment were changed.
+
 ## 2026-10-31: Local asynchronous task orchestration verified (draft PR #5)
 
 - Added a provider-neutral task coordinator, in-memory reference repository, task state/event lifecycle, tenant/caller-scoped idempotency, deadlines, optimistic transitions, leased outbox processing, bounded wait/cancel, and safe `REMOTE_OUTCOME_UNKNOWN` handling.
