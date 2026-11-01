@@ -200,3 +200,61 @@ test("pinned fetch enforces request size and exposes a bounded timeout", async (
   await fetchRemote(new Request("https://agent.example.test/mcp", { method: "POST", body: "1234" }));
   assert.equal(captured.timeoutMs, 25);
 });
+
+
+test("pinned fetch enforces the timeout and caller abort while reading request bodies", async () => {
+  const endpoint = await validateRemoteEndpoint("https://agent.example.test/mcp", {
+    allowedHosts, lookupAll: publicLookup
+  });
+  let outboundCalls = 0;
+  const fetchRemote = createPinnedFetch({
+    validatedEndpoint: endpoint,
+    timeoutMs: 1000,
+    requestImpl: async () => {
+      outboundCalls += 1;
+      return new Response("unexpected");
+    }
+  });
+  const controller = new AbortController();
+  const slowBody = new ReadableStream({
+    pull() {
+      return new Promise(() => {});
+    }
+  });
+  const pending = fetchRemote(new Request("https://agent.example.test/mcp", {
+    method: "POST",
+    body: slowBody,
+    duplex: "half",
+    signal: controller.signal
+  }));
+  setTimeout(() => controller.abort(), 5);
+  await assert.rejects(pending, (error) => error.code === "REQUEST_ABORTED");
+  assert.equal(outboundCalls, 0);
+});
+
+test("pinned fetch deadline covers stalled request-body reads", async () => {
+  const endpoint = await validateRemoteEndpoint("https://agent.example.test/mcp", {
+    allowedHosts, lookupAll: publicLookup
+  });
+  let outboundCalls = 0;
+  const fetchRemote = createPinnedFetch({
+    validatedEndpoint: endpoint,
+    timeoutMs: 10,
+    requestImpl: async () => {
+      outboundCalls += 1;
+      return new Response("unexpected");
+    }
+  });
+  const slowBody = new ReadableStream({
+    pull() {
+      return new Promise(() => {});
+    }
+  });
+  await assert.rejects(
+    fetchRemote(new Request("https://agent.example.test/mcp", {
+      method: "POST", body: slowBody, duplex: "half"
+    })),
+    (error) => error.code === "REMOTE_TIMEOUT"
+  );
+  assert.equal(outboundCalls, 0);
+});
