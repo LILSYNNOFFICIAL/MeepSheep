@@ -3,157 +3,137 @@
 **Last updated:** 2026-11-01  
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
-**Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)
-**Current branch head:** `a1805121144507beb27438a1647f264486d0b76a`
+**Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)  
+**Current branch head at this documentation update:** `790ec02463c048e46ffbe5d4d833b9d8cf6b99f0`
 
-This ledger distinguishes verified implementation from planned or unverified capabilities.
+This ledger distinguishes verified local behavior from production capabilities that remain unimplemented or unverified.
 
 ## Product direction
 
-- [x] Owner-confirmed primary purpose: AI agents communicate with other AI agents.
-- [x] MCP-first product direction documented and merged to main.
-- [x] Inbound MCP server and outbound MCP client roles documented.
-- [x] Remote agents perform their own work using their own models, tools, and capabilities.
+- [x] MeepSheep is an MCP-first AI-to-AI communication and coordination service.
+- [x] The inbound MCP server is the primary interface for compatible requesting clients.
+- [x] The outbound MCP client connects to separately configured remote MCP servers.
+- [x] MeepSheep owns the relay, registry, authorization boundary, routing, task coordination, and provenance.
+- [x] Remote agents perform their own work with their own models, tools, and capabilities.
 - [x] A2A, provider APIs, and webhooks remain optional adapters.
-- [x] MeepSheep-owned research-engine functionality is deferred from the MVP.
+- [x] MeepSheep-owned research-engine functionality is outside the MVP.
 
-## Documentation foundation
+## Open pull-request stack
 
-- [x] PR #2 merged to main: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
-- [x] Merge commit: `d0bec625eb191d71781ab3e1d239245e54dd9594`
-- [x] README, product, architecture, interoperability, security, API, build, and workflow docs aligned around the MCP relay.
-- [x] Automated test suite exists.
-- [x] CI workflow exists.
+All three PRs were rechecked on 2026-11-01. They remain open and mergeable. No approving reviews are recorded.
 
-## Local MCP relay laboratory
+| PR | Title | Head | Base | State |
+|---|---|---|---|---|
+| [#3](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3) | Build MCP relay laboratory | `feat/mcp-relay-lab` at `ca56cbfcb82d0c19fcbf6b904c43ae1dc1579049` | `main` | Open, ready for review |
+| [#4](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4) | Require owner-approved MCP tool schema fingerprints | `feat/mcp-tool-schema-approval` at `1d76b9708d7102bbce7e18af3c3541cbc011755d` | `feat/mcp-relay-lab` | Open, stacked on #3 |
+| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at `790ec02463c048e46ffbe5d4d833b9d8cf6b99f0` | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
 
-- [x] Node.js 26.13.0 local-lab runtime pinned in `.nvmrc`.
-- [x] Official MCP TypeScript SDK v2.4.0 client/server packages pinned.
-- [x] Zod 4.6.7 pinned.
-- [x] Inbound MCP handler exposes `discover_agents` and `send_message`.
-- [x] Outbound MCP client initializes against a separately instantiated mock MCP handler.
-- [x] In-memory registry enforces same-tenant discovery and message permission.
-- [x] Remote tool invocation requires an owner-approved tool name and matching canonical SHA-256 fingerprint of name, description, input schema, and output schema.
-- [x] Successful responses include message ID, trace ID, caller principal, target agent, output, and MCP provenance.
-- [x] Remote tool errors are sanitized before returning to the caller.
-- [x] Nine MCP integration tests pass in CI, including a separate-process loopback TCP test and trusted-auth boundary checks.
+Required integration order is **#3 → #4 → #5**. PR #5 must not be merged directly to `main` while its base is PR #4's branch. After a parent merges, retarget/rebase its child as required, inspect the changed diff, rerun CI on the new exact head, and obtain review before proceeding. No PR was merged, retargeted, or closed in this work.
 
-**Important boundary:** Most in-process handler tests use the MCP SDK's Streamable HTTP transport with a custom fetch bridge for deterministic tests. A separate integration test starts the remote mock MCP server in a child Node process and sends the outbound MCP request over loopback TCP. This proves local separate-process/socket-level outbound transport, but not a public network connection, independently operated external agent, production authentication, or persistence.
+## Verified local MCP relay
 
-## Secure connection boundary (draft PR #5)
+- [x] Node.js 26.13.0 local-lab runtime and npm lockfile.
+- [x] Official MCP TypeScript SDK v2.4.0 client/server packages and Zod 4.6.7 pinned.
+- [x] Inbound `discover_agents` and `send_message` tools.
+- [x] Outbound MCP client connected to a deterministic mock agent.
+- [x] Separate-process mock MCP agent exercised over loopback TCP.
+- [x] Tenant-aware in-memory registry with explicit owner grants and approved remote tool allowlists.
+- [x] Canonical SHA-256 remote tool fingerprints include tool name, description, input schema, and output schema.
+- [x] Tool schema drift fails closed before invocation.
+- [x] Structured message/trace identity and remote provenance; remote errors are sanitized.
 
-- [x] RS256 JWT access-token verifier validates a configured JWKS resolver, exact issuer/audience, `typ: at+jwt`, subject, tenant, client ID, unique OAuth scope tokens, JTI, issue/expiry times, clock skew, and maximum lifetime.
-- [x] Bearer middleware authenticates each inbound HTTP request, overwrites any caller-supplied MCP auth context, and fails closed on missing/invalid credentials or JWKS retrieval failure.
-- [x] Relay integration test proves a forged `authInfo.extra.principal` cannot override signed-token caller identity or tenant.
-- [x] Endpoint policy requires exact host allowlisting, HTTPS/443, validates every DNS result, and rejects IP literals, non-public/mixed DNS sets, credentials, query strings, and fragments.
-- [x] Pinned HTTPS adapter restricts origin/path/method, pins DNS lookup to the approved snapshot, preserves host/SNI TLS checks, strips unsafe request headers, forces identity encoding, strips unsafe response headers, bounds upload and response bytes, applies request deadlines/cancellation, and does not follow redirects.
-- [x] `createSecureRemoteMcpClient` combines endpoint validation, pinned transport, per-request vault-backed bearer injection, caller Authorization replacement, remote tool discovery, and schema fingerprint snapshots for owner review.
-- [x] Credential vault encrypts with AES-256-GCM. Authenticated data binds tenant, credential ID, key ID, schema version, and record version. Supports scoped callbacks, key rotation, revocation/ciphertext destruction, size limits, and optimistic concurrency.
-- [x] Agent registry stores an explicit safe field set, accepts only canonical opaque credential/endpoint references, rejects raw credentials/authorization headers and raw endpoint URLs, and does not expose references through discovery.
-- [x] Internal owner connection manager previews remote tools without registration, binds previews to owner and tenant, enforces expiry, allows explicit selection of discovered tools, derives approved schema hashes from the preview snapshot, and registers only the selected tools.
-- [x] Owner connection manager disconnect is owner/tenant scoped, unregisters the agent before cleanup, revokes its credential, and closes the MCP client even when credential revocation fails.
-- [x] Any credential-backed connection requires both a vault load operation and a revocation operation.
-- [x] Focused CI suites: authentication 8/8, endpoint 11/11, credential vault 11/11, registry isolation 4/4, secure remote MCP connection 5/5, owner connection lifecycle 10/10.
-- [x] Full Node suite: **63 passed, 0 failed**.
-- [x] CI exact head `59b38b6e3b3329c983b696bd01da7ded667bb2e2`: [run 41269980816](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41269980816).
-- [x] Python Wellness Doctor: 10 passed.
-- [x] Repository Doctor: 113 passed, 0 warnings, 0 errors, 0 critical.
-- [x] Both GitHub Actions workflow YAML files parsed successfully.
+**Boundary:** The local test harness uses deterministic MCP fetch bridges plus one separate-process loopback TCP case. It does not prove public-network deployment, a separately operated third-party AI agent, or production egress controls.
 
-**Still not production-ready:** The token verifier does not issue tokens or supply production OAuth client registration, PKCE, signing-key rotation, or revocation. The vault uses injected store/key-provider interfaces and has no persistent DB/KMS adapter. Registry, previews, and active connections are in-memory and are lost at process restart. The owner lifecycle module is an internal service, not a public owner API or console, and there is no persistent audit log. Tests use deterministic DNS/request/client/transport seams, so a real external TLS handshake and production egress enforcement remain unverified. No production credentials, Cloudflare resources, DNS, or deployment were changed.
+## Verified local security and owner connection lifecycle
 
-## Latest verification
+- [x] RS256 JWT access-token resource-server verifier using a configured trusted JWKS resolver.
+- [x] Issuer/audience, access-token type, subject, tenant, client, scope grammar, JTI, issue/expiry times, bounded skew, and maximum lifetime checks.
+- [x] Bearer middleware replaces caller-provided authentication context; forged identity fields cannot override verified token claims.
+- [x] Exact-host HTTPS/443 endpoint policy and validation of every IPv4/IPv6 DNS answer.
+- [x] Rejection of private, loopback, reserved, link-local, mixed DNS, IP-literal, credential-bearing, query, fragment, and redirect cases.
+- [x] Pinned fetch preserves hostname/SNI TLS checks, restricts origin/path/method, strips unsafe headers, forces identity encoding, bounds bytes/time, and supports cancellation.
+- [x] AES-256-GCM credential-vault logic binds authenticated metadata to tenant, credential, key, schema, and record version; supports scoped decryption, key rotation, revocation, tamper rejection, and optimistic concurrency.
+- [x] Registry accepts only safe fields and canonical opaque references, rejects raw credentials/authorization/endpoint URL fields, and hides secret references from discovery.
+- [x] Internal owner connection manager previews without registration, binds previews to owner/tenant, expires abandoned previews, requires explicit selection of discovered tools, registers approved schema snapshots, and disconnects/revokes/cleans up safely.
 
-- PR #5: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5
-- Branch: `feat/secure-connection-boundary`
-- CI-verified head: `59b38b6e3b3329c983b696bd01da7ded667bb2e2`
-- Latest complete quality run: [41269980816](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41269980816)
-- Focused suites: authentication 8, endpoint security 11, credential vault 11, registry isolation 4, secure outbound connector 5, owner connection lifecycle 10. All passed.
-- Full Node suite: 63 passed, 0 failed.
-- Python Wellness Doctor: 10 passed.
-- Repository Doctor: 113 passed, 0 warnings, 0 errors, 0 critical.
+**Still local-only:** Registry, owner previews, active connections, vault storage, and key provider use in-memory/test adapters. No OAuth issuer, production JWKS trust lifecycle, persistent endpoint approvals, public owner API/console, production KMS, or durable audit trail is implemented.
+
+## Verified local asynchronous task orchestration
+
+- [x] Provider-neutral task coordinator with server-generated task/trace IDs, tenant/caller scope, request fingerprint, scoped idempotency hash, bounded JSON payload, deadlines, and optimistic-concurrency version.
+- [x] Repository contract defines atomic task + initial event + dispatch outbox creation, version-checked transition + event append, leased outbox claim, and lease-owned completion.
+- [x] In-memory reference repository implements the contract for local tests only; it is not durable or safe for multi-process deployment.
+- [x] Registry-backed dispatcher rechecks tenant, caller grant, approved tool name, current remote schema fingerprint, and cancellation before remote call.
+- [x] Worker state transitions, expiry, task event history, bounded cancellation/wait, output-size limits, and sanitized error mapping.
+- [x] Ambiguous post-dispatch lease expiry becomes `REMOTE_OUTCOME_UNKNOWN`; the worker does not blindly repeat a potentially delivered non-idempotent remote call.
+- [x] Optional inbound `delegate_task`, `get_task`, `wait_task`, and `cancel_task` tools register only when the host injects a compatible coordinator and bind to the trusted request principal.
+
+**Still unimplemented:** Production SQL adapter/migrations, durable queue/outbox, worker service and restart recovery, retention/deletion policy, dead-letter/reconciliation controls, cross-process transaction/CAS tests, and live remote idempotency/cancellation.
+
+## Latest exact-head quality verification
+
+The latest exact-head code verification before these documentation-only changes is:
+- **PR:** [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5)
+- **Code commit:** `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5`
+- **Run:** [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) — completed successfully.
+- Authentication boundary: 8/8.
+- Endpoint security: 11/11.
+- Credential vault: 11/11.
+- Agent registry isolation: 7/7.
+- Secure remote MCP connection: 5/5.
+- Owner connection lifecycle: 10/10.
+- Task coordinator: 15/15.
+- Task dispatcher: 8/8.
+- Full Node suite: **90 passed, 0 failed**.
+- Python Wellness Doctor unit tests: **10 passed**.
+- Repository Doctor: **117 passed, 0 warnings, 0 errors, 0 critical**.
 - Both GitHub Actions workflow YAML files parsed successfully.
-- PR #5 remains a draft stacked on PR #4; neither PR #3 nor PR #4 has been merged as part of this work.
+- Every focused gate and the final complete quality gate passed on the same exact commit.
 
+Earlier failing runs 41271513643, 41272917191, and 41276348993 are diagnostic runs, not current status. They exposed stale grant/timeout fixtures, nullable-reference validation, the MCP SDK v2 callTool options position, and missing task-tool wiring. Their fixes are included in the code commit above.
 
-- Stacked PR #4: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4
-- Branch: `feat/mcp-tool-schema-approval`
-- CI-verified head: `2718da1a49404fcf270db09276bc96d94ed2354f`
-- PR #4 targets `feat/mcp-relay-lab` and depends on PR #3. CI run 41263501830 passed: 13 Node tests, 10 Python Wellness Doctor tests, 112 Repository Doctor checks, zero warnings/errors/critical, and both workflow YAML files parsed.
+Documentation updates after this code checkpoint have triggered a new quality run; the latest documentation commit must not be called verified until that run completes.
 
-- PR #3: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3
-- Active branch: `feat/mcp-relay-lab`
-- Tested implementation head: `6a11d3aa40c8173b0dc996842d6cc0f9c615e99b`
-- Quality run: https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253769189
-- Node MCP tests: 9 passed, 0 failed.
-- Python Wellness Doctor unit tests: 10 passed.
-- Repository Doctor: 112 passed, 0 warnings, 0 errors, 0 critical.
-- Both GitHub Actions workflow YAML files parsed successfully.
-- TDD red evidence: earlier run 41253274558 failed because `src/relay/agent-registry.mjs` did not yet exist. After implementation, run 41253320195 passed the first six MCP tests; run 41253359267 passed the expanded seven-test suite.
+## Current account and infrastructure inventory (read-only, 2026-11-01)
+
+### Cloudflare
+- One Cloudflare account is accessible through the current connection.
+- Read-only API inventory returned zero Zones, Worker scripts, D1 databases, Queues, and Durable Object namespaces.
+- No MeepSheep deployment, domain zone, database, queue, or Worker has been created or changed.
+- This inventory is account-scoped; it does not rule out a different Cloudflare account or domain registrar.
+
+### Supabase
+- The accessible organization is on the Free plan.
+- An existing project named `meepsheep-storage` exists in `us-west-1`, but Supabase reports status `INACTIVE`.
+- Project metadata reports PostgreSQL 17.6.1.166. Read-only table/extension inspection failed because the database was inaccessible; migration listing timed out.
+- Security/performance advisors returned no lint records, which is not proof that the inactive database is healthy.
+- A separate active project named `BlueNote` exists in the same organization and is unrelated. Do not repurpose it for MeepSheep.
+- No project was resumed, no migration was applied, and no database schema or data was changed.
 
 ## Not implemented or not verified
 
-- [ ] Persistent database adapter, migrations, durable tasks, message history, and retention/deletion behavior.
-- [x] Local signed bearer-token resource-server verification and forged-context integration boundary.
-- [ ] Production OAuth issuer/token issuance, client registration/PKCE, trusted identity-provider configuration, JWKS rotation, and token revocation.
-- [x] Local encrypted AES-256-GCM credential-vault logic with rotation, revocation, tamper detection, and concurrency tests.
-- [ ] Production credential-vault store and KMS/platform secret-manager key-provider adapters.
-- [x] Local HTTPS endpoint policy, all-answer DNS validation, pinned fetch adapter, and request/response limits.
-- [x] Local secure outbound MCP connection factory now combines endpoint validation, pinned fetch, and per-request vault-backed bearer auth.
-- [x] Remote tool discovery returns schema fingerprints for owner review; the registry enforces explicit approved tool/schema snapshots.
-- [x] Internal in-memory owner connection preview/approval/disconnect service with explicit per-tool schema approval and credential revocation.
-- [ ] Public owner API/console, persistent endpoint approval records, schema reapproval workflow after tool drift, and durable audit trail.
-- [x] Registry rejects raw credentials/authorization/endpoint fields and retains canonical opaque references.
-- [ ] Persistent agent/connection registry and migrations.
-- [ ] Durable asynchronous tasks, idempotency, deadlines, bounded retries, cancellation, task events, and recovery after restart.
-- [x] Local separate-process mock MCP agent over loopback TCP.
-- [ ] Real external TLS/socket integration against an independently operated remote MCP endpoint and deployed egress control.
-- [ ] Real external AI agent and real requesting client round trip.
-- [ ] A2A/provider/webhook adapters.
-- [ ] Production Cloudflare deployment, DNS, TLS, or hosting.
-- [x] Dependency lockfile committed and CI uses `npm ci`.
-- [ ] Lint, typecheck, secret scanning, and supply-chain audit.
-- [ ] Branch protection/rulesets verified.
+- [ ] Persistent agent/connection/grant registry and migrations.
+- [ ] Persistent credential-vault store and production KMS/platform secret-manager key provider.
+- [ ] Production OAuth issuer, client registration/PKCE, signing-key rotation, token revocation, and verified identity-provider configuration.
+- [ ] Durable task tables, atomic SQL transactions, outbox delivery, queue/worker, restart recovery, and dead-letter/reconciliation.
+- [ ] Public owner API/console, persistent schema approvals, durable audit, schema reapproval workflow.
+- [ ] Retention, export, deletion, and artifact authorization policies.
+- [ ] Real external TLS/socket verification and runtime-level egress enforcement.
+- [ ] First real requesting MCP client and independently operated target AI agent round trip.
+- [ ] Production hosting, domain/TLS/DNS configuration, monitoring, backups, restore, cost controls, and launch approval.
+- [ ] Formatting/lint/typecheck, secret scanning, dependency auditing, and repository branch-protection verification.
 
-No production credentials, Cloudflare resources, DNS, or deployment have been changed.
+No production credentials, project resources, DNS, deployments, or external AI connections were changed.
 
-## Per-principal agent access hardening (verification pending)
+## Next decision gate
 
-- [x] Registry requires an immutable owner principal for each connection.
-- [x] New connections default to owner-only discovery and invocation.
-- [x] Registry exposes internal owner-scoped grant and revoke operations.
-- [x] Grant creation requires a target principal identity whose tenant matches the connection tenant.
-- [x] Synchronous invocation and asynchronous task dispatch use their own permission scopes while both enforce the principal grant.
-- [ ] Exact-head CI verification for owner-only defaults, explicit grant/revoke, cross-tenant grant rejection, task permission separation and all existing tests.
+The local asynchronous task layer is implemented and verified. The next independent implementation gate is durable persistence and worker architecture. The repository's platform and hosting decisions remain open:
 
-## Asynchronous task orchestration (feature branch, verification pending)
+1. Confirm whether the existing inactive `meepsheep-storage` Supabase project is the intended authoritative database and whether it should be restored for read-only inspection.
+2. Compare that Postgres project with Cloudflare D1 under the actual hosting/account constraints. The accessible Cloudflare account currently has no configured Workers, D1, Queues, or zone.
+3. Choose one authoritative database, key-management owner, and durable execution primitive before writing provider-specific schema or provisioning resources.
 
-- [x] Provider-neutral task coordinator with server-generated task/trace IDs, caller/tenant scope, request fingerprint, scoped idempotency hash, bounded JSON payload, deadline and optimistic-concurrency version.
-- [x] Repository contract requires atomic task + initial event + dispatch outbox creation, version-checked state transition + event append, worker lease claim and lease-owned completion.
-- [x] In-memory reference repository exists for deterministic tests only. It is not durable or safe for multi-process deployment.
-- [x] Registry-backed dispatcher checks tenant, caller and owner-approved tool access, re-discovers remote MCP schema and checks its approved fingerprint before every queued dispatch.
-- [x] Worker state lifecycle, deadline expiry, bounded cancellation, caller-scoped task reads, bounded wait, output limits and sanitized errors are implemented.
-- [x] Expired outbox lease after dispatch has started becomes `REMOTE_OUTCOME_UNKNOWN`; the worker does not blindly repeat a possibly non-idempotent remote invocation.
-- [x] Optional inbound MCP tools: `delegate_task`, `get_task`, `wait_task`, `cancel_task`. They are registered only when a compatible coordinator is injected and bind to the trusted request principal.
-- [ ] Exact current-head CI verification for the coordinator, dispatcher, MCP task tools, full regression suite and repository health.
-- [ ] Production database/migrations, durable queue/outbox, worker process, retention/deletion policy, monitoring and dead-letter/reconciliation controls.
-- [ ] Live external MCP target verification, including real cancellation/idempotency behavior.
-
-**Current branch head:** `d186ea430076f51d0aa5ff5d3dcbd461048d42f4`. Do not treat the task layer as production-ready or fully verified until a completed green CI run tests this exact head. The preceding CI run 41269980816 verifies the security/connection milestone only, not the subsequent task implementation.
-
-## Infrastructure
-
-A read-only inspection on 2026-10-31 returned one accessible Cloudflare account with zero zones, Worker scripts, D1 databases, Durable Object namespaces, and Queues. This is account-scoped and does not rule out another account or registrar. Do not deploy or change DNS until the correct account and domain zone are confirmed.
-
-## Next actions
-
-1. Build an owner-controlled connection manager: endpoint preview, explicit per-tool approval, immutable schema approval snapshots, register/disconnect, revoke, and audit.
-2. Select the authoritative relational database and production key-management provider, then implement persistent registry/vault adapters and migrations.
-3. Select the production OAuth issuer/client registration/PKCE flow, trusted JWKS source, signing-key rotation, and revocation owner.
-4. Build durable asynchronous task records/events, idempotency, deadlines, bounded retries, and cancellation semantics.
-5. Verify real external TLS/socket behavior and runtime egress policy against the selected hosting platform.
-6. Confirm the first requesting MCP client and independently operated target agent.
-7. Prove an actual public-network AI-to-AI round trip before claiming provider support or deploying.
+Do not restore, create, migrate, deploy, or alter DNS until the owner confirms the platform and account.
 
 ## Session handoff
 
