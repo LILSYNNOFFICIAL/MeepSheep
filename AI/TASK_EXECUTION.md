@@ -1,6 +1,6 @@
 # MeepSheep Task Execution Contract
 
-**Status:** Local task coordinator, in-memory reference repository, registry-backed dispatcher, and optional MCP task tools are implemented and CI-verified on exact PR #5 code head `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5` (run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903)). This is not a durable production task system.
+**Status:** Local task coordinator, in-memory reference repository, registry-backed dispatcher, and optional MCP task tools are implemented. Outbox completion now fences stale claims by worker ID, monotonically increasing claim attempt, exact lease deadline, and lease expiry. PR #5 feature head `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4` passed quality run [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098) (PR merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`). This remains an in-memory local implementation, not a durable production task system.
 
 ## Purpose
 
@@ -68,9 +68,9 @@ A task repository must implement these operations:
 - \`listEvents({ taskId, tenantId })\`: return ordered task events only within the tenant.
 - \`transitionTask({ taskId, tenantId, expectedVersion, fromStates, toState, patch, event })\`: compare-and-swap the state/version and append the event atomically.
 - \`claimNextOutbox({ workerId, now, leaseMs })\`: atomically lease one ready outbox record or reclaim an expired lease.
-- \`completeOutbox({ outboxId, workerId, completedAt })\`: complete only when the caller still owns the lease.
+- \`completeOutbox({ outboxId, workerId, leaseAttempt, leaseUntil, completedAt })\`: complete only if the stored row is still leased to that worker, the monotonically increasing \`attempts\` value matches the claim, the stored lease deadline exactly matches the claimed deadline, and completion is strictly before lease expiry. A stale or expired claim returns \`false\`.
 
-The committed \`src/relay/task-store-memory.mjs\` is a reference/test adapter. Its synchronous in-process map operations are not durable, do not provide cross-process locks, and are lost on restart. No production SQL migrations, D1/Postgres/Supabase adapter, queue, durable outbox, or worker deployment is included.
+The committed \`src/relay/task-store-memory.mjs\` is a reference/test adapter. Its synchronous in-process map operations are not durable, do not provide cross-process locks, and are lost on restart. A persistent adapter must enforce the same claim-generation and expiry predicate atomically and use its authoritative database clock rather than trusting a worker-supplied timestamp. No production SQL migrations, D1/Postgres/Supabase adapter, queue, durable outbox, or worker deployment is included.
 
 ## Dispatch and remote outcome safety
 
@@ -78,7 +78,7 @@ The committed \`src/relay/task-store-memory.mjs\` is a reference/test adapter. I
 
 The dispatcher passes the task's abort signal to the MCP client call. Cancellation and timeout are best-effort: a remote server may already have received or started a request before the relay aborts its local wait.
 
-The worker does not automatically retry a remote invocation. If an outbox lease expires and the task is already \`dispatching\` or \`working\`, the recovered worker marks the task \`REMOTE_OUTCOME_UNKNOWN\` and does not dispatch it again. This avoids duplicating non-idempotent remote side effects when the first worker may have reached the target but failed before saving the result. A retry policy requires a confirmed end-to-end idempotency contract with each target agent.
+The worker does not automatically retry a remote invocation. If an outbox lease expires and the task is already \`dispatching\` or \`working\`, the recovered worker marks the task \`REMOTE_OUTCOME_UNKNOWN\` and does not dispatch it again. This avoids duplicating non-idempotent remote side effects when the first worker may have reached the target but failed before saving the result. Completion fencing prevents a stale worker from overwriting the outbox after expiry or reclaim. It does not by itself eliminate the narrow race in which a suspended worker resumes between its final task-state check and the external MCP call; a durable worker design must test this boundary and establish an end-to-end idempotency/fencing contract before retrying.
 
 ## Local worker contract
 
@@ -90,6 +90,7 @@ A host calls \`processNext({ workerId })\` to claim and process one outbox item.
 - Select and configure one authoritative database and a durable queue/outbox delivery mechanism.
 - Define task and artifact retention, export, deletion, encryption, and privacy policy.
 - Implement recovery/monitoring, worker lifecycle, lease renewal if required, and operational dead-letter/reconciliation procedures.
+- Add a durable dispatch-start/lease-ownership boundary and adversarial pause/resume tests for the interval between the final state check and the external MCP call.
 - Verify request cancellation and idempotency against an independently operated MCP target.
 - Add integration tests for cross-process races, worker termination at every state boundary, transaction rollback, redelivery, and lost remote responses.
 - Prove the complete flow through a live requesting MCP client and a separately operated remote agent.
@@ -98,15 +99,19 @@ No production credentials, database, queue, Cloudflare resources, DNS, or deploy
 
 ## Verification status
 
-The coordinator, in-memory reference repository, registry-backed dispatcher, optional MCP task tools, and focused tests have passed exact-head CI verification.
+The current PR #5 feature head and its PR merge revision passed the complete GitHub Actions quality workflow after stale-lease regression tests were added.
 
-- CI run: [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903)
-- Exact code head: `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5`
+- Feature branch commit: `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4`
+- CI run: [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098)
+- PR merge revision checked out by CI: `4266663f338dbf292c6081db3f3b00f044359b5e`
 - Task coordinator: 15/15.
 - Task dispatcher: 8/8.
-- Full Node suite: 90/90.
+- Task repository lease-fencing regressions: 2/2.
+- Full Node suite: 92/92.
 - Python Wellness Doctor: 10/10.
 - Repository Doctor: 117 passed, zero warnings/errors/critical.
-- Both workflow YAML files parsed successfully.
+- Both workflow YAML files parsed successfully; every focused gate and the final complete quality gate passed.
 
-These checks verify the local in-memory implementation and integration seams. They do not verify production database transactions, cross-process CAS, restart recovery, queue redelivery, production retention/deletion, or a real remote MCP target. Those remain release blockers.
+TDD evidence: run [41288627434](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288627434) observed both new lease-fencing tests fail with the expected `true !== false` assertions against the old implementation. The implementation and coordinator propagation were then added, and run 41288727098 passed both tests and the full suite.
+
+These checks verify the local in-memory implementation and integration seams. They do not verify production database transactions, authoritative database-clock expiry, cross-process CAS, restart recovery, queue redelivery, the suspended-worker dispatch race, production retention/deletion, or a real remote MCP target. Those remain release blockers.
