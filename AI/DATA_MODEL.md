@@ -114,9 +114,9 @@ The provider-neutral task contract is defined in [TASK_EXECUTION.md](TASK_EXECUT
 | Task | `task_id`, `trace_id`, `tenant_id`, `caller_principal_id`, `target_agent_id`, `connection_id`, `tool_name`, bounded JSON input/output, state, deadline, attempt count, version, timestamps, sanitized error code |
 | Idempotency | Tenant + caller + hashed idempotency key is unique; a repeated key with a different request fingerprint is rejected |
 | Task event | Append-only event ID, task ID, tenant, event type, from/to state, timestamp, actor and sanitized error code |
-| Outbox | Task ID, tenant, event type, ready/leased/completed state, attempt count, worker ID, lease deadline and creation/completion timestamps |
+| Outbox | Task ID, tenant, event type, ready/leased/completed state, monotonically increasing claim attempt, worker ID, lease deadline and creation/completion timestamps |
 
-Creating the task, initial event, and outbox record must be one atomic transaction. State transitions must compare-and-swap the expected version and append the matching event in the same transaction. Outbox leases must be claimed and completed atomically. The committed in-memory adapter is reference/test code only and does not satisfy these durability guarantees.
+Creating the task, initial event, and outbox record must be one atomic transaction. State transitions must compare-and-swap the expected version and append the matching event in the same transaction. Outbox leases must be claimed and completed atomically. Completion must compare the worker ID, monotonically increasing claim attempt, exact claimed lease deadline, and an unexpired lease in the same atomic operation. Persistent adapters must evaluate expiry using the database's authoritative clock, not a worker-supplied clock. The committed in-memory adapter is reference/test code only and does not satisfy these durability guarantees.
 
 ## Per-principal agent access
 
