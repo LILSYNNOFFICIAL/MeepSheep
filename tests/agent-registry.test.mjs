@@ -94,11 +94,29 @@ test("agents are owner-only by default and can be shared only by explicit owner 
     () => registry.grantAccess(sameTenantMember, "agent-a", "member-c"),
     (error) => error.code === "AGENT_NOT_FOUND"
   );
-  registry.grantAccess({ ...principal, permissions: [...principal.permissions, "connection:manage"] }, "agent-a", "member-b");
+  registry.grantAccess(
+    { ...principal, permissions: [...principal.permissions, "connection:manage"] },
+    "agent-a",
+    { principalId: "member-b", tenantId: "tenant-a" }
+  );
   assert.deepEqual(registry.discover(sameTenantMember).map((agent) => agent.id), ["agent-a"]);
   assert.equal(registry.getAuthorized(sameTenantMember, "agent-a", "review_message").id, "agent-a");
   registry.revokeAccess({ ...principal, permissions: [...principal.permissions, "connection:manage"] }, "agent-a", "member-b");
   assert.deepEqual(registry.discover(sameTenantMember), []);
+});
+
+
+test("grantAccess rejects a target principal from another tenant", () => {
+  const registry = new AgentRegistry();
+  registry.register(validAgent());
+  const ownerWithManage = { ...principal, permissions: [...principal.permissions, "connection:manage"] };
+  assert.throws(
+    () => registry.grantAccess(ownerWithManage, "agent-a", {
+      principalId: "attacker-b",
+      tenantId: "tenant-b"
+    }),
+    (error) => error.code === "TENANT_MISMATCH"
+  );
 });
 
 test("only the owner can manage grants and the owner grant cannot be revoked", () => {
