@@ -5,8 +5,9 @@ import { createCredentialVault } from "../src/relay/credential-vault.mjs";
 class MemoryCredentialStore {
   records = new Map();
   async insert(record) {
-    if (this.records.has(record.credentialId)) throw new Error("duplicate");
+    if (this.records.has(record.credentialId)) return false;
     this.records.set(record.credentialId, structuredClone(record));
+    return true;
   }
   async get(credentialId) {
     const record = this.records.get(credentialId);
