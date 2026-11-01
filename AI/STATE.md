@@ -18,6 +18,14 @@ This ledger distinguishes verified local behavior from production capabilities t
 - [x] A2A, provider APIs, and webhooks remain optional adapters.
 - [x] MeepSheep-owned research-engine functionality is outside the MVP.
 
+## Documentation foundation
+
+- [x] PR #2 merged to main: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/2
+- [x] MCP-first README and AI documentation foundation exists.
+- [x] Automated test suite exists.
+- [x] CI workflow exists.
+- [x] Repository Wellness Doctor and scheduled README health workflow exist.
+
 ## Open pull-request stack
 
 All three PRs were rechecked on 2026-11-01. They remain open and mergeable. No approving reviews are recorded.
