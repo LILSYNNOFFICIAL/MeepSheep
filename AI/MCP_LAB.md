@@ -124,6 +124,14 @@ The owner lifecycle tests cover preview without premature registration, credenti
 
 **TDD evidence:** Authentication/endpoint/registry/connector/lifecycle suites were added before their corresponding production changes and failed for the expected missing-module or missing-behavior reason. Subsequent fixes were challenged by additional tests. The latest complete run 41269980816 passes all focused suites and the full regression suite on the exact head above.
 
+## Asynchronous task execution
+
+The feature branch adds a provider-neutral task coordinator, an in-memory reference repository, a registry-backed dispatcher, and optional inbound MCP task tools. The supported caller operations are `delegate_task`, `get_task`, `wait_task`, and `cancel_task`. The dispatcher rechecks tenant/caller authorization and the remote tool's owner-approved schema fingerprint immediately before dispatch.
+
+Task creation requires an atomic repository operation that writes the task, its initial event, and an outbox record. State transitions require compare-and-swap on the task version with the corresponding event appended atomically. Worker dispatch uses a leased outbox item and abort signal. A possibly delivered invocation is not retried automatically after an uncertain worker outcome; the task becomes `REMOTE_OUTCOME_UNKNOWN`.
+
+The current in-memory store is test/reference code, not a durable queue or database. **CI verification of these task additions on the latest exact branch head is pending.** The previously green security/connection run does not cover these later task changes. See [TASK_EXECUTION.md](TASK_EXECUTION.md).
+
 ## Important limitations
 
 This remains a local engineering implementation, not a production identity or hosting system:
