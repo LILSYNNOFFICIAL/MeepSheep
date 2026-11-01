@@ -59,6 +59,7 @@ export class AgentRegistry {
       capabilities: [...(agent.capabilities ?? [])],
       endpointRef: agent.endpointRef ?? null,
       credentialRef: agent.credentialRef ?? null,
+      ownerPrincipalId: agent.ownerPrincipalId ?? null,
       client: agent.client,
       approvedTools: new Set(agent.approvedTools),
       approvedToolSchemas: new Map(Object.entries(agent.approvedToolSchemas)),
@@ -95,5 +96,22 @@ export class AgentRegistry {
       throw new RelayError("TOOL_NOT_ALLOWED");
     }
     return { ...agent, approvedSchemaFingerprint: agent.approvedToolSchemas.get(toolName) };
+  }
+
+  unregister(principal, agentId) {
+    requirePrincipal(principal);
+    if (!principal.permissions.includes("connection:manage")) {
+      throw new RelayError("PERMISSION_DENIED");
+    }
+    const agent = this.#agents.get(agentId);
+    if (
+      !agent ||
+      agent.tenantId !== principal.tenantId ||
+      agent.ownerPrincipalId !== principal.principalId
+    ) {
+      throw new RelayError("AGENT_NOT_FOUND");
+    }
+    this.#agents.delete(agentId);
+    return agent;
   }
 }
