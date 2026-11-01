@@ -28,7 +28,7 @@ export function createRegistryTaskDispatcher({ registry } = {}) {
     const principal = {
       principalId: task.callerPrincipalId,
       tenantId: task.tenantId,
-      permissions: ["agent:message"]
+      permissions: ["task:dispatch"]
     };
     const agent = registry.getAuthorized(principal, task.targetAgentId, task.toolName);
     if (task.connectionId !== agent.id) throw new RelayError("AGENT_NOT_FOUND");
