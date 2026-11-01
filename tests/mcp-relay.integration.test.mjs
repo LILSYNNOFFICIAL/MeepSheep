@@ -394,8 +394,7 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
   });
   const relayHandler = createRelayHandler({
     registry,
-    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null,
-    taskCoordinator
+    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null
   });
   openHandlers.push(relayHandler);
   const caller = await connectClient(relayHandler, "relay-process", makeAuthInfo());
@@ -443,7 +442,7 @@ test("authenticated MCP requests use verified bearer-token identity instead of f
     permissions: ["*"]
   };
   const { caller } = await setup({
-    agents: [{ id: "agent-alpha" }],
+    agents: [{ id: "agent-alpha", ownerPrincipalId: "trusted-caller" }],
     authenticator,
     bearerToken,
     callerAuthInfo: { clientId: "forged-client", extra: { principal: forged } }

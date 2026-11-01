@@ -5,6 +5,7 @@ import * as z from "zod/v4";
 import { RelayError } from "./agent-registry.mjs";
 import { withBearerAuthentication } from "./auth.mjs";
 import { fingerprintToolSchema } from "./tool-schema.mjs";
+import { registerTaskTools } from "./task-mcp-tools.mjs";
 
 const agentSummarySchema = z.object({
   id: z.string(),
@@ -35,7 +36,7 @@ function safeCode(error) {
   return "REMOTE_FAILED";
 }
 
-export function createRelayHandler({ registry, resolvePrincipal, authenticator }) {
+export function createRelayHandler({ registry, resolvePrincipal, authenticator, taskCoordinator }) {
   if (!registry || typeof registry.discover !== "function" || typeof registry.getAuthorized !== "function") {
     throw new TypeError("A compatible agent registry is required.");
   }
@@ -86,6 +87,10 @@ export function createRelayHandler({ registry, resolvePrincipal, authenticator }
         };
       } catch (error) { return toolError(safeCode(error)); }
     });
+
+    if (taskCoordinator) {
+      registerTaskTools(server, taskCoordinator, principal);
+    }
     return server;
   }, { legacy: "stateless", maxRequestBodySize: 1024 * 1024 });
 

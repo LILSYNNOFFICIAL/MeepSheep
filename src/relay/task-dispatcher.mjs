@@ -45,7 +45,6 @@ export function createRegistryTaskDispatcher({ registry } = {}) {
 
     const result = await agent.client.callTool(
       { name: task.toolName, arguments: task.input },
-      undefined,
       { signal }
     );
     if (signal.aborted) throw signal.reason ?? new RelayError("TASK_CANCELED");
