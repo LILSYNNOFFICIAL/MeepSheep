@@ -41,6 +41,9 @@ jobs:
       - name: Run credential vault boundary tests
         run: node --test tests/credential-vault.test.mjs
 
+      - name: Run agent registry isolation tests
+        run: node --test tests/agent-registry.test.mjs
+
       - name: Run MCP relay integration and unit suite
         run: npm test
 
