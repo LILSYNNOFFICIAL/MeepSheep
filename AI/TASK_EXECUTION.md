@@ -1,6 +1,6 @@
 # MeepSheep Task Execution Contract
 
-**Status:** Local task coordinator, in-memory reference repository, registry-backed dispatcher, and optional MCP task tools are implemented. Outbox completion now fences stale claims by worker ID, monotonically increasing claim attempt, exact lease deadline, and lease expiry. PR #5 feature head `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4` passed quality run [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098) (PR merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`). This remains an in-memory local implementation, not a durable production task system.
+**Status:** Local task coordinator, in-memory reference repository, registry-backed dispatcher, and optional MCP task tools are implemented. Outbox completion now fences stale claims by worker ID, monotonically increasing claim attempt, exact lease deadline, and lease expiry. PR #5 feature head `9f8050d09e068e31b13e26ead4ef255e28fbf53b` passed quality run [41289284477](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289284477) (PR merge revision `ec6f3e5849496b4ee7f084b4f10c28e41e5bc1e8`). A reusable repository contract suite now defines seven shared tests for any future adapter. This remains an in-memory local implementation, not a durable production task system.
 
 ## Purpose
 
@@ -70,7 +70,7 @@ A task repository must implement these operations:
 - \`claimNextOutbox({ workerId, now, leaseMs })\`: atomically lease one ready outbox record or reclaim an expired lease.
 - \`completeOutbox({ outboxId, workerId, leaseAttempt, leaseUntil, completedAt })\`: complete only if the stored row is still leased to that worker, the monotonically increasing \`attempts\` value matches the claim, the stored lease deadline exactly matches the claimed deadline, and completion is strictly before lease expiry. A stale or expired claim returns \`false\`.
 
-The committed \`src/relay/task-store-memory.mjs\` is a reference/test adapter. Its synchronous in-process map operations are not durable, do not provide cross-process locks, and are lost on restart. A persistent adapter must enforce the same claim-generation and expiry predicate atomically and use its authoritative database clock rather than trusting a worker-supplied timestamp. No production SQL migrations, D1/Postgres/Supabase adapter, queue, durable outbox, or worker deployment is included.
+The committed \`src/relay/task-store-memory.mjs\` is a reference/test adapter. Its synchronous in-process map operations are not durable, do not provide cross-process locks, and are lost on restart. The shared behavioral suite in \`tests/support/task-repository-contract.mjs\` is registered by \`tests/task-store-memory.test.mjs\`; a future D1 or PostgreSQL adapter should register the same contract with its own \`createRepository\` factory. Passing this shared suite will be necessary but not sufficient: each durable adapter must additionally prove transactional rollback, provider-specific uniqueness and compare-and-swap semantics, database-authoritative lease expiry, cross-process contention, and restart recovery. No production SQL migrations, D1/Postgres/Supabase adapter, queue, durable outbox, or worker deployment is included.
 
 ## Dispatch and remote outcome safety
 
@@ -102,16 +102,16 @@ No production credentials, database, queue, Cloudflare resources, DNS, or deploy
 The current PR #5 feature head and its PR merge revision passed the complete GitHub Actions quality workflow after stale-lease regression tests were added.
 
 - Feature branch commit: `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4`
-- CI run: [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098)
-- PR merge revision checked out by CI: `4266663f338dbf292c6081db3f3b00f044359b5e`
+- CI run: [41289284477](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289284477)
+- PR merge revision checked out by CI: `ec6f3e5849496b4ee7f084b4f10c28e41e5bc1e8`
 - Task coordinator: 15/15.
 - Task dispatcher: 8/8.
-- Task repository lease-fencing regressions: 2/2.
-- Full Node suite: 92/92.
+- Reusable task repository contract suite: 7/7.
+- Full Node suite: 97/97.
 - Python Wellness Doctor: 10/10.
 - Repository Doctor: 117 passed, zero warnings/errors/critical.
 - Both workflow YAML files parsed successfully; every focused gate and the final complete quality gate passed.
 
-TDD evidence: run [41288627434](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288627434) observed both new lease-fencing tests fail with the expected `true !== false` assertions against the old implementation. The implementation and coordinator propagation were then added, and run 41288727098 passed both tests and the full suite.
+TDD evidence: run [41288627434](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288627434) observed both original lease-fencing regressions fail with the expected `true !== false` assertions. The reusable contract harness then expanded those cases into seven adapter-neutral repository tests; run 41289284477 passed the full suite with 97/97 Node tests.
 
 These checks verify the local in-memory implementation and integration seams. They do not verify production database transactions, authoritative database-clock expiry, cross-process CAS, restart recovery, queue redelivery, the suspended-worker dispatch race, production retention/deletion, or a real remote MCP target. Those remain release blockers.
