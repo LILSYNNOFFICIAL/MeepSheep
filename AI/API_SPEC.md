@@ -1,6 +1,6 @@
 # MeepSheep MCP API and Relay Contract
 
-**Status:** Design contract with CI-verified local relay, signed-token resource-server middleware, endpoint-pinned remote MCP connector, encrypted credential-vault abstraction, registry secret isolation, and internal owner connection lifecycle manager. Not deployed; production identity issuance, storage/key-provider adapters, public owner API/console, persistence, and durable tasks remain unimplemented.  
+**Status:** Design contract with CI-verified local relay, signed-token resource-server middleware, endpoint-pinned remote MCP connector, encrypted credential-vault abstraction, registry secret isolation, and internal owner connection lifecycle manager. Optional asynchronous task tools and a provider-neutral task coordinator are implemented on the feature branch; their latest exact-head CI verification is pending. Not deployed; production identity issuance, storage/key-provider adapters, public owner API/console, persistence, and durable tasks remain unimplemented.  
 **Primary interface:** Remote MCP server.  
 **Core behavior:** Route authorized messages and tasks between independently connected agents.
 
@@ -129,6 +129,17 @@ On connection setup:
 7. Revalidate tool schema changes before invoking newly changed behavior.
 
 Never expose all remote tools to every caller by default. MeepSheep authorizes a specific remote tool for a specific tenant/caller/agent.
+
+### Optional asynchronous task tools
+
+When the host injects a compatible task coordinator, the inbound relay may additionally register:
+
+- `delegate_task`: requires `task:dispatch`; authorizes the target agent/tool before task creation; requires a caller-provided idempotency key; returns a task ID and queued state.
+- `get_task`: requires `task:read`; returns only a task created by the authenticated caller in the same tenant.
+- `wait_task`: requires `task:read`; waits for at most 30 seconds and returns the latest task state.
+- `cancel_task`: requires `task:cancel`; cancels only the caller's own queued or active task.
+
+The principal is captured from the relay's trusted per-request principal resolver. These tool schemas do not accept caller/tenant identity fields. Owner connection operations remain separate.
 
 ### Internal owner connection lifecycle (not an inbound MCP tool)
 
