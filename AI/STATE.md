@@ -4,7 +4,7 @@
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
 **Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)
-**Current branch head:** `d1aa272bfc98e2f767aa389ea7f6b00859e6a71d`
+**Current branch head:** `59b38b6e3b3329c983b696bd01da7ded667bb2e2`
 
 This ledger distinguishes verified implementation from planned or unverified capabilities.
 
@@ -50,16 +50,31 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [x] `createSecureRemoteMcpClient` combines endpoint validation, pinned transport, per-request vault-backed bearer injection, caller Authorization replacement, remote tool discovery, and schema fingerprint snapshots for owner review.
 - [x] Credential vault encrypts with AES-256-GCM. Authenticated data binds tenant, credential ID, key ID, schema version, and record version. Supports scoped callbacks, key rotation, revocation/ciphertext destruction, size limits, and optimistic concurrency.
 - [x] Agent registry stores an explicit safe field set, accepts only canonical opaque credential/endpoint references, rejects raw credentials/authorization headers and raw endpoint URLs, and does not expose references through discovery.
-- [x] Focused CI suites: authentication 8/8, endpoint 11/11, credential vault 11/11, registry isolation 4/4, secure remote MCP connection 5/5.
-- [x] Full Node suite: **53 passed, 0 failed**.
-- [x] CI exact head `d1aa272bfc98e2f767aa389ea7f6b00859e6a71d`: [run 41269374223](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41269374223).
+- [x] Internal owner connection manager previews remote tools without registration, binds previews to owner and tenant, enforces expiry, allows explicit selection of discovered tools, derives approved schema hashes from the preview snapshot, and registers only the selected tools.
+- [x] Owner connection manager disconnect is owner/tenant scoped, unregisters the agent before cleanup, revokes its credential, and closes the MCP client even when credential revocation fails.
+- [x] Any credential-backed connection requires both a vault load operation and a revocation operation.
+- [x] Focused CI suites: authentication 8/8, endpoint 11/11, credential vault 11/11, registry isolation 4/4, secure remote MCP connection 5/5, owner connection lifecycle 10/10.
+- [x] Full Node suite: **63 passed, 0 failed**.
+- [x] CI exact head `59b38b6e3b3329c983b696bd01da7ded667bb2e2`: [run 41269980816](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41269980816).
 - [x] Python Wellness Doctor: 10 passed.
 - [x] Repository Doctor: 113 passed, 0 warnings, 0 errors, 0 critical.
 - [x] Both GitHub Actions workflow YAML files parsed successfully.
 
-**Still not production-ready:** The token verifier does not issue tokens or supply production OAuth client registration, PKCE, signing-key rotation, or revocation. The vault uses injected store/key-provider interfaces and has no persistent DB/KMS adapter. The outbound connector now uses the endpoint validator, pinned fetch, and vault, but there is no owner-facing endpoint/tool approval manager or persistent connection lifecycle. Tests use deterministic DNS/request/client/transport seams, so a real external TLS handshake and production egress enforcement remain unverified. No production credentials, Cloudflare resources, DNS, or deployment were changed.
+**Still not production-ready:** The token verifier does not issue tokens or supply production OAuth client registration, PKCE, signing-key rotation, or revocation. The vault uses injected store/key-provider interfaces and has no persistent DB/KMS adapter. Registry, previews, and active connections are in-memory and are lost at process restart. The owner lifecycle module is an internal service, not a public owner API or console, and there is no persistent audit log. Tests use deterministic DNS/request/client/transport seams, so a real external TLS handshake and production egress enforcement remain unverified. No production credentials, Cloudflare resources, DNS, or deployment were changed.
 
 ## Latest verification
+
+- PR #5: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5
+- Branch: `feat/secure-connection-boundary`
+- CI-verified head: `59b38b6e3b3329c983b696bd01da7ded667bb2e2`
+- Latest complete quality run: [41269980816](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41269980816)
+- Focused suites: authentication 8, endpoint security 11, credential vault 11, registry isolation 4, secure outbound connector 5, owner connection lifecycle 10. All passed.
+- Full Node suite: 63 passed, 0 failed.
+- Python Wellness Doctor: 10 passed.
+- Repository Doctor: 113 passed, 0 warnings, 0 errors, 0 critical.
+- Both GitHub Actions workflow YAML files parsed successfully.
+- PR #5 remains a draft stacked on PR #4; neither PR #3 nor PR #4 has been merged as part of this work.
+
 
 - Stacked PR #4: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4
 - Branch: `feat/mcp-tool-schema-approval`
@@ -86,7 +101,8 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [x] Local HTTPS endpoint policy, all-answer DNS validation, pinned fetch adapter, and request/response limits.
 - [x] Local secure outbound MCP connection factory now combines endpoint validation, pinned fetch, and per-request vault-backed bearer auth.
 - [x] Remote tool discovery returns schema fingerprints for owner review; the registry enforces explicit approved tool/schema snapshots.
-- [ ] Owner-facing endpoint onboarding, explicit per-tool approval/reapproval, connection management, disconnect, and audit UI/API.
+- [x] Internal in-memory owner connection preview/approval/disconnect service with explicit per-tool schema approval and credential revocation.
+- [ ] Public owner API/console, persistent endpoint approval records, schema reapproval workflow after tool drift, and durable audit trail.
 - [x] Registry rejects raw credentials/authorization/endpoint fields and retains canonical opaque references.
 - [ ] Persistent agent/connection registry and migrations.
 - [ ] Durable asynchronous tasks, idempotency, deadlines, bounded retries, cancellation, task events, and recovery after restart.
