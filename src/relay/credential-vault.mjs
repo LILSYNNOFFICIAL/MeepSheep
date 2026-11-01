@@ -18,10 +18,7 @@ function fail(code) {
 
 function requireIdentifier(value) {
   return typeof value === "string" &&
-    value.length > 0 &&
-    value.length <= 128 &&
-    value.trim() === value &&
-    !/[\u0000-\u0020\u007F]/.test(value);
+    /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(value);
 }
 
 function requireTenantId(value) {
