@@ -1,21 +1,23 @@
 # MeepSheep Security and Privacy Baseline
 
-**Status:** Required design controls. A local RS256 resource-server verifier and outbound endpoint-security primitives are CI-tested on the secure-connection feature branch. Production identity issuance, credential storage, endpoint onboarding, and deployment egress remain unimplemented.  
+**Status:** Required design controls. Draft PR #5 contains CI-tested RS256 resource-server verification, pinned HTTPS outbound connection factory, AES-256-GCM credential-vault logic, and registry secret isolation. Production identity issuance, persistent store/KMS adapters, owner onboarding, and deployment egress remain unimplemented.  
 **Primary risk boundary:** Untrusted agents and tools communicating through an authorized relay.
 
 ## Verified local security primitives (draft PR #5)
 
 The following behavior is implemented and CI-tested on `feat/secure-connection-boundary`:
 
-- Inbound bearer-token middleware verifies RS256 JWT access tokens through an injected JWKS resolver, checks exact issuer/audience, `typ: at+jwt`, subject, tenant ID, client ID, unique scope tokens, JTI, issue/expiry times, bounded clock skew, and maximum lifetime.
-- The middleware replaces preexisting request auth context. The relay resolves principal and tenant from a private, verified auth-context association, not caller-controlled `extra` fields.
-- Missing and invalid credentials fail closed. A JWKS retrieval timeout/fetch failure is mapped to service-unavailable rather than silently allowing access.
-- The endpoint helper requires exact approved hostnames, HTTPS, and port 443; rejects IP literals, credentials, query/fragment components, unapproved hosts, DNS errors, empty answers, and any non-public DNS result.
-- The endpoint helper validates every returned IPv4/IPv6 answer and rejects mixed public/non-public sets.
-- The pinned fetch helper restricts origin/path and method, pins DNS lookup to the previously validated address set, preserves the original hostname for TLS SNI/certificate validation, removes cookie/hop-by-hop/proxy headers, bounds payload sizes, applies timeouts, and does not follow redirects.
-- Evidence: 7 authentication tests, 9 endpoint tests, 30 total Node tests, 10 Python Wellness Doctor tests, and 113 Repository Doctor checks passed on CI run [41268297674](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41268297674).
+- Inbound bearer middleware verifies RS256 JWT access tokens through an injected trusted JWKS resolver. It checks exact issuer/audience, `typ: at+jwt`, subject, tenant ID, client ID, unique OAuth scope tokens, JTI, issue/expiry times, bounded clock skew, and maximum lifetime.
+- The middleware replaces preexisting request auth context. The relay resolves principal and tenant from a private verified auth-context association, not caller-controlled `extra` fields. Invalid clocks and invalid credentials fail closed.
+- Endpoint validation requires exact approved hostnames, HTTPS/443, and validation of every IPv4/IPv6 DNS answer. It rejects IP literals, credentials, query/fragment components, unapproved hosts, DNS errors, empty answers, and any non-public or mixed address set.
+- The pinned fetch helper restricts origin/path/method, pins lookup to the approved DNS snapshot, preserves the original hostname for TLS SNI/certificate validation, removes unsafe request headers, forces `Accept-Encoding: identity`, strips response hop-by-hop/connection-nominated/cookie headers, rejects compressed responses, bounds request upload and streamed response bytes, applies deadlines/cancellation, and does not follow redirects.
+- `createSecureRemoteMcpClient` combines the endpoint validator, pinned fetch adapter, MCP Streamable HTTP client, and vault-backed per-request bearer credential. Caller-supplied Authorization headers are removed before the connection credential is injected. Credential revocation blocks subsequent outbound HTTP requests that attempt to load the revoked reference. The factory discovers tools and returns schema fingerprints for owner review; it does not auto-approve tools.
+- The credential vault encrypts with AES-256-GCM. Authenticated data binds schema version, tenant ID, credential ID, key ID, and record version. The module enforces credential size and canonical opaque IDs; it supports callback-scoped decryption, key rotation, ciphertext destruction on revocation, tamper detection, and optimistic concurrency.
+- The in-memory registry uses an explicit allowlist, accepts canonical `credentialRef` and `endpointRef` references, rejects raw credential/authorization/endpoint fields, and does not reveal references through discovery.
 
-**Not established by these tests:** a production OAuth authorization server or token issuer, production JWKS/key lifecycle or revocation, persistent owner-approved endpoint registration, credential vault, real external TLS connection using the pinned fetch adapter, runtime-level egress filtering, or live AI-provider connectivity. The endpoint helper is not yet wired into the current in-memory registry's outbound-client construction. The old injected principal resolver remains for the test harness; a deployed runtime must configure the verified bearer middleware and never expose that resolver as a public auth path.
+**Latest evidence:** CI run [41269374223](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41269374223) passed on exact head `d1aa272bfc98e2f767aa389ea7f6b00859e6a71d`: authentication 8/8, endpoint 11/11, credential vault 11/11, registry 4/4, remote MCP connector 5/5, full Node suite 53/53, Python Wellness Doctor 10/10, Repository Doctor 113 passed with zero warnings/errors/critical, and both workflow YAML files parsed.
+
+**Not established by these tests:** production OAuth token issuance, client registration/PKCE, production signing-key rotation or revocation, persistent credential store, KMS/platform secret-manager adapter, owner registration and per-tool reapproval UI, real external TLS handshake through the default Node HTTPS transport, deployed DNS/egress policy, or live AI-provider connectivity. The test connector uses deterministic request/client/transport seams. The original injected principal resolver remains for local tests; a deployed runtime must configure verified bearer middleware and never expose that resolver as a public auth path.
 
 ## 1. Threat model
 
@@ -52,7 +54,7 @@ For every configured remote endpoint, tool URL, redirect, Agent Card, or callbac
 - Resolve and validate every DNS answer, including IPv4 and IPv6.
 - Revalidate every redirect target.
 - Defend against DNS rebinding and connect-time address changes where runtime permits.
-- Limit redirects, response bytes, decompressed bytes, content types, and time.
+- Limit response bytes and execution time; the current local pinned transport requests identity encoding and rejects non-identity content encoding rather than attempting decompression.
 - Do not forward inbound cookies, auth headers, or internal headers.
 - Prefer explicit owner-configured endpoints over arbitrary URLs supplied by model tool arguments.
 
@@ -118,10 +120,12 @@ Do not store complete private conversations by default. Do not log full task pay
 - [ ] Cross-tenant discovery, task, message, and artifact isolation tests pass.
 - [ ] Confused-deputy and privilege-escalation tests pass.
 - [ ] Remote tool prompt injection cannot alter MeepSheep policy or invoke unapproved tools.
-- [x] Local unit tests cover common IPv4/IPv6 non-public ranges, all-answer DNS rejection, mixed DNS sets, exact endpoint origin/path, pinned lookup contents, and no redirect following.
+- [x] Local unit tests cover IPv4/IPv6 non-public ranges, all-answer DNS rejection, mixed DNS sets, exact endpoint origin/path, pinned lookup contents, request/response header policy, request upload timeouts, and no redirect following.
 - [ ] Real socket/TLS, metadata-service, DNS-rebinding, and deployed egress-policy tests pass in the selected hosting runtime.
 - [ ] Replay, duplicate, forged callback, and out-of-order event tests pass.
-- [ ] Credential rotation and revocation stop future dispatch.
+- [x] Local AES-256-GCM vault tests verify rotation, ciphertext revocation, tamper rejection, tenant/key/version binding, and stale-write rejection.
+- [x] The outbound MCP fetch wrapper reloads credentials for each HTTP request and fails before outbound network I/O after revocation.
+- [ ] Production store/KMS adapters and in-flight request/revocation semantics are verified in the selected hosting runtime.
 - [ ] Fan-out, depth, retries, concurrency, duration, and budgets are enforced.
 - [ ] Secrets are absent from Git, browser bundles, logs, and task outputs.
 - [ ] Retention, deletion, and artifact authorization are tested.
