@@ -121,7 +121,7 @@ This is intentionally a local lab, not production:
 - The principal resolver is injected by test setup. No production OAuth/token verification or identity provider is implemented.
 - The registry is in-memory. No database, migrations, durable task history, or message retention exists.
 - Only `discover_agents` and `send_message` are implemented. Task delegation, task retrieval, wait, cancellation, and connection management remain planned.
-- The local lab now compares a canonical SHA-256 fingerprint of the discovered remote tool contract against the owner-approved snapshot before each invocation. This branch's new tests have not yet been observed passing in CI. Production owner onboarding and reapproval UI are not implemented.
+- The local lab now compares a canonical SHA-256 fingerprint of the discovered remote tool contract against the owner-approved snapshot before each invocation. The schema-fingerprint implementation and tests passed CI run 41263501830 on commit `2718da1a49404fcf270db09276bc96d94ed2354f`. Production owner onboarding and reapproval UI are not implemented.
 - No owner console, credential onboarding, production secret store, SSRF policy, rate/budget service, or multi-tenant persistence exists.
 - No real AI provider or consumer chat UI is connected.
 - No Cloudflare resource, DNS, TLS, or production deployment has been changed.
