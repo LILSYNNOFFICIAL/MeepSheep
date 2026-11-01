@@ -12,12 +12,38 @@ function requirePrincipal(principal) {
   }
 }
 
+const RAW_CREDENTIAL_FIELDS = new Set([
+  "credential", "credentials", "secret", "secretRef", "token", "accessToken",
+  "access_token", "refresh_token", "password", "apiKey", "privateKey",
+  "authorization", "authorizationHeader", "authHeaders", "headers", "endpoint"
+]);
+
+function isOpaqueReference(value, prefix) {
+  return typeof value === "string" &&
+    value.startsWith(prefix) &&
+    value.length > prefix.length &&
+    value.length <= 512 &&
+    value.trim() === value &&
+    !/[\u0000-\u0020\u007F]/.test(value);
+}
+
 export class AgentRegistry {
   #agents = new Map();
 
   register(agent) {
     if (!agent?.id || !agent?.tenantId || !agent?.client || !Array.isArray(agent.approvedTools) || !agent.approvedToolSchemas || typeof agent.approvedToolSchemas !== "object") {
       throw new TypeError("Agent registration requires id, tenantId, client, approvedTools, and approvedToolSchemas.");
+    }
+    for (const field of RAW_CREDENTIAL_FIELDS) {
+      if (Object.hasOwn(agent, field)) {
+        throw new TypeError("Agent registration must use credentialRef and endpointRef, never raw credentials or endpoint URLs.");
+      }
+    }
+    if (agent.credentialRef !== undefined && !isOpaqueReference(agent.credentialRef, "credential://")) {
+      throw new TypeError("credentialRef must be an opaque credential:// reference.");
+    }
+    if (agent.endpointRef !== undefined && !isOpaqueReference(agent.endpointRef, "endpoint://")) {
+      throw new TypeError("endpointRef must be an opaque endpoint:// reference.");
     }
     if (this.#agents.has(agent.id)) {
       throw new RelayError("AGENT_ALREADY_REGISTERED");
@@ -28,7 +54,15 @@ export class AgentRegistry {
       }
     }
     this.#agents.set(agent.id, {
-      ...agent,
+      id: agent.id,
+      tenantId: agent.tenantId,
+      name: agent.name ?? agent.id,
+      description: agent.description ?? "",
+      discoverable: agent.discoverable !== false,
+      capabilities: [...(agent.capabilities ?? [])],
+      endpointRef: agent.endpointRef ?? null,
+      credentialRef: agent.credentialRef ?? null,
+      client: agent.client,
       approvedTools: new Set(agent.approvedTools),
       approvedToolSchemas: new Map(Object.entries(agent.approvedToolSchemas)),
       status: agent.status ?? "active"
