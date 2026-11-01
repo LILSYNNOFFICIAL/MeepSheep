@@ -116,13 +116,18 @@ export class AgentRegistry {
     return { ...agent, approvedSchemaFingerprint: agent.approvedToolSchemas.get(toolName) };
   }
 
-  grantAccess(principal, agentId, targetPrincipalId) {
+  grantAccess(principal, agentId, targetPrincipal) {
     requirePrincipal(principal);
     if (!principal.permissions.includes("connection:manage")) {
       throw new RelayError("PERMISSION_DENIED");
     }
-    if (typeof targetPrincipalId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(targetPrincipalId)) {
-      throw new TypeError("A valid target principal ID is required.");
+    const targetPrincipalId = targetPrincipal?.principalId;
+    if (
+      typeof targetPrincipalId !== "string" ||
+      !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(targetPrincipalId) ||
+      targetPrincipal?.tenantId !== principal.tenantId
+    ) {
+      throw new RelayError("TENANT_MISMATCH");
     }
     const agent = this.#agents.get(agentId);
     if (
