@@ -12,6 +12,7 @@ function validAgent(overrides = {}) {
   return {
     id: "agent-a",
     tenantId: "tenant-a",
+    ownerPrincipalId: principal.principalId,
     name: "Agent A",
     description: "Review requests",
     discoverable: true,
@@ -73,6 +74,45 @@ test("registry rejects noncanonical or path-bearing credential references", () =
       (error) => error instanceof TypeError && /opaque credential/.test(error.message)
     );
   }
+});
+
+
+test("agents are owner-only by default and can be shared only by explicit owner grant", () => {
+  const registry = new AgentRegistry();
+  registry.register(validAgent());
+  const sameTenantMember = {
+    principalId: "member-b",
+    tenantId: "tenant-a",
+    permissions: ["agent:discover", "agent:message", "connection:manage"]
+  };
+  assert.deepEqual(registry.discover(sameTenantMember), []);
+  assert.throws(
+    () => registry.getAuthorized(sameTenantMember, "agent-a", "review_message"),
+    (error) => error.code === "AGENT_NOT_FOUND"
+  );
+  assert.throws(
+    () => registry.grantAccess(sameTenantMember, "agent-a", "member-c"),
+    (error) => error.code === "AGENT_NOT_FOUND"
+  );
+  registry.grantAccess({ ...principal, permissions: [...principal.permissions, "connection:manage"] }, "agent-a", "member-b");
+  assert.deepEqual(registry.discover(sameTenantMember).map((agent) => agent.id), ["agent-a"]);
+  assert.equal(registry.getAuthorized(sameTenantMember, "agent-a", "review_message").id, "agent-a");
+  registry.revokeAccess({ ...principal, permissions: [...principal.permissions, "connection:manage"] }, "agent-a", "member-b");
+  assert.deepEqual(registry.discover(sameTenantMember), []);
+});
+
+test("only the owner can manage grants and the owner grant cannot be revoked", () => {
+  const registry = new AgentRegistry();
+  registry.register(validAgent());
+  const ownerWithManage = { ...principal, permissions: [...principal.permissions, "connection:manage"] };
+  assert.throws(
+    () => registry.revokeAccess(ownerWithManage, "agent-a", principal.principalId),
+    (error) => error.code === "OWNER_GRANT_IMMUTABLE"
+  );
+  assert.throws(
+    () => registry.grantAccess(principal, "agent-a", "member-b"),
+    (error) => error.code === "PERMISSION_DENIED"
+  );
 });
 
 test("model-facing discovery does not reveal credential or endpoint references", () => {
