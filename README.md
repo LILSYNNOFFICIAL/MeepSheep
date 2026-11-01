@@ -48,7 +48,7 @@ MEEPSHEEP COORDINATION CORE
   identity + permissions
   agent discovery + registry
   message/task routing
-  durable task state
+  task state (in-memory in the local lab; durable storage is a production gate)
   response + provenance
         |
         | MeepSheep outbound MCP client
@@ -78,19 +78,28 @@ The inbound MCP server and outbound MCP client are separate roles. MeepSheep imp
 
 ## Initial MCP tools
 
-Planned model-callable tools:
+### Available in the local MCP laboratory
+- `discover_agents`
+- `send_message`
 
-- `discover_agents` and `get_agent`
-- `send_message` and `delegate_task`
-- `get_task` and `wait_task`
+### Optional local task tools
+When the host injects a compatible task coordinator, the relay also registers:
+- `delegate_task`
+- `get_task`
+- `wait_task`
 - `cancel_task`
+
+The task coordinator and reference repository are verified in CI, but the repository is in-memory only. Tasks do not survive process restart and this is not a production durable queue.
+
+### Still planned
+- `get_agent`
 - `list_my_connections`
 
-`discover_agents` and `send_message` now have a local MCP lab implementation. The remaining tools are planned. The lab is not deployed and does not yet include production authentication, persistence, or live provider connections. Credential changes, endpoint registration, permission administration, and other privileged operations stay in a separately authenticated owner interface.
+Owner-only operations such as credential changes, endpoint registration, permission administration, and disconnect remain in a separately authenticated owner interface. The lab is not deployed and does not yet include production identity issuance, persistent storage, or live provider connections.
 
 ## Current MCP relay laboratory
 
-The first executable relay slice is in [AI/MCP_LAB.md](AI/MCP_LAB.md). It includes an inbound MCP handler, an outbound MCP client, a tenant-aware in-memory agent registry, approved-tool checks, and a deterministic mock agent. Most caller-to-relay-to-agent tests exercise separate MCP server handlers through the SDK's Streamable HTTP transport with an in-process fetch bridge. An additional integration test launches a mock agent in a separate Node process and sends a request over loopback TCP. This verifies local socket-level MCP transport, but it is not a public deployment or a live AI provider integration.
+The first executable relay slice is in [AI/MCP_LAB.md](AI/MCP_LAB.md). It includes an inbound MCP handler, an outbound MCP client, a tenant-aware in-memory agent registry, approved-tool checks, a deterministic mock agent, and optional caller-bound task tools backed by a verified in-memory task coordinator. Most caller-to-relay-to-agent tests exercise separate MCP server handlers through the SDK's Streamable HTTP transport with an in-process fetch bridge. An additional integration test launches a mock agent in a separate Node process and sends a request over loopback TCP. This verifies local socket-level MCP transport, but it is not a public deployment or a live AI provider integration.
 
 ## Protocol responsibilities
 
@@ -129,7 +138,7 @@ A mock agent is required for deterministic tests, but a mock alone is not proof 
 
 ## Hosting direction
 
-Cloudflare is a candidate hosting platform, not yet a verified deployment. The connected Cloudflare account inspected on 2026-10-31 returned no zones, Workers, D1 databases, Durable Object namespaces, or Queues. This is an account-scoped snapshot and does not rule out another account. Do not configure DNS or deploy until the correct account and domain zone are confirmed.
+Cloudflare is a candidate hosting platform, not yet a verified deployment. A fresh read-only inventory on 2026-11-01 found one accessible Cloudflare account and zero zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues. The inventory is account-scoped and does not rule out another account. The existing Supabase project named `meepsheep-storage` is reported as `INACTIVE` in a Free organization; its database could not be inspected because the connection timed out. Neither platform has been selected or provisioned for MeepSheep. Do not resume projects, create resources, configure DNS, or deploy until the owner confirms the intended platform and account.
 
 No local GPU is required for a relay service. Connected AI providers perform inference. MeepSheep handles networking, authorization, orchestration, and storage. Hosted infrastructure and external provider usage may still incur costs.
 
@@ -181,7 +190,9 @@ Research documents are retained as optional future agent-side capability referen
 - [x] Inbound MCP server handler implemented in the local lab (not deployed).
 - [x] Outbound MCP client implemented against a mock MCP server in the local lab.
 - [~] In-memory agent registry and approved-tool checks implemented; persistent connection management remains open.
-- [x] Deterministic MCP mock-agent round-trip tests pass, including a separate-process loopback HTTP case and authentication-boundary checks.
+- [x] Deterministic MCP mock-agent round-trip tests pass, including a separate-process loopback TCP case and authentication-boundary checks.
+- [x] Local async task coordinator, registry-backed dispatcher, and optional task tools pass the full CI suite on PR #5.
+- [ ] Durable SQL repository, persistent connection/credential storage, queue consumer, and worker recovery remain unimplemented.
 - [ ] Network-separated live independent-agent round trip demonstrated.
 - [ ] Production hosting and domain verified.
 
