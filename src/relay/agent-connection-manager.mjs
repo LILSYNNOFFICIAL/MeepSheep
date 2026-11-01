@@ -152,8 +152,11 @@ export function createAgentConnectionManager({
       allowedHosts.some((host) => typeof host !== "string" || host.length === 0) ||
       (
         credentialRef &&
-        createRemoteClient === createSecureRemoteMcpClient &&
-        (!credentialVault || typeof credentialVault.withCredential !== "function")
+        (
+          !credentialVault ||
+          typeof credentialVault.withCredential !== "function" ||
+          typeof credentialVault.revoke !== "function"
+        )
       )
     ) {
       throw fail("CONNECTION_CONFIG_INVALID");
