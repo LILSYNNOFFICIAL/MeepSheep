@@ -1,7 +1,21 @@
 # MeepSheep Security and Privacy Baseline
 
-**Status:** Required design controls. Implementation is not yet verified.  
+**Status:** Required design controls. A local RS256 resource-server verifier and outbound endpoint-security primitives are CI-tested on the secure-connection feature branch. Production identity issuance, credential storage, endpoint onboarding, and deployment egress remain unimplemented.  
 **Primary risk boundary:** Untrusted agents and tools communicating through an authorized relay.
+
+## Verified local security primitives (draft PR #5)
+
+The following behavior is implemented and CI-tested on `feat/secure-connection-boundary`:
+
+- Inbound bearer-token middleware verifies RS256 JWT access tokens through an injected JWKS resolver, checks exact issuer/audience, `typ: at+jwt`, subject, tenant ID, client ID, unique scope tokens, JTI, issue/expiry times, bounded clock skew, and maximum lifetime.
+- The middleware replaces preexisting request auth context. The relay resolves principal and tenant from a private, verified auth-context association, not caller-controlled `extra` fields.
+- Missing and invalid credentials fail closed. A JWKS retrieval timeout/fetch failure is mapped to service-unavailable rather than silently allowing access.
+- The endpoint helper requires exact approved hostnames, HTTPS, and port 443; rejects IP literals, credentials, query/fragment components, unapproved hosts, DNS errors, empty answers, and any non-public DNS result.
+- The endpoint helper validates every returned IPv4/IPv6 answer and rejects mixed public/non-public sets.
+- The pinned fetch helper restricts origin/path and method, pins DNS lookup to the previously validated address set, preserves the original hostname for TLS SNI/certificate validation, removes cookie/hop-by-hop/proxy headers, bounds payload sizes, applies timeouts, and does not follow redirects.
+- Evidence: 7 authentication tests, 9 endpoint tests, 30 total Node tests, 10 Python Wellness Doctor tests, and 113 Repository Doctor checks passed on CI run [41268297674](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41268297674).
+
+**Not established by these tests:** a production OAuth authorization server or token issuer, production JWKS/key lifecycle or revocation, persistent owner-approved endpoint registration, credential vault, real external TLS connection using the pinned fetch adapter, runtime-level egress filtering, or live AI-provider connectivity. The endpoint helper is not yet wired into the current in-memory registry's outbound-client construction. The old injected principal resolver remains for the test harness; a deployed runtime must configure the verified bearer middleware and never expose that resolver as a public auth path.
 
 ## 1. Threat model
 
@@ -104,7 +118,8 @@ Do not store complete private conversations by default. Do not log full task pay
 - [ ] Cross-tenant discovery, task, message, and artifact isolation tests pass.
 - [ ] Confused-deputy and privilege-escalation tests pass.
 - [ ] Remote tool prompt injection cannot alter MeepSheep policy or invoke unapproved tools.
-- [ ] SSRF tests cover IPv4, IPv6, DNS answers, redirects, and metadata destinations.
+- [x] Local unit tests cover common IPv4/IPv6 non-public ranges, all-answer DNS rejection, mixed DNS sets, exact endpoint origin/path, pinned lookup contents, and no redirect following.
+- [ ] Real socket/TLS, metadata-service, DNS-rebinding, and deployed egress-policy tests pass in the selected hosting runtime.
 - [ ] Replay, duplicate, forged callback, and out-of-order event tests pass.
 - [ ] Credential rotation and revocation stop future dispatch.
 - [ ] Fan-out, depth, retries, concurrency, duration, and budgets are enforced.
