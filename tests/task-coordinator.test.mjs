@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
-  createInMemoryTaskRepository,
-  createTaskCoordinator
-} from "../src/relay/task-coordinator.mjs";
+import { createTaskCoordinator } from "../src/relay/task-coordinator.mjs";
+import { createInMemoryTaskRepository } from "../src/relay/task-store-memory.mjs";
 
 const caller = {
   principalId: "caller-a",
@@ -203,7 +201,10 @@ test("task and event reads are scoped to the creating caller and tenant", async 
     (error) => error.code === "TASK_NOT_FOUND"
   );
   await assert.rejects(
-    coordinator.getTask(noDispatch, created.task.taskId),
+    coordinator.getTask({
+      ...caller,
+      permissions: ["task:dispatch", "task:cancel"]
+    }, created.task.taskId),
     (error) => error.code === "PERMISSION_DENIED"
   );
 });
