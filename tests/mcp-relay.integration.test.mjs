@@ -247,6 +247,8 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
   openClients.push(remoteClient);
 
   const registry = new AgentRegistry();
+  const processTool = (await remoteClient.listTools()).tools.find((tool) => tool.name === "review_message");
+  assert.ok(processTool, "separate process must expose the approved tool before registration");
   registry.register({
     id: "agent-process",
     name: "Separate process agent",
@@ -254,7 +256,7 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
     discoverable: true,
     capabilities: ["message-review"],
     approvedTools: ["review_message"],
-    approvedToolSchemas: { review_message: fingerprintToolSchema({ name: "review_message", description: "Process a message using this independent mock agent.", inputSchema: { type: "object", properties: { message: { type: "string" } }, required: ["message"], additionalProperties: false }, outputSchema: { type: "object", properties: { reply: { type: "string" }, agentId: { type: "string" } }, required: ["reply", "agentId"], additionalProperties: false } }) },
+    approvedToolSchemas: { review_message: fingerprintToolSchema(processTool) },
     client: remoteClient
   });
   const relayHandler = createRelayHandler({
