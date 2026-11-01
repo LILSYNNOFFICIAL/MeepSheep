@@ -1,6 +1,6 @@
 # MeepSheep MCP API and Relay Contract
 
-**Status:** Design contract with CI-verified local relay, signed-token resource-server middleware, endpoint-pinned remote MCP connector, encrypted credential-vault abstraction, and registry secret isolation. Not deployed; production identity issuance, storage/key-provider adapters, owner onboarding, persistence, and durable tasks remain unimplemented.  
+**Status:** Design contract with CI-verified local relay, signed-token resource-server middleware, endpoint-pinned remote MCP connector, encrypted credential-vault abstraction, registry secret isolation, and internal owner connection lifecycle manager. Not deployed; production identity issuance, storage/key-provider adapters, public owner API/console, persistence, and durable tasks remain unimplemented.  
 **Primary interface:** Remote MCP server.  
 **Core behavior:** Route authorized messages and tasks between independently connected agents.
 
@@ -130,6 +130,16 @@ On connection setup:
 
 Never expose all remote tools to every caller by default. MeepSheep authorizes a specific remote tool for a specific tenant/caller/agent.
 
+### Internal owner connection lifecycle (not an inbound MCP tool)
+
+The local `createAgentConnectionManager({ registry, credentialVault, createRemoteClient, clock, previewTtlSeconds })` service exposes three privileged operations:
+
+- `preview(principal, { endpoint, endpointRef, credentialRef?, allowedHosts })`: requires `connection:manage`, validates opaque references, establishes the secure remote MCP connection, discovers tools, and returns a short-lived preview ID, safe endpoint metadata, tool descriptions/schemas, and schema fingerprints. It does not register an agent or approve any tool.
+- `approve(principal, { previewId, agent, approvedTools })`: requires the same owner and tenant that created the preview. It accepts only unique tool names present in the preview and derives the approved schema map from the server-side preview snapshot, never from caller-supplied fingerprints. It registers only the explicitly selected tools.
+- `disconnect(principal, { agentId })`: requires the exact owner and tenant plus `connection:manage`. It unregisters the agent first, revokes its credential reference, closes the MCP client, and returns a sanitized revocation failure if the vault cannot complete revocation.
+
+Previews expire and their client is closed on the next manager operation or explicit expiry handling. An active connection is process-local in this phase. The manager is an internal privileged service and is not registered as an ordinary model-callable MCP tool. It does not yet have a public owner API, UI, persistent preview/connection records, or durable audit log.
+
 ### Local security helper contracts
 
 - `createBearerAuthenticator({ issuer, audience, jwks, clock, maxLifetimeSeconds, clockSkewSeconds })` verifies RS256 JWT access tokens with `typ: at+jwt` through a trusted JWKS resolver and binds principal resolution to the verified auth context.
@@ -139,7 +149,7 @@ Never expose all remote tools to every caller by default. MeepSheep authorizes a
 - `createCredentialVault({ store, keyProvider, clock, maxCredentialBytes })` exposes `put`, `withCredential`, `describe`, `rotate`, and `revoke`. It encrypts secrets with AES-256-GCM and uses tenant/credential/key/version-bound authenticated data. The store must provide atomic insert and compare-and-swap semantics.
 - `createSecureRemoteMcpClient({ endpoint, allowedHosts, credentialVault, credentialRef, tenantId, ... })` combines endpoint validation, pinned fetch, vault-backed bearer auth, MCP transport/client setup, remote tool discovery, and schema-fingerprint snapshots. It returns discovered schemas for an owner to review; it never approves remote tools itself.
 
-These are local security/connection primitives. They are not a production OAuth issuer, persistent registry/vault store, production key manager, endpoint owner console, or evidence of a real external agent handshake.
+These are local security/connection primitives. They are not a production OAuth issuer, persistent registry/vault store, production key manager, public owner API/console, durable audit system, or evidence of a real external agent handshake.
 
 ## 8. Authorization rules
 
