@@ -1,6 +1,6 @@
 # MeepSheep Task Execution Contract
 
-**Status:** Local task coordinator, in-memory reference repository, registry-backed dispatcher, and optional MCP task tools are implemented on the secure-connection feature branch. Exact-head CI verification is pending. This is not a durable production task system.
+**Status:** Local task coordinator, in-memory reference repository, registry-backed dispatcher, and optional MCP task tools are implemented and CI-verified on exact PR #5 code head `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5` (run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903)). This is not a durable production task system.
 
 ## Purpose
 
@@ -98,4 +98,15 @@ No production credentials, database, queue, Cloudflare resources, DNS, or deploy
 
 ## Verification status
 
-The coordinator, in-memory reference repository, registry-backed dispatcher, optional MCP task tools, and focused tests have been added on `feat/secure-connection-boundary`. **The exact current feature-branch head has not yet been verified by a completed green CI run in this session.** Do not treat the task subsystem as passing until the focused coordinator/dispatcher suites, MCP integration suite, existing security suites, Wellness Doctor, Repository Doctor, and workflow YAML checks pass on the same commit. The earlier 63-test CI run verified the preceding security/connection milestone only and does not cover these later task changes.
+The coordinator, in-memory reference repository, registry-backed dispatcher, optional MCP task tools, and focused tests have passed exact-head CI verification.
+
+- CI run: [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903)
+- Exact code head: `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5`
+- Task coordinator: 15/15.
+- Task dispatcher: 8/8.
+- Full Node suite: 90/90.
+- Python Wellness Doctor: 10/10.
+- Repository Doctor: 117 passed, zero warnings/errors/critical.
+- Both workflow YAML files parsed successfully.
+
+These checks verify the local in-memory implementation and integration seams. They do not verify production database transactions, cross-process CAS, restart recovery, queue redelivery, production retention/deletion, or a real remote MCP target. Those remain release blockers.
