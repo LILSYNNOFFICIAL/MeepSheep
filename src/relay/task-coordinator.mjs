@@ -363,6 +363,20 @@ export function createTaskCoordinator({
     }
   }
 
+  async function waitTask(principal, taskId, { waitMs = 5000 } = {}) {
+    if (!Number.isSafeInteger(waitMs) || waitMs < 0 || waitMs > 30000) {
+      throw fail("TASK_WAIT_INVALID");
+    }
+    let current = await getOwnedTask(principal, taskId);
+    const endAt = Date.now() + waitMs;
+    while (ACTIVE_STATES.has(current.state) && Date.now() < endAt) {
+      const remaining = endAt - Date.now();
+      await new Promise((resolve) => setTimeout(resolve, Math.min(100, Math.max(1, remaining))));
+      current = await getOwnedTask(principal, taskId);
+    }
+    return cloneTask(current);
+  }
+
   async function cancelTask(principal, taskId) {
     requirePermission(principal, "task:cancel");
     if (typeof taskId !== "string" || !IDENTIFIER_PATTERN.test(taskId)) throw fail("TASK_NOT_FOUND");
@@ -556,6 +570,7 @@ export function createTaskCoordinator({
     createTask,
     getTask,
     listTaskEvents,
+    waitTask,
     cancelTask,
     processNext,
     close
