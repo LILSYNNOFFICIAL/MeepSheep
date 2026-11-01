@@ -85,7 +85,10 @@ export class AgentRegistry {
 
   getAuthorized(principal, agentId, toolName) {
     requirePrincipal(principal);
-    if (!principal.permissions.includes("agent:message")) {
+    if (
+      !principal.permissions.includes("agent:message") &&
+      !principal.permissions.includes("task:dispatch")
+    ) {
       throw new RelayError("PERMISSION_DENIED");
     }
     const agent = this.#agents.get(agentId);
