@@ -72,7 +72,7 @@
 - [ ] Implement deterministic mock MCP agent.
 - [ ] Add contract tests and local integration tests.
 
-**Current evidence:** Eight contract cases exercise separate SDK handler/client instances through an in-process fetch bridge. A ninth test starts a separate mock-agent Node process and verifies an outbound MCP call over loopback TCP. This proves local socket-level transport and relay behavior. A public network deployment and live external AI agent are still required for the full phase exit.
+**Current evidence:** The latest PR #5 exact-head run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) passed all 90 Node tests, including local MCP bridge and separate-process loopback TCP coverage. This does not prove a public network deployment or live external AI agent.
 
 ## Verified local security and connection lifecycle (PR #5, stacked on PR #4)
 
@@ -91,7 +91,7 @@
 
 **Still open:** This is not an OAuth authorization server or production identity integration. Registry, connection previews and active connection state remain in memory. There is no persistent DB/KMS adapter, public owner API/console, durable audit log, schema reapproval workflow, durable task system, or live external agent. The actual external TLS handshake and deployed egress policy remain unverified. No secrets, production endpoints, Cloudflare resources, DNS, or deployment were changed.
 
-## Phase 4B: Asynchronous task execution (local implementation, CI verification pending)
+## Phase 4B: Asynchronous task execution (local implementation, CI verified)
 
 - [x] Define task, event, outbox, deadline, idempotency and worker lease contracts.
 - [x] Add the task coordinator with tenant/caller authorization, bounded input/output, deadlines, optimistic state transitions, cancellation and bounded wait.
@@ -99,11 +99,12 @@
 - [x] Add registry-backed dispatch with owner-approved schema revalidation before invocation.
 - [x] Add optional MCP tools for `delegate_task`, `get_task`, `wait_task`, and `cancel_task`, bound to the trusted request principal.
 - [x] Avoid blind retries after a lease expires once remote dispatch may have begun; mark `REMOTE_OUTCOME_UNKNOWN`.
-- [ ] Verify the task and dispatcher suites, MCP integration suite, full Node suite, Wellness Doctor and Repository Doctor on the same exact head.
+- [x] Verify exact feature head with all focused gates and full quality workflow: [run 41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903), code commit `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5`.
+- [x] CI evidence: task coordinator 15/15, task dispatcher 8/8, full Node suite 90/90, Wellness Doctor 10/10, Repository Doctor 117 passed with zero warnings/errors/critical, and both workflow YAML validations.
 - [ ] Implement the production SQL repository and migrations, durable outbox/queue, worker deployment and operational recovery.
-- [ ] Test lost responses, transaction rollback, cross-process contention, worker crashes at every state boundary and real remote idempotency/cancellation.
+- [ ] Test transaction rollback, cross-process contention, worker crashes at every state boundary, queue redelivery, and real remote idempotency/cancellation.
 
-**Boundary:** The committed in-memory store is a test/reference adapter. It does not provide durability, distributed locking or restart recovery.
+**Boundary:** The committed in-memory store is a test/reference adapter. It does not provide durability, distributed locking or restart recovery. No database provider or durable worker has been selected.
 
 ## Phase 5: First real AI-to-AI proof
 
