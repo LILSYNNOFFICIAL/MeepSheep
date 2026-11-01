@@ -1,16 +1,22 @@
 # MeepSheep MCP API and Relay Contract
 
-**Status:** Design contract with CI-verified local relay, resource-server authentication, and outbound endpoint-security primitives. Not deployed; production identity issuance, endpoint onboarding, persistence, and task lifecycle remain unimplemented.  
+**Status:** Design contract with CI-verified local relay, signed-token resource-server middleware, endpoint-pinned remote MCP connector, encrypted credential-vault abstraction, and registry secret isolation. Not deployed; production identity issuance, storage/key-provider adapters, owner onboarding, persistence, and durable tasks remain unimplemented.  
 **Primary interface:** Remote MCP server.  
 **Core behavior:** Route authorized messages and tasks between independently connected agents.
 
 ## Lab implementation status
 
-The local laboratory implements two inbound tools: `discover_agents` and `send_message`. The outbound MCP client verifies that the requested remote tool is currently listed, owner-approved, and has an unchanged canonical SHA-256 fingerprint covering its name, description, input schema, and output schema before invocation. Any drift fails closed with `SCHEMA_CHANGED`. The normal test seam still supports an injected trusted principal for legacy tests. A separate RS256 bearer-token resource-server middleware now verifies access tokens through a configured JWKS resolver, validates issuer, audience, client ID, subject, tenant, scope, token type, time claims, and maximum lifetime, and derives identity only from verified claims. The middleware replaces caller-supplied MCP auth context before the relay resolves the principal. Successful relay responses retain message ID, trace ID, source principal, target agent, status, remote output, and MCP tool provenance.
+The local laboratory implements two inbound tools: `discover_agents` and `send_message`. Remote tool invocation checks the current remote contract against the owner-approved canonical SHA-256 fingerprint covering tool name, description, input schema, and output schema; schema drift fails closed with `SCHEMA_CHANGED`. The registry retains only explicit agent fields, opaque `credentialRef`/`endpointRef` values, approved tool snapshots, and a runtime client handle; raw credential/authorization fields and raw endpoint URLs are rejected.
 
-A local endpoint-security module now accepts only exact allowlisted HTTPS hosts on port 443, resolves and validates every DNS answer, rejects mixed or non-public address sets, and exposes a fetch adapter that restricts origin/path/method, pins lookup to the validated DNS snapshot, preserves hostname TLS verification and SNI, removes unsafe request headers, limits request/response bytes, applies a timeout, and does not follow redirects. This module is not yet wired into an owner-facing endpoint-registration flow or the current in-memory registry's remote-client construction.
+The inbound authentication boundary includes RS256 JWT access-token verification through a configured trusted JWKS resolver. It checks exact issuer/audience, access-token type, subject, tenant, client ID, scope grammar, JTI, issue/expiry times, maximum lifetime, and clock skew. The bearer middleware replaces preexisting auth context. The relay derives principal and tenant only from an internally branded verified auth context, not caller-supplied `extra` fields. This is a resource-server verifier, not an OAuth authorization server or token issuer.
 
-This is still a local security implementation, not a production identity or hosting system. No OAuth authorization server/token issuer, production identity-provider configuration, key rotation/revocation service, persistent registry, credential vault, public egress policy, durable tasks, owner onboarding/reapproval UI, or live external agent is implemented. The focused security tests use deterministic local fixtures; the pinned transport's real external TLS/socket behavior still requires runtime integration testing. See [MCP_LAB.md](MCP_LAB.md).
+The outbound security path is now combined in `createSecureRemoteMcpClient`: it validates an exact allowlisted HTTPS/443 endpoint, resolves and rejects any non-public or mixed DNS answer set, uses a pinned HTTPS fetch adapter, preserves the original host for TLS/SNI checks, limits request/response bytes and execution time, strips unsafe request and response headers, forces identity content encoding, and refuses redirects. It removes caller-supplied Authorization headers and can load a per-connection bearer token from the encrypted credential vault for each HTTP request. Tool discovery returns canonical schema fingerprints for owner review; the connector does not auto-approve discovered tools.
+
+The local credential vault uses AES-256-GCM with authenticated metadata bound to the tenant, credential ID, key ID, schema version, and record version. It supports scoped callback decryption, key rotation, ciphertext destruction on revocation, maximum credential size, and optimistic concurrency. The backing store and key provider are injected interfaces; the repository has no production database or KMS/secret-manager adapter yet.
+
+This remains a local security implementation, not a production identity or hosting system. No OAuth authorization server/token issuer, production identity-provider configuration, signing-key lifecycle/revocation, persistent vault/registry adapter, owner onboarding/reapproval UI, durable task queue, public egress policy, or live external agent is implemented. The default HTTPS transport is implemented, but CI uses deterministic request seams for connector tests and does not prove a real external TLS handshake or deployed egress policy. See [MCP_LAB.md](MCP_LAB.md).
+
+
 
 ## 1. Protocol model
 
@@ -126,12 +132,14 @@ Never expose all remote tools to every caller by default. MeepSheep authorizes a
 
 ### Local security helper contracts
 
-- `createBearerAuthenticator({ issuer, audience, jwks, clock, maxLifetimeSeconds, clockSkewSeconds })` verifies RS256 JWT access tokens with `typ: at+jwt` and returns MCP-compatible auth context only after checking the token against a configured JWKS resolver.
-- `withBearerAuthentication(handler, authenticator)` authenticates each inbound HTTP request and replaces any preexisting `authInfo`; invalid and missing credentials fail closed.
-- `validateRemoteEndpoint(endpoint, { allowedHosts, lookupAll })` returns a frozen, module-branded endpoint only when the URL is HTTPS/443, its hostname exactly matches an approved hostname, and every DNS answer is globally routable.
-- `createPinnedFetch({ validatedEndpoint, requestImpl, timeoutMs, maxRequestBytes, maxResponseBytes })` accepts only the validated endpoint's exact origin/path, uses the saved DNS addresses for connection lookup, keeps the original host for TLS validation, and does not follow redirects.
+- `createBearerAuthenticator({ issuer, audience, jwks, clock, maxLifetimeSeconds, clockSkewSeconds })` verifies RS256 JWT access tokens with `typ: at+jwt` through a trusted JWKS resolver and binds principal resolution to the verified auth context.
+- `withBearerAuthentication(handler, authenticator)` authenticates each inbound HTTP request, replaces preexisting `authInfo`, and fails closed on missing/invalid credentials.
+- `validateRemoteEndpoint(endpoint, { allowedHosts, lookupAll })` returns a frozen, module-branded endpoint only when the URL is HTTPS/443, the hostname exactly matches an approved hostname, and every DNS answer is globally routable.
+- `createPinnedFetch({ validatedEndpoint, requestImpl, timeoutMs, maxRequestBytes, maxResponseBytes })` accepts only the validated origin/path, uses only the saved DNS addresses for lookup, preserves the original host for TLS validation, bounds request upload and response streaming, strips unsafe headers, requires identity encoding, and does not follow redirects.
+- `createCredentialVault({ store, keyProvider, clock, maxCredentialBytes })` exposes `put`, `withCredential`, `describe`, `rotate`, and `revoke`. It encrypts secrets with AES-256-GCM and uses tenant/credential/key/version-bound authenticated data. The store must provide atomic insert and compare-and-swap semantics.
+- `createSecureRemoteMcpClient({ endpoint, allowedHosts, credentialVault, credentialRef, tenantId, ... })` combines endpoint validation, pinned fetch, vault-backed bearer auth, MCP transport/client setup, remote tool discovery, and schema-fingerprint snapshots. It returns discovered schemas for an owner to review; it never approves remote tools itself.
 
-These are reusable local primitives, not a token issuer, persistent owner-approved endpoint registry, credential manager, or evidence of live outbound TLS connectivity.
+These are local security/connection primitives. They are not a production OAuth issuer, persistent registry/vault store, production key manager, endpoint owner console, or evidence of a real external agent handshake.
 
 ## 8. Authorization rules
 
