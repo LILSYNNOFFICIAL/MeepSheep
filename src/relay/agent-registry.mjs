@@ -28,8 +28,16 @@ export class AgentRegistry {
   #agents = new Map();
 
   register(agent) {
-    if (!agent?.id || !agent?.tenantId || !agent?.client || !Array.isArray(agent.approvedTools) || !agent.approvedToolSchemas || typeof agent.approvedToolSchemas !== "object") {
-      throw new TypeError("Agent registration requires id, tenantId, client, approvedTools, and approvedToolSchemas.");
+    if (
+      !agent?.id ||
+      !agent?.tenantId ||
+      !agent?.ownerPrincipalId ||
+      !agent?.client ||
+      !Array.isArray(agent.approvedTools) ||
+      !agent.approvedToolSchemas ||
+      typeof agent.approvedToolSchemas !== "object"
+    ) {
+      throw new TypeError("Agent registration requires id, tenantId, ownerPrincipalId, client, approvedTools, and approvedToolSchemas.");
     }
     for (const field of RAW_CREDENTIAL_FIELDS) {
       if (Object.hasOwn(agent, field)) {
@@ -53,6 +61,8 @@ export class AgentRegistry {
     this.#agents.set(agent.id, {
       id: agent.id,
       tenantId: agent.tenantId,
+      ownerPrincipalId: agent.ownerPrincipalId,
+      allowedPrincipalIds: new Set([agent.ownerPrincipalId]),
       name: agent.name ?? agent.id,
       description: agent.description ?? "",
       discoverable: agent.discoverable !== false,
@@ -73,7 +83,7 @@ export class AgentRegistry {
       throw new RelayError("PERMISSION_DENIED");
     }
     return [...this.#agents.values()]
-      .filter((agent) => agent.tenantId === principal.tenantId && agent.discoverable !== false && agent.status === "active")
+      .filter((agent) => agent.tenantId === principal.tenantId && agent.allowedPrincipalIds.has(principal.principalId) && agent.discoverable !== false && agent.status === "active")
       .map((agent) => ({
         id: agent.id,
         name: agent.name ?? agent.id,
@@ -92,13 +102,58 @@ export class AgentRegistry {
       throw new RelayError("PERMISSION_DENIED");
     }
     const agent = this.#agents.get(agentId);
-    if (!agent || agent.tenantId !== principal.tenantId || agent.status !== "active") {
+    if (
+      !agent ||
+      agent.tenantId !== principal.tenantId ||
+      !agent.allowedPrincipalIds.has(principal.principalId) ||
+      agent.status !== "active"
+    ) {
       throw new RelayError("AGENT_NOT_FOUND");
     }
     if (!agent.approvedTools.has(toolName)) {
       throw new RelayError("TOOL_NOT_ALLOWED");
     }
     return { ...agent, approvedSchemaFingerprint: agent.approvedToolSchemas.get(toolName) };
+  }
+
+  grantAccess(principal, agentId, targetPrincipalId) {
+    requirePrincipal(principal);
+    if (!principal.permissions.includes("connection:manage")) {
+      throw new RelayError("PERMISSION_DENIED");
+    }
+    if (typeof targetPrincipalId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(targetPrincipalId)) {
+      throw new TypeError("A valid target principal ID is required.");
+    }
+    const agent = this.#agents.get(agentId);
+    if (
+      !agent ||
+      agent.tenantId !== principal.tenantId ||
+      agent.ownerPrincipalId !== principal.principalId
+    ) {
+      throw new RelayError("AGENT_NOT_FOUND");
+    }
+    agent.allowedPrincipalIds.add(targetPrincipalId);
+    return { agentId, targetPrincipalId, granted: true };
+  }
+
+  revokeAccess(principal, agentId, targetPrincipalId) {
+    requirePrincipal(principal);
+    if (!principal.permissions.includes("connection:manage")) {
+      throw new RelayError("PERMISSION_DENIED");
+    }
+    const agent = this.#agents.get(agentId);
+    if (
+      !agent ||
+      agent.tenantId !== principal.tenantId ||
+      agent.ownerPrincipalId !== principal.principalId
+    ) {
+      throw new RelayError("AGENT_NOT_FOUND");
+    }
+    if (targetPrincipalId === agent.ownerPrincipalId) {
+      throw new RelayError("OWNER_GRANT_IMMUTABLE");
+    }
+    agent.allowedPrincipalIds.delete(targetPrincipalId);
+    return { agentId, targetPrincipalId, revoked: true };
   }
 
   unregister(principal, agentId) {
