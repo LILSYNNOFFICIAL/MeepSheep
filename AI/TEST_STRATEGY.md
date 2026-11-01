@@ -55,11 +55,27 @@ Mocks prove contract behavior only. They do not establish that a real provider o
 
 ## 3.1 Verified local lab coverage
 
-The current suite in `tests/mcp-relay.integration.test.mjs` exercises nine cases through the MCP SDK's Streamable HTTP client/server interfaces: same-tenant discovery without secret leakage, successful outbound tool invocation with provenance, cross-tenant hiding/denial, unapproved-tool denial, missing remote tool rejection, caller permission denial, and sanitized remote failure. The mock target is implemented in `tests/fixtures/mock-agent.mjs`; `tests/fixtures/mock-agent-process.mjs` runs a separate socket-served target process.
+The current exact-head quality run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) on `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5` passed all focused security, connection, and task gates plus the full Node suite.
 
-Seven cases use a custom in-process `fetch` bridge; an eighth launches a separate Node process and calls its MCP endpoint over loopback TCP. It does not prove public network deployment, production authentication, persistence, real AI inference, async task recovery, OAuth, SSRF defenses, or actual provider compatibility. Do not mark those release gates complete based on these tests.
+| Suite | Passed |
+|---|---:|
+| Authentication boundary | 8 |
+| Endpoint security | 11 |
+| Credential vault | 11 |
+| Agent registry isolation | 7 |
+| Secure remote MCP connection | 5 |
+| Owner connection lifecycle | 10 |
+| Task coordinator | 15 |
+| Task dispatcher | 8 |
+| Full Node suite | 90 |
+| Python Wellness Doctor | 10 |
+| Repository Doctor | 117, 0 warnings/errors/critical |
 
-**Latest CI evidence:** PR #3 run 41253769189: 9 Node tests passed; 10 Python Wellness Doctor tests passed; Repository Doctor 112 passed, 0 warnings, 0 errors, 0 critical; both workflow YAML files parsed successfully.
+Both GitHub Actions workflow YAML files parsed successfully. The read-only quality workflow installs from the lockfile, runs focused gates, executes the full Node suite, runs Python unit tests and the Repository Doctor, and fails the final gate if any required step fails or is skipped.
+
+Task tests cover in-memory repository atomic-operation contracts, caller/tenant idempotency scoping, authorization-before-persistence, input/deadline bounds, state and event transitions, cancellation races, lease recovery, remote schema drift, sanitized errors, and optional MCP task-tool identity binding. These checks verify the local reference implementation only; they do not establish durable SQL transactions, cross-process locking, queue redelivery, restart recovery, or production task guarantees.
+
+The MCP integration suite exercises SDK handler/client instances through a deterministic fetch bridge, plus a separately spawned mock agent over loopback TCP. It does not prove public network deployment, production authentication, persistent registry/vault/task state, real AI inference, OAuth issuance, deployed SSRF protections, or actual provider compatibility.
 
 ## 4. Live round-trip evidence
 
