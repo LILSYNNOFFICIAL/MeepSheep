@@ -31,7 +31,8 @@ function setup({
   authorizeTarget = async () => ({ connectionId: "connection-a" }),
   dispatch = async () => ({ accepted: true }),
   maxInputBytes = 4096,
-  maxTaskDurationMs = 60000
+  maxTaskDurationMs = 60000,
+  defaultTimeoutMs = 30000
 } = {}) {
   const repository = createInMemoryTaskRepository();
   const coordinator = createTaskCoordinator({
@@ -41,7 +42,7 @@ function setup({
     clock,
     maxInputBytes,
     maxTaskDurationMs,
-    defaultTimeoutMs: 30000
+    defaultTimeoutMs
   });
   return { repository, coordinator };
 }
