@@ -4,19 +4,20 @@
 
 ### `.github/workflows/quality.yml`
 
-Purpose: fast, read-only quality gate for pushes and pull requests.
+Purpose: read-only complete diagnostic and quality gate for pushes to `main` and pull requests.
 
 Required behavior:
 - Trigger on pull requests and pushes to `main`.
 - Set workflow/job permissions to `contents: read`.
-- Use a bounded timeout.
-- Check out the event commit.
-- Set up the pinned Python version.
-- Run standard-library unit tests.
-- Run the Wellness Doctor in read-only mode.
-- Parse all workflow YAML files with Ruby/Psych on the GitHub-hosted Ubuntu runner.
-- Fail when the doctor reports error or critical findings.
-- Never commit or modify the repository.
+- Use a bounded timeout and check out the exact event commit.
+- Set up the pinned Node.js version and install dependencies from the committed lockfile with `npm ci --ignore-scripts --no-audit --no-fund`.
+- Run focused authentication, endpoint-security, credential-vault, agent-registry, secure-connection, owner-connection-lifecycle, task-coordinator, and task-dispatcher suites.
+- Run the complete Node suite with `npm test`.
+- Set up Python 3.12 and run the standard-library Wellness Doctor unit tests.
+- Run the read-only Repository Doctor and report pass/warning/error/critical counts.
+- Parse every workflow YAML file with Ruby/Psych on the GitHub-hosted Ubuntu runner.
+- Allow later diagnostic steps to run after an earlier focused failure, then fail the final complete quality gate if any required step failed or was skipped.
+- Never commit or modify the repository and never publish a generated README status from a pull-request job.
 
 ### `.github/workflows/wellness-doctor.yml`
 
@@ -58,10 +59,12 @@ GitHub scheduled workflows can be delayed and are not a continuous monitoring se
 
 ## Failure behavior
 
-- Unit-test failure stops publication.
-- Doctor error/critical status stops publication and fails the run.
-- YAML parse failure stops publication.
-- README update failure fails the run.
+- A failing focused suite is recorded but does not suppress later diagnostic steps.
+- Any required focused suite, full suite, Python setup/test, Repository Doctor, or YAML parse failure causes the final complete quality gate to fail.
+- The quality workflow is read-only and never updates README.
+- Doctor error/critical status fails the quality run.
+- The separate Wellness Doctor workflow publishes the generated README block only after its trusted-main tests, inspection, and YAML checks pass.
+- README update failure in the Wellness Doctor workflow fails that run.
 - Workflow cancellation is visible as a canceled run, not green.
 - Do not swallow a failed check merely to publish a green README.
 

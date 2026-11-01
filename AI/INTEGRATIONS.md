@@ -58,7 +58,7 @@ Recheck specifications, SDK versions, pricing, plans, and terms immediately befo
 
 ## 6. Infrastructure candidates
 
-Cloudflare Workers/Agents SDK, Workflows, Durable Objects, D1, Queues, KV, R2, and Static Assets are candidates only. The accessible Cloudflare account inspected on 2026-10-31 returned no zones, Workers, D1 databases, Durable Object namespaces, or Queues. Confirm the correct account and domain before deployment.
+Cloudflare Workers/Agents SDK, Workflows, Durable Objects, D1, Queues, KV, R2, and Static Assets are candidates only. The accessible Cloudflare account inspected on 2026-10-31 returned no zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues. The existing Supabase `meepsheep-storage` project in the connected Free organization is `INACTIVE`; its database was not accessible for read-only schema/migration inspection. Confirm the intended account and authoritative database before provisioning or deployment.
 
 Supabase remains an alternative candidate for selected identity/data responsibilities. Avoid two competing authoritative databases.
 
@@ -69,6 +69,8 @@ Use tools actually available and authorized in the current session. GitHub is th
 
 ## 8. Current local MCP lab evidence
 
-The first local integration uses the official TypeScript SDK v2.4.0. The caller connects to the MeepSheep inbound MCP handler; MeepSheep's outbound MCP client connects to a separately instantiated mock-agent handler. Tests use the SDK Streamable HTTP transport with a custom in-process fetch bridge. Seven tests pass for discovery, authorized dispatch, tenant isolation, allowlisting, remote tool presence, permission denial, and sanitized remote failures.
+The local integration uses the official TypeScript SDK v2.4.0. The caller connects to the MeepSheep inbound MCP handler; MeepSheep's outbound MCP client connects to a separately instantiated mock-agent handler. Most tests use the SDK Streamable HTTP transport with a custom in-process fetch bridge. One test launches the mock agent in a separate Node process and exercises outbound MCP over loopback TCP.
 
-This is not socket-level/network-separated operation and does not establish compatibility with ChatGPT, Grok, Claude, or any other live product surface. See [MCP_LAB.md](MCP_LAB.md) and PR #3. The official SDK references and pinned versions must be rechecked before production implementation.
+Draft PR #5's exact-head quality run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) passed 90/90 Node tests, including authentication, endpoint security, credential vault, agent registry grants, secure outbound MCP connection, owner connection lifecycle, task coordinator, dispatcher, and MCP integration. The test/quality workflow does not establish public network deployment or live compatibility with ChatGPT, Grok, Claude, or another product surface. Optional task tools appear only when a compatible coordinator is injected; its current repository remains in memory.
+
+See [MCP_LAB.md](MCP_LAB.md), [TASK_EXECUTION.md](TASK_EXECUTION.md), and PR #5. The official SDK references and pinned versions must be rechecked before production implementation.

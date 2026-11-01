@@ -3,7 +3,9 @@ import { Client } from "@modelcontextprotocol/client";
 import { McpServer, createMcpHandler } from "@modelcontextprotocol/server";
 import * as z from "zod/v4";
 import { RelayError } from "./agent-registry.mjs";
+import { withBearerAuthentication } from "./auth.mjs";
 import { fingerprintToolSchema } from "./tool-schema.mjs";
+import { registerTaskTools } from "./task-mcp-tools.mjs";
 
 const agentSummarySchema = z.object({
   id: z.string(),
@@ -34,14 +36,16 @@ function safeCode(error) {
   return "REMOTE_FAILED";
 }
 
-export function createRelayHandler({ registry, resolvePrincipal }) {
+export function createRelayHandler({ registry, resolvePrincipal, authenticator, taskCoordinator }) {
   if (!registry || typeof registry.discover !== "function" || typeof registry.getAuthorized !== "function") {
     throw new TypeError("A compatible agent registry is required.");
   }
-  if (typeof resolvePrincipal !== "function") throw new TypeError("A trusted principal resolver is required.");
+  const principalResolver = authenticator?.resolvePrincipal ?? resolvePrincipal;
+  if (typeof principalResolver !== "function") throw new TypeError("A trusted principal resolver is required.");
+  if (authenticator && typeof authenticator.authenticate !== "function") throw new TypeError("A valid bearer authenticator is required.");
 
-  return createMcpHandler((context) => {
-    const principal = resolvePrincipal(context.authInfo);
+  const handler = createMcpHandler((context) => {
+    const principal = principalResolver(context.authInfo);
     const server = new McpServer({ name: "meepsheep-relay", version: "0.1.0" }, { maxToolInputElements: 256 });
 
     server.registerTool("discover_agents", {
@@ -83,6 +87,12 @@ export function createRelayHandler({ registry, resolvePrincipal }) {
         };
       } catch (error) { return toolError(safeCode(error)); }
     });
+
+    if (taskCoordinator) {
+      registerTaskTools(server, taskCoordinator, principal);
+    }
     return server;
   }, { legacy: "stateless", maxRequestBodySize: 1024 * 1024 });
+
+  return authenticator ? withBearerAuthentication(handler, authenticator) : handler;
 }

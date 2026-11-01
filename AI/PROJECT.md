@@ -4,7 +4,7 @@
 **Domain:** https://meepsheep.com  
 **Repository:** https://github.com/LILSYNNOFFICIAL/MeepSheep  
 **Product direction:** MCP-first AI-to-AI communication and coordination  
-**Implementation status:** Not started
+**Implementation status:** Local MCP relay, secure connection boundary, owner lifecycle service, and async task coordinator are implemented and CI-verified on draft PR #5; production persistence, identity issuance, worker infrastructure, and live integrations are not implemented.
 
 ## 1. Mission
 

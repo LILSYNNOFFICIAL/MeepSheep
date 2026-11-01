@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { generateKeyPairSync, randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
 import { afterEach, test } from "node:test";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import * as z from "zod/v4";
+import { createLocalJWKSet, SignJWT } from "jose";
+import { createBearerAuthenticator } from "../src/relay/auth.mjs";
 import { AgentRegistry } from "../src/relay/agent-registry.mjs";
 import { createRelayHandler } from "../src/relay/mcp-handler.mjs";
 import { fingerprintToolSchema } from "../src/relay/tool-schema.mjs";
@@ -27,9 +30,13 @@ function makeAuthInfo(value = principal) {
   };
 }
 
-async function connectClient(handler, name, authInfo) {
+async function connectClient(handler, name, authInfo, bearerToken) {
   const transport = new StreamableHTTPClientTransport(new URL("http://" + name + ".test/mcp"), {
-    fetch: (url, init) => handler.fetch(new Request(url, init), authInfo ? { authInfo } : undefined)
+    fetch: (url, init) => {
+      const headers = new Headers(init?.headers);
+      if (bearerToken) headers.set("authorization", "Bearer " + bearerToken);
+      return handler.fetch(new Request(url, { ...init, headers }), authInfo ? { authInfo } : undefined);
+    }
   });
   const client = new Client({ name: name, version: "0.1.0" });
   await client.connect(transport);
@@ -37,7 +44,7 @@ async function connectClient(handler, name, authInfo) {
   return client;
 }
 
-async function setup({ agents = [], principalValue = principal } = {}) {
+async function setup({ agents = [], principalValue = principal, authenticator, bearerToken, callerAuthInfo, taskCoordinator } = {}) {
   const registry = new AgentRegistry();
   const remoteHandlers = [];
   for (const agent of agents) {
@@ -55,21 +62,29 @@ async function setup({ agents = [], principalValue = principal } = {}) {
       name: agent.name ?? agent.id,
       description: agent.description ?? "Test agent",
       tenantId: agent.tenantId ?? "tenant-1",
+      ownerPrincipalId: agent.ownerPrincipalId ?? (agent.tenantId === "tenant-2" ? "caller-other" : "caller-1"),
       discoverable: agent.discoverable ?? true,
       capabilities: agent.capabilities ?? ["message-review"],
       approvedTools: agent.approvedTools ?? [agent.remoteToolName ?? "review_message"],
       approvedToolSchemas,
-      secretRef: "secret://must-never-be-exposed",
-      endpoint: "https://remote.invalid/mcp",
+      credentialRef: "credential://must-never-be-exposed",
+      endpointRef: "endpoint://agent-alpha",
       client: remoteClient
     });
   }
   const relayHandler = createRelayHandler({
     registry,
-    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null
+    resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null,
+    ...(authenticator ? { authenticator } : {}),
+    ...(taskCoordinator ? { taskCoordinator } : {})
   });
   openHandlers.push(...remoteHandlers, relayHandler);
-  const caller = await connectClient(relayHandler, "relay", makeAuthInfo(principalValue));
+  const caller = await connectClient(
+    relayHandler,
+    "relay",
+    callerAuthInfo ?? makeAuthInfo(principalValue),
+    bearerToken
+  );
   return { caller, registry, relayHandler, remoteHandlers };
 }
 
@@ -253,6 +268,90 @@ test("remote tool failures are sanitized before returning to the caller", async 
   assert.equal(message.includes("/private/path"), false);
 });
 
+
+test("delegate_task, get_task, wait_task, and cancel_task use the trusted MCP principal", async () => {
+  const principals = [];
+  const calls = [];
+  const task = {
+    taskId: "task-1",
+    traceId: "trace-1",
+    targetAgentId: "agent-alpha",
+    toolName: "review_message",
+    state: "queued",
+    attemptCount: 0,
+    deadlineAt: 2000,
+    createdAt: 1000,
+    updatedAt: 1000,
+    startedAt: null,
+    completedAt: null,
+    output: null,
+    errorCode: null
+  };
+  const taskCoordinator = {
+    async createTask(principalValue, input) {
+      principals.push(principalValue);
+      calls.push({ operation: "create", input });
+      return { created: true, task };
+    },
+    async getTask(principalValue, taskId) {
+      principals.push(principalValue);
+      calls.push({ operation: "get", taskId });
+      return task;
+    },
+    async waitTask(principalValue, taskId, options) {
+      principals.push(principalValue);
+      calls.push({ operation: "wait", taskId, options });
+      return task;
+    },
+    async cancelTask(principalValue, taskId) {
+      principals.push(principalValue);
+      calls.push({ operation: "cancel", taskId });
+      return { ...task, state: "canceled" };
+    }
+  };
+  const { caller } = await setup({
+    taskCoordinator,
+    principalValue: {
+      ...principal,
+      permissions: [...principal.permissions, "task:dispatch", "task:read", "task:cancel"]
+    }
+  });
+  const created = await caller.callTool({
+    name: "delegate_task",
+    arguments: {
+      targetAgentId: "agent-alpha",
+      toolName: "review_message",
+      arguments: { message: "Review this task." },
+      idempotencyKey: "task-idempotency-0001"
+    }
+  });
+  assert.equal(created.isError, undefined);
+  assert.equal(created.structuredContent.created, true);
+  assert.equal(created.structuredContent.task.taskId, "task-1");
+
+  const status = await caller.callTool({
+    name: "get_task",
+    arguments: { taskId: "task-1" }
+  });
+  assert.equal(status.structuredContent.task.state, "queued");
+
+  const waited = await caller.callTool({
+    name: "wait_task",
+    arguments: { taskId: "task-1", waitMs: 0 }
+  });
+  assert.equal(waited.structuredContent.task.state, "queued");
+
+  const canceled = await caller.callTool({
+    name: "cancel_task",
+    arguments: { taskId: "task-1" }
+  });
+  assert.equal(canceled.structuredContent.task.state, "canceled");
+
+  assert.equal(principals.length, 4);
+  assert.ok(principals.every((item) => item.principalId === "caller-1" && item.tenantId === "tenant-1"));
+  assert.deepEqual(calls.map((call) => call.operation), ["create", "get", "wait", "cancel"]);
+});
+
 test("send_message crosses a separately spawned remote MCP server over TCP", async () => {
   const scriptPath = new URL("./fixtures/mock-agent-process.mjs", import.meta.url);
   const child = spawn(process.execPath, [scriptPath.pathname], { stdio: ["ignore", "pipe", "pipe"] });
@@ -286,6 +385,7 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
     id: "agent-process",
     name: "Separate process agent",
     tenantId: "tenant-1",
+    ownerPrincipalId: "caller-1",
     discoverable: true,
     capabilities: ["message-review"],
     approvedTools: ["review_message"],
@@ -311,6 +411,45 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
   assert.equal(result.isError, undefined);
   assert.equal(result.structuredContent.output.reply, "REMOTE RECEIVED: " + uniqueMessage);
   assert.equal(result.structuredContent.targetAgentId, "agent-process");
+});
+
+
+test("authenticated MCP requests use verified bearer-token identity instead of forged authInfo extras", async () => {
+  const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
+  const jwks = createLocalJWKSet({
+    keys: [{ ...publicKey.export({ format: "jwk" }), use: "sig", alg: "RS256", kid: "integration-key" }]
+  });
+  const issuer = "https://identity.example.test/";
+  const audience = "https://meepsheep.example.test";
+  const authenticator = createBearerAuthenticator({ issuer, audience, jwks });
+  const now = Math.floor(Date.now() / 1000);
+  const bearerToken = await new SignJWT({
+    tenant_id: "tenant-1",
+    client_id: "external-mcp-client",
+    scope: "agent:discover agent:message",
+    jti: randomUUID()
+  })
+    .setProtectedHeader({ alg: "RS256", typ: "at+jwt", kid: "integration-key" })
+    .setIssuer(issuer)
+    .setAudience(audience)
+    .setSubject("trusted-caller")
+    .setIssuedAt(now)
+    .setExpirationTime(now + 300)
+    .sign(privateKey);
+  const forged = {
+    principalId: "attacker-controlled",
+    tenantId: "tenant-2",
+    permissions: ["*"]
+  };
+  const { caller } = await setup({
+    agents: [{ id: "agent-alpha", ownerPrincipalId: "trusted-caller" }],
+    authenticator,
+    bearerToken,
+    callerAuthInfo: { clientId: "forged-client", extra: { principal: forged } }
+  });
+  const result = await caller.callTool({ name: "discover_agents", arguments: {} });
+  assert.equal(result.isError, undefined);
+  assert.deepEqual(result.structuredContent.agents.map((agent) => agent.id), ["agent-alpha"]);
 });
 
 test("requests without validated authentication context are rejected", async () => {

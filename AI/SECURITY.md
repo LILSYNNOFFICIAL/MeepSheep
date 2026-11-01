@@ -1,7 +1,24 @@
 # MeepSheep Security and Privacy Baseline
 
-**Status:** Required design controls. Implementation is not yet verified.  
+**Status:** Required design controls. Draft PR #5 contains CI-tested RS256 resource-server verification, pinned HTTPS outbound MCP connection factory, AES-256-GCM credential-vault logic, registry secret isolation, and internal owner-controlled connection preview/approval/disconnect. Production identity issuance, persistent store/KMS adapters, public owner API/console, durable audit, and deployment egress remain unimplemented.  
 **Primary risk boundary:** Untrusted agents and tools communicating through an authorized relay.
+
+## Verified local security primitives (draft PR #5)
+
+The following behavior is implemented and CI-tested on `feat/secure-connection-boundary`:
+
+- Inbound bearer middleware verifies RS256 JWT access tokens through an injected trusted JWKS resolver. It checks exact issuer/audience, `typ: at+jwt`, subject, tenant ID, client ID, unique OAuth scope tokens, JTI, issue/expiry times, bounded clock skew, and maximum lifetime.
+- The middleware replaces preexisting request auth context. The relay resolves principal and tenant from a private verified auth-context association, not caller-controlled `extra` fields. Invalid clocks and invalid credentials fail closed.
+- Endpoint validation requires exact approved hostnames, HTTPS/443, and validation of every IPv4/IPv6 DNS answer. It rejects IP literals, credentials, query/fragment components, unapproved hosts, DNS errors, empty answers, and any non-public or mixed address set.
+- The pinned fetch helper restricts origin/path/method, pins lookup to the approved DNS snapshot, preserves the original hostname for TLS SNI/certificate validation, removes unsafe request headers, forces `Accept-Encoding: identity`, strips response hop-by-hop/connection-nominated/cookie headers, rejects compressed responses, bounds request upload and streamed response bytes, applies deadlines/cancellation, and does not follow redirects.
+- `createSecureRemoteMcpClient` combines the endpoint validator, pinned fetch adapter, MCP Streamable HTTP client, and vault-backed per-request bearer credential. Caller-supplied Authorization headers are removed before the connection credential is injected. The factory discovers tools and returns schema fingerprints for owner review; it does not auto-approve tools.
+- The credential vault encrypts with AES-256-GCM. Authenticated data binds schema version, tenant ID, credential ID, key ID, and record version. The module enforces credential size and canonical opaque IDs; it supports callback-scoped decryption, key rotation, ciphertext destruction on revocation, tamper detection, and optimistic concurrency.
+- The in-memory registry uses an explicit allowlist, accepts canonical `credentialRef` and `endpointRef` references, rejects raw credential/authorization/endpoint fields, and does not reveal references through discovery.
+- The internal owner connection manager requires `connection:manage`, binds preview tokens to the creator and tenant, expires and closes abandoned previews, and presents discovered schemas/fingerprints without registering or approving them. Approval accepts only unique discovered tool names and derives the approved fingerprint map from the server-side preview snapshot. Disconnect verifies owner/tenant, unregisters the agent before revocation, and closes the MCP client even when revocation fails. Any credential-backed connection must provide both vault retrieval and revocation operations.
+
+**Latest evidence:** CI run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) passed on exact PR #5 code head `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5`: authentication 8/8, endpoint 11/11, credential vault 11/11, agent registry isolation 7/7, secure remote MCP connector 5/5, owner connection lifecycle 10/10, task coordinator 15/15, task dispatcher 8/8, full Node suite 90/90, Python Wellness Doctor 10/10, Repository Doctor 117 passed with zero warnings/errors/critical, and both workflow YAML files parsed. Earlier run 41269980816 verifies the preceding security/connection-only checkpoint.
+
+**Not established by these tests:** production OAuth token issuance, client registration/PKCE, production signing-key rotation or revocation, persistent credential store, KMS/platform secret-manager adapter, public owner API/console, persistent connection approvals, durable audit events, real external TLS handshake through the default Node HTTPS transport, deployed DNS/egress policy, persistent task/outbox storage, cross-process worker recovery, queue redelivery, durable task retention, or live AI-provider connectivity. The test connector uses deterministic request/client/transport seams. The connection manager stores previews and active connections in memory and loses them on process restart. The original injected principal resolver remains for local tests; a deployed runtime must configure verified bearer middleware and never expose that resolver as a public auth path.
 
 ## 1. Threat model
 
@@ -23,6 +40,8 @@ Primary risks:
 - Authenticate every inbound MCP client using the selected supported auth mechanism.
 - Derive principal and tenant identity from trusted credentials, never caller-supplied body fields.
 - Bind each agent connection to an owner and tenant.
+- New connections default to owner-only principal access. Require an explicit same-tenant grant from the connection owner before another principal can discover or invoke the connection. Check grants on every operation and revoke future access immediately.
+- Default each connection to owner-only access. Require explicit owner approval to grant another principal access, and check the grant on both discovery and every invocation. Revoke grants immediately for future operations.
 - Separate discovery, message-send, task-dispatch, status-read, cancellation, artifact-read, and administration scopes.
 - Check authorization server-side on every operation, not only at connection setup.
 - Treat discovered capabilities and remote tool names as metadata, not grants.
@@ -38,7 +57,7 @@ For every configured remote endpoint, tool URL, redirect, Agent Card, or callbac
 - Resolve and validate every DNS answer, including IPv4 and IPv6.
 - Revalidate every redirect target.
 - Defend against DNS rebinding and connect-time address changes where runtime permits.
-- Limit redirects, response bytes, decompressed bytes, content types, and time.
+- Limit response bytes and execution time; the current local pinned transport requests identity encoding and rejects non-identity content encoding rather than attempting decompression.
 - Do not forward inbound cookies, auth headers, or internal headers.
 - Prefer explicit owner-configured endpoints over arbitrary URLs supplied by model tool arguments.
 
@@ -104,9 +123,12 @@ Do not store complete private conversations by default. Do not log full task pay
 - [ ] Cross-tenant discovery, task, message, and artifact isolation tests pass.
 - [ ] Confused-deputy and privilege-escalation tests pass.
 - [ ] Remote tool prompt injection cannot alter MeepSheep policy or invoke unapproved tools.
-- [ ] SSRF tests cover IPv4, IPv6, DNS answers, redirects, and metadata destinations.
+- [x] Local unit tests cover IPv4/IPv6 non-public ranges, all-answer DNS rejection, mixed DNS sets, exact endpoint origin/path, pinned lookup contents, request/response header policy, request upload timeouts, and no redirect following.
+- [ ] Real socket/TLS, metadata-service, DNS-rebinding, and deployed egress-policy tests pass in the selected hosting runtime.
 - [ ] Replay, duplicate, forged callback, and out-of-order event tests pass.
-- [ ] Credential rotation and revocation stop future dispatch.
+- [x] Local AES-256-GCM vault tests verify rotation, ciphertext revocation, tamper rejection, tenant/key/version binding, and stale-write rejection.
+- [x] The outbound MCP fetch wrapper reloads credentials for each HTTP request and fails before outbound network I/O after revocation.
+- [ ] Production store/KMS adapters and in-flight request/revocation semantics are verified in the selected hosting runtime.
 - [ ] Fan-out, depth, retries, concurrency, duration, and budgets are enforced.
 - [ ] Secrets are absent from Git, browser bundles, logs, and task outputs.
 - [ ] Retention, deletion, and artifact authorization are tested.

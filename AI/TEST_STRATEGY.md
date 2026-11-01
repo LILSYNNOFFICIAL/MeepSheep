@@ -55,11 +55,28 @@ Mocks prove contract behavior only. They do not establish that a real provider o
 
 ## 3.1 Verified local lab coverage
 
-The current suite in `tests/mcp-relay.integration.test.mjs` exercises nine cases through the MCP SDK's Streamable HTTP client/server interfaces: same-tenant discovery without secret leakage, successful outbound tool invocation with provenance, cross-tenant hiding/denial, unapproved-tool denial, missing remote tool rejection, caller permission denial, and sanitized remote failure. The mock target is implemented in `tests/fixtures/mock-agent.mjs`; `tests/fixtures/mock-agent-process.mjs` runs a separate socket-served target process.
+The latest exact-head quality run [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348) on PR #5 documentation checkpoint `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034` passed all focused security, connection, and task gates plus the full Node suite (CI merge revision `e60e52c301f3a98c3cf9dc64c0ddc2ca031b5941`). The tested checkpoint contains the task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5` unchanged.
 
-Seven cases use a custom in-process `fetch` bridge; an eighth launches a separate Node process and calls its MCP endpoint over loopback TCP. It does not prove public network deployment, production authentication, persistence, real AI inference, async task recovery, OAuth, SSRF defenses, or actual provider compatibility. Do not mark those release gates complete based on these tests.
+| Suite | Passed |
+|---|---:|
+| Authentication boundary | 8 |
+| Endpoint security | 11 |
+| Credential vault | 11 |
+| Agent registry isolation | 7 |
+| Secure remote MCP connection | 5 |
+| Owner connection lifecycle | 10 |
+| Task coordinator | 15 |
+| Task dispatcher | 8 |
+| Reusable task repository contract suite | 8 |
+| Full Node suite | 98 |
+| Python Wellness Doctor | 10 |
+| Repository Doctor | 117, 0 warnings/errors/critical |
 
-**Latest CI evidence:** PR #3 run 41253769189: 9 Node tests passed; 10 Python Wellness Doctor tests passed; Repository Doctor 112 passed, 0 warnings, 0 errors, 0 critical; both workflow YAML files parsed successfully.
+Both GitHub Actions workflow YAML files parsed successfully. The read-only quality workflow installs from the lockfile, runs focused gates, executes the full Node suite, runs Python unit tests and the Repository Doctor, and fails the final gate if any required step fails or is skipped.
+
+Task tests use the reusable `registerTaskRepositoryContract({ test, createRepository, name })` harness in `tests/support/task-repository-contract.mjs`. The in-memory adapter currently runs eight shared behavioral cases: concurrent idempotent creation and atomic initial records, idempotency uniqueness scoped to both tenant and caller, tenant-scoped reads, compare-and-swap transition races with one event winner, exclusive lease claims and reclaim attempts, exact-claim completion fencing, expired-lease rejection, and stale-generation rejection when worker IDs are reused. Future durable adapters should register the same contract against their own repository factory, then add provider-specific rollback, database-clock, cross-process and restart tests. Coordinator tests separately cover caller/tenant idempotency, authorization-before-persistence, input/deadline bounds, task cancellation races, remote schema drift, sanitized errors, and optional MCP task-tool identity binding. The lease-fencing regressions were observed failing before the repair and passing afterward. These checks verify the local reference implementation only; they do not establish durable SQL transactions, database-clock expiry, cross-process locking, the suspended-worker dispatch race, queue redelivery, restart recovery, or production task guarantees.
+
+The MCP integration suite exercises SDK handler/client instances through a deterministic fetch bridge, plus a separately spawned mock agent over loopback TCP. It does not prove public network deployment, production authentication, persistent registry/vault/task state, real AI inference, OAuth issuance, deployed SSRF protections, or actual provider compatibility.
 
 ## 4. Live round-trip evidence
 

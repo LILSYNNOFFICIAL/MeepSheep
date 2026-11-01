@@ -87,6 +87,18 @@ This file records accepted decisions, proposals, and open questions. Do not sile
 - **O-006:** What default message/task retention and deletion policy will be published?
 - **O-007:** Which optional adapters are justified by actual target demand?
 
+## Platform inventory evidence (2026-10-31)
+
+This evidence informs O-003, O-004, and O-005 but does not resolve them:
+
+- The one accessible Cloudflare account returned zero zones, Worker scripts, D1 databases, Queues, and Durable Object namespaces.
+- The existing Supabase project `meepsheep-storage` is in an accessible Free organization, in `us-west-1`, with project metadata reporting PostgreSQL 17.6.1.166. The project status is `INACTIVE`.
+- Attempts to inspect Supabase tables and extensions failed because the database was not accessible; listing migrations timed out. Security/performance advisor calls returned no lint records, but this is not a database-health verification.
+- The separate active `BlueNote` Supabase project is unrelated and is not a candidate to repurpose.
+- No project was resumed, no database or queue was created, no migration was applied, and no DNS or deployment changed.
+
+A durable store is the next implementation gate because the existing task repository, registry, connection manager, and vault adapters are in-memory. Cloudflare D1 remains attractive if Cloudflare Workers is the selected host because D1 batches provide transactional execution of statements. Supabase Postgres remains an option if the existing MeepSheep project is intentionally restored and inspected. The decision must also identify the production key-management owner and durable execution primitive. No provider-specific schema or infrastructure should be committed until this decision is made.
+
 ## Decision change procedure
 
 1. Identify the affected decision.
@@ -102,3 +114,43 @@ This file records accepted decisions, proposals, and open questions. Do not sile
 - **Decision:** Use Node.js 26.13.0, `@modelcontextprotocol/client@2.4.0`, `@modelcontextprotocol/server@2.4.0`, and `zod@4.6.7` for the first executable TypeScript MCP lab.
 - **Reason:** The official TypeScript SDK v2 is the current stable line for the 2026-07-28 MCP protocol revision. The lab needs both the MCP server and client roles.
 - **Boundary:** This does not decide the production hosting runtime, identity provider, database, or client-facing authentication profile. Revalidate package versions before production release.
+
+
+### D-013: Local inbound bearer-token verification
+- **Status:** Accepted for the local security boundary only.
+- **Decision:** Verify inbound JWT access tokens with RS256 against a configured JWKS resolver. Require exact issuer and audience, `typ: at+jwt`, and validated subject, tenant, client ID, scope, JTI, issue time, expiry, bounded clock skew, and maximum token lifetime. Derive caller identity exclusively from the verified claims.
+- **Reason:** The relay must not trust tool arguments or transport context fields as a caller identity source.
+- **Boundary:** This is a resource-server verifier and middleware, not an OAuth authorization server, client registration service, token issuer, production identity-provider integration, key lifecycle, or revocation store. A deployed runtime must configure the verifier and must not expose the test principal resolver as public authentication.
+
+### D-014: Local outbound endpoint policy
+- **Status:** Accepted for the local security boundary only.
+- **Decision:** Require exact host allowlisting, HTTPS on port 443, validation of every DNS answer, rejection of any non-public address, and a fetch adapter that pins DNS lookups to the validated address set while retaining TLS hostname verification and refusing redirects.
+- **Reason:** A hostname allowlist alone does not prevent private-address resolution or DNS rebinding.
+- **Boundary:** The validator and pinned fetch are now used by the local `createSecureRemoteMcpClient` factory and the internal owner preview/approval service. They are not connected to persistent endpoint approval records or production egress controls. Real external TLS/socket and runtime egress tests remain required.
+
+
+### D-015: Owner-controlled remote MCP connection lifecycle
+- **Status:** Accepted for the local in-memory implementation.
+- **Decision:** Separate remote endpoint preview from registration. Bind each preview to the creating owner and tenant, expire it, present the discovered remote tool schemas and fingerprints, and require explicit selection of unique discovered tool names before registration. Derive stored approval fingerprints from the server-side preview snapshot, never from caller input. Disconnect removes the agent from the registry before credential revocation and client cleanup.
+- **Reason:** Discovery and connectivity must never imply approval. Privileged connection administration must remain separate from model-callable message tools.
+- **Boundary:** The manager is an internal service with in-memory preview/active records. It is not a public owner API, owner console, persistent registry, durable audit log, or production identity boundary. A production host must pass a principal derived from the verified authentication middleware.
+
+## Platform review follow-up (2026-11-01)
+
+### D-016: Preferred persistence candidate, Supabase Postgres
+- **Status:** Proposed. O-004 and O-005 remain open pending owner approval.
+- **Decision:** Prefer the existing `meepsheep-storage` PostgreSQL project as the initial relational persistence candidate, with Supabase Queues/PGMQ evaluated as the queue implementation. This is a recommendation for the next design and adapter phase, not permission to upgrade the organization, install extensions, apply database migrations, create infrastructure, or deploy.
+- **Evidence:** The owner-authorized restore completed and the project reports `ACTIVE_HEALTHY` in `us-west-1`, PostgreSQL 17.6.1.166. Read-only inspection found 45 user tables across Supabase-managed schemas and five public application tables: `mcp_servers`, `mcp_tools`, `mcp_execution_logs`, `mcp_server_credentials`, and `media_assets`. All five public tables have RLS enabled. All five report zero rows, and `auth.users` reports zero rows. Eleven migration versions are recorded in `supabase_migrations.schema_migrations`.
+- **Fit:** The existing MCP server/tool/credential-reference tables offer a useful starting point. `supabase_vault` and `pgcrypto` are installed. The `pgmq` extension (default version 1.5.1) is available but not installed. PostgreSQL transactions can support atomic task, event, idempotency, and outbox persistence; PGMQ is a plausible same-database queue candidate after its transaction behavior is tested.
+- **Required schema work:** The current public schema is an earlier owner-scoped MCP hub, not the current provider-neutral MeepSheep model. It has no durable task, task-event, outbox, tenant, principal, or grant tables. It does not yet implement tenant-plus-caller idempotency or the repository's database-clock lease-fencing contract. The existing `mcp_tools.server_id` column has no foreign-key constraint to `mcp_servers`. Existing policies use Supabase `auth.uid()`/owner identity; the relationship between that identity and the relay's verified external `tenant_id` and principal claims must be designed before client access is enabled.
+- **Migration reproducibility:** Eleven applied migration versions are present in the database history, but no SQL migration files or Supabase migration directory exist in the inspected PR #5 branch. Recover the exact source migrations or create a reviewed, reproducible baseline before relying on repository-driven deployments.
+- **Security/performance review:** The Supabase security advisor returned zero lint findings. The performance advisor reported one RLS initialization-plan warning on `mcp_server_credentials_owner_all` and five informational unused-index findings. These are review items, not a reason to remove indexes without workload evidence. No application table data or credential contents were read.
+- **Operations constraint:** The organization is on Supabase Free. Supabase documents that Free projects with low activity over a seven-day period may be paused; projects under a paid plan are not subject to inactivity pausing. A production always-on service therefore needs an explicit plan, budget, and availability decision. No plan change was made.
+- **Alternative evidence:** The connected Cloudflare account currently has zero Zones, Workers, D1 databases, Queues, and Durable Object namespaces. D1 batching supports transactional statement groups and Cloudflare Workflows provide durable execution, but adopting that path requires creating the application runtime and data/queue infrastructure in the accessible account.
+- **Consequences:** Continue with a provider-specific design proposal and SQL adapter plan against the existing Supabase project only after owner approval of the provider and operating plan. The adapter must register the shared eight-case repository contract and add transaction rollback, database-clock expiry, cross-process contention, restart recovery, and queue-redelivery tests. Do not treat a successful local contract run as proof of live remote side-effect exactly-once behavior.
+
+References:
+- Supabase project pausing: https://supabase.com/docs/guides/platform/free-project-pausing
+- Supabase Queues: https://supabase.com/docs/guides/queues
+- Cloudflare D1 transactions: https://developers.cloudflare.com/d1/worker-api/d1-database/
+- Cloudflare Workflows: https://developers.cloudflare.com/workflows/

@@ -97,18 +97,30 @@ Never infer implementation from documentation, a successful API response, or a m
 
 - [x] Establish Node 26.13.0, npm, pinned dependencies, package lock, and CI tests; lint/typecheck remain open.
 - [ ] Implement authoritative persistence layer and migrations.
-- [~] Implement in-memory agent registry; persistent connection management remains open.
+- [~] Implement in-memory agent registry and owner-scoped grant model; persistent connection management remains open.
 - [x] Implement inbound MCP server handler in the local lab.
 - [x] Implement outbound MCP client to an independent mock MCP server handler, including a separate-process loopback TCP test.
 - [x] Discover remote tools and enforce owner-approved tool-name allowlists.
-- [~] Implement synchronous `send_message` routing and response provenance; full canonical task router remains open.
-- [ ] Implement durable asynchronous task path.
-- [~] Implement `discover_agents` and `send_message`; remaining planned tools are not implemented.
+- [x] Implement synchronous `send_message` routing and response provenance in the local lab; canonical envelope expansion remains open.
+- [x] Implement a provider-neutral local asynchronous task coordinator, in-memory reference repository, registry-backed dispatcher, and optional caller-bound task tools. Production persistence and worker delivery remain open.
+- [x] Implement `discover_agents` and `send_message`; optional task tools are implemented when a coordinator is injected. `get_agent` and `list_my_connections` remain planned.
 - [x] Implement deterministic mock MCP agent for tests.
 - [x] Add local MCP integration tests and run them in GitHub Actions.
 - [x] Add local lab setup and verification notes in `AI/MCP_LAB.md`.
 
-**Current evidence:** Nine local MCP integration tests pass. Seven use an in-process fetch bridge; one connects over loopback TCP to a mock MCP agent running in a separate Node process. This proves local socket-level MCP transport, not a public deployment or live external AI connection.
+**Current evidence:** PR #5 task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5` passed run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297). Documentation checkpoint `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034` passed run [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348), checked out as merge revision `e60e52c301f3a98c3cf9dc64c0ddc2ca031b5941`: all focused gates, 98/98 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with no warnings/errors/critical, and all eight repository-contract cases. The separate-process loopback TCP test proves local socket-level MCP transport, not a public deployment or live external AI connection.
+
+## Phase 4B: Asynchronous tasks
+
+- [x] Implement local task/outbox repository contract and in-memory reference adapter, with completion fenced by worker ID, claim generation, lease snapshot and expiry.
+- [x] Extract and pass an eight-case repository contract suite that a future durable adapter can register against its own factory, including tenant-and-caller idempotency scope.
+- [x] Add caller-scoped idempotent task creation, deadline enforcement, optimistic state transitions, event history, cancellation, bounded wait and task output limits.
+- [x] Revalidate target permissions and approved remote tool schema immediately before asynchronous dispatch.
+- [x] Add optional caller-bound `delegate_task`, `get_task`, `wait_task`, and `cancel_task` MCP tools.
+- [x] Verify the updated exact head with all focused task gates and the complete quality workflow (run 41289499297, feature commit `b5904db4fdaf1d608e5264f86038a45380116fb5`, PR merge revision `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`); all 8 shared repository contract tests pass.
+- [ ] Implement durable database transactions with database-authoritative lease expiry, a checked dispatch-start/lease-ownership boundary, queue/outbox consumer, worker recovery, retention and monitoring before production.
+
+No automatic retry is permitted after a potentially delivered remote invocation unless the target's end-to-end idempotency contract is established.
 
 ## Phase 5: First real AI-to-AI round trip
 
@@ -205,4 +217,4 @@ Research can be performed by an agent connected to MeepSheep. It is not a core M
 
 ## Current next action
 
-Extend the local test harness to a network-separated remote MCP process and commit a generated lockfile. Then confirm the first real caller and target, validate the exact product surfaces and credentials, and only then design the production authentication/persistence/deployment path.
+Resolve the outstanding platform decisions before writing provider-specific persistence code: confirm whether the inactive existing `meepsheep-storage` Supabase project should be restored for inspection, compare Supabase Postgres with Cloudflare D1 under the accessible account constraints, and choose the authoritative database, key-management owner, and durable execution primitive. Then implement persistent task/registry/vault adapters and a worker behind the existing provider-neutral contracts. The local async task slice and dependency lockfile are already verified; do not provision or restore resources without owner approval.
