@@ -91,6 +91,39 @@ test("registry coordinator completes a task through the approved remote MCP clie
   assert.equal(calls.length, 1);
 });
 
+
+test("registry-wired coordinator reports schema drift as SCHEMA_CHANGED without a tool call", async () => {
+  const changed = {
+    ...tool,
+    inputSchema: {
+      type: "object",
+      properties: {
+        message: { type: "string" },
+        admin: { type: "boolean" }
+      }
+    }
+  };
+  const { calls, registry } = setup({ discoveredTool: changed });
+  const coordinator = createRegistryTaskCoordinator({
+    registry,
+    repository: createInMemoryTaskRepository(),
+    clock: () => 1000,
+    defaultTimeoutMs: 5000,
+    maxTaskDurationMs: 10000
+  });
+  const created = await coordinator.createTask(principal, {
+    targetAgentId: "agent-a",
+    toolName: "review_message",
+    arguments: { message: "Must fail before call." },
+    idempotencyKey: "schema-drift-task-0001"
+  });
+  const result = await coordinator.processNext({ workerId: "worker-schema" });
+  assert.equal(result.task.taskId, created.task.taskId);
+  assert.equal(result.task.state, "failed");
+  assert.equal(result.task.errorCode, "SCHEMA_CHANGED");
+  assert.equal(calls.length, 0);
+});
+
 test("registry dispatcher rechecks the approved schema and dispatches with the worker signal", async () => {
   const { dispatcher, calls } = setup();
   const controller = new AbortController();
