@@ -277,7 +277,12 @@ test("disconnect is tenant/owner scoped and requires connection:manage", async (
 test("disconnect still closes and unregisters when credential revocation fails", async () => {
   const connection = makeConnection();
   const { registry, manager } = setup({
-    vault: { async revoke() { throw new Error("secret store details must not leak"); } },
+    vault: {
+      async withCredential(_input, callback) {
+        return callback({ type: "bearer", token: "test-token" });
+      },
+      async revoke() { throw new Error("secret store details must not leak"); }
+    },
     createRemoteClient: async () => connection
   });
   const preview = await manager.preview(owner, previewInput);
