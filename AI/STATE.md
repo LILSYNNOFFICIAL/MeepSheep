@@ -4,7 +4,7 @@
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
 **Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)  
-**Latest documentation checkpoint:** PR #5 head `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034` passed run [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348); CI checked out merge revision `e60e52c301f3a98c3cf9dc64c0ddc2ca031b5941`. The tested branch includes task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5`, which passed run 41289499297. All eight shared repository-contract cases pass.
+**Latest verified PR #5 checkpoint:** Branch commit `2e192a220cc1182fa5f0bca92fd1a934eddd13f6` passed run [41289860243](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289860243); CI checked out merge revision `2e539222cc3d8c0e833148132915dcd22de1a49f`. The tested branch contains task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5`, which passed run 41289499297, and documentation checkpoint `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034`, which passed run 41289621348. All eight shared repository-contract cases pass.
 
 This ledger distinguishes verified local behavior from production capabilities that remain unimplemented or unverified.
 
@@ -34,7 +34,7 @@ All three PRs were rechecked on 2026-11-01. They remain open and mergeable. The 
 |---|---|---|---|---|
 | [#3](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3) | Build MCP relay laboratory | `feat/mcp-relay-lab` at `ca56cbfcb82d0c19fcbf6b904c43ae1dc1579049` | `main` | Open, ready for review |
 | [#4](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4) | Require owner-approved MCP tool schema fingerprints | `feat/mcp-tool-schema-approval` at `1d76b9708d7102bbce7e18af3c3541cbc011755d` | `feat/mcp-relay-lab` | Open, stacked on #3 |
-| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034` | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
+| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at `2e192a220cc1182fa5f0bca92fd1a934eddd13f6` | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
 
 Required integration order is **#3 → #4 → #5**. PR #5 must not be merged directly to `main` while its base is PR #4's branch. After a parent merges, retarget/rebase its child as required, inspect the changed diff, rerun CI on the new exact head, and obtain review before proceeding. No PR was merged, retargeted, or closed in this work.
 
@@ -81,12 +81,12 @@ Required integration order is **#3 → #4 → #5**. PR #5 must not be merged dir
 
 ## Latest exact-head quality verification
 
-The current PR #5 documentation checkpoint and its task-contract implementation passed the complete GitHub Actions quality workflow:
+The current PR #5 task-contract implementation and documentation checkpoint passed the complete GitHub Actions quality workflow:
 - **PR:** [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5)
-- **Documentation checkpoint commit:** `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034`
+- **Latest verified branch checkpoint:** `2e192a220cc1182fa5f0bca92fd1a934eddd13f6`
 - **Task-contract implementation commit:** `b5904db4fdaf1d608e5264f86038a45380116fb5`
-- **CI run:** [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348) — completed successfully.
-- **PR merge revision checked out:** `e60e52c301f3a98c3cf9dc64c0ddc2ca031b5941`.
+- **CI run:** [41289860243](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289860243) — completed successfully.
+- **PR merge revision checked out:** `2e539222cc3d8c0e833148132915dcd22de1a49f`.
 - Authentication boundary: 8/8.
 - Endpoint security: 11/11.
 - Credential vault: 11/11.
@@ -106,7 +106,7 @@ The reusable suite in `tests/support/task-repository-contract.mjs` covers concur
 
 **TDD evidence:** Run [41288627434](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288627434) failed the two initial lease-fencing assertions against the pre-fix implementation. The current exact-head run above passed all eight shared repository-contract cases.
 
-The task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5` also passed run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297). The current documentation checkpoint was independently retested by run 41289621348.
+The task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5` also passed run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297). Documentation checkpoint `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034` passed run [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348).
 
 
 ## Current account and infrastructure inventory (read-only, 2026-10-31)
