@@ -54,7 +54,7 @@ function makeVault() {
   return { store, vault };
 }
 
-function makeClientFactory(onRequest) {
+function makeClientFactory({ tools = [tool] } = {}) {
   let createdClient;
   const clientFactory = () => {
     createdClient = {
@@ -76,7 +76,7 @@ function makeClientFactory(onRequest) {
           })
         );
         assert.equal(response.status, 200);
-        return { tools: [tool] };
+        return { tools };
       },
       async close() {
         this.closed = true;
@@ -216,4 +216,25 @@ test("invalid credential references and malformed bearer secrets fail closed", a
     }),
     (error) => error.code === "REMOTE_AUTH_CONFIG_INVALID"
   );
+});
+
+
+test("remote tool schema snapshots safely support prototype-like tool names", async () => {
+  const specialTools = [
+    { ...tool, name: "__proto__" },
+    { ...tool, name: "constructor" }
+  ];
+  const { clientFactory } = makeClientFactory({ tools: specialTools });
+  const connection = await createSecureRemoteMcpClient({
+    endpoint: "https://agent.example.test/mcp",
+    allowedHosts,
+    lookupAll,
+    requestImpl: async () => new Response("ok", { status: 200 }),
+    clientFactory,
+    transportFactory: (_url, options) => ({ fetch: options.fetch })
+  });
+  assert.equal(Object.getPrototypeOf(connection.schemaFingerprints), null);
+  assert.equal(Object.hasOwn(connection.schemaFingerprints, "__proto__"), true);
+  assert.equal(Object.hasOwn(connection.schemaFingerprints, "constructor"), true);
+  assert.equal(connection.schemaFingerprints["__proto__"].length, 64);
 });
