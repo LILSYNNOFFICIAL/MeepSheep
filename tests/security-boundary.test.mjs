@@ -100,7 +100,7 @@ test("rejects incomplete or malformed identity and scope claims", async () => {
     { client_id: "" },
     { scope: "" },
     { scope: "agent:message agent:message" },
-    { scope: "agent:message invalid scope" },
+    { scope: 'agent:message bad"scope' },
     { jti: "" },
     { exp: "later" },
     { iat: "now" },
