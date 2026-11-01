@@ -33,11 +33,7 @@ function requirePermission(principal, permission) {
 }
 
 function normalizeJson(value, ancestors = new Set()) {
-  if (
-    value === null ||
-    typeof value === "string" ||
-    typeof value === "boolean"
-  ) return value;
+  if (value === null || typeof value === "string" || typeof value === "boolean") return value;
   if (typeof value === "number") {
     if (!Number.isFinite(value)) throw fail("TASK_INPUT_INVALID");
     return value;
@@ -66,15 +62,20 @@ function normalizeJson(value, ancestors = new Set()) {
   throw fail("TASK_INPUT_INVALID");
 }
 
-function serializeJson(value, maximumBytes, tooLargeCode) {
+function serializeJson(value, maximumBytes, tooLargeCode, invalidCode = "TASK_INPUT_INVALID") {
   let serialized;
   try {
     serialized = JSON.stringify(normalizeJson(value));
   } catch (error) {
-    if (error instanceof TaskCoordinatorError) throw error;
-    throw fail("TASK_INPUT_INVALID");
+    if (error instanceof TaskCoordinatorError) {
+      if (error.code === "TASK_INPUT_INVALID" && invalidCode !== "TASK_INPUT_INVALID") {
+        throw fail(invalidCode);
+      }
+      throw error;
+    }
+    throw fail(invalidCode);
   }
-  if (typeof serialized !== "string") throw fail("TASK_INPUT_INVALID");
+  if (typeof serialized !== "string") throw fail(invalidCode);
   const bytes = Buffer.byteLength(serialized, "utf8");
   if (bytes > maximumBytes) throw fail(tooLargeCode);
   return { serialized, bytes, value: JSON.parse(serialized) };
@@ -95,8 +96,13 @@ function safeTargetError(error) {
   return fail("TARGET_NOT_AUTHORIZED");
 }
 
-function safeRemoteError(error, signal, task, now) {
-  if (signal?.aborted && now >= task.deadlineAt) return "REMOTE_TIMEOUT";
+function safeRemoteError(error, signal, task, timestamp) {
+  if (timestamp >= task.deadlineAt || (signal?.aborted && timestamp >= task.deadlineAt)) {
+    return "REMOTE_TIMEOUT";
+  }
+  if (error?.code === "TASK_OUTPUT_TOO_LARGE" || error?.code === "TASK_OUTPUT_INVALID") {
+    return error.code;
+  }
   if (SAFE_REMOTE_ERRORS.has(error?.code)) return error.code;
   return "REMOTE_FAILED";
 }
@@ -110,7 +116,7 @@ function createEvent(task, {
   fromState = null,
   toState,
   at,
-  actorPrincipalId,
+  actorPrincipalId = null,
   errorCode = null
 }) {
   return {
@@ -204,15 +210,18 @@ export function createTaskCoordinator({
     return Math.floor(timestamp);
   }
 
-  async function getOwnedTask(principal, taskId, permission = "task:read") {
-    requirePermission(principal, permission);
-    if (!IDENTIFIER_PATTERN.test(taskId)) throw fail("TASK_NOT_FOUND");
-    let task;
+  async function readTask(taskId, tenantId) {
     try {
-      task = await repository.getTask({ taskId, tenantId: principal.tenantId });
+      return await repository.getTask({ taskId, tenantId });
     } catch {
       throw fail("TASK_STORE_UNAVAILABLE");
     }
+  }
+
+  async function getOwnedTask(principal, taskId, permission = "task:read") {
+    requirePermission(principal, permission);
+    if (typeof taskId !== "string" || !IDENTIFIER_PATTERN.test(taskId)) throw fail("TASK_NOT_FOUND");
+    const task = await readTask(taskId, principal.tenantId);
     if (!task || task.callerPrincipalId !== principal.principalId) throw fail("TASK_NOT_FOUND");
     return task;
   }
@@ -224,9 +233,8 @@ export function createTaskCoordinator({
     errorCode = null
   }) {
     const timestamp = now();
-    let updated;
     try {
-      updated = await repository.transitionTask({
+      return await repository.transitionTask({
         taskId: task.taskId,
         tenantId: task.tenantId,
         expectedVersion: task.version,
@@ -241,11 +249,10 @@ export function createTaskCoordinator({
           actorPrincipalId,
           errorCode
         })
-      });
+      }) ?? null;
     } catch {
       throw fail("TASK_STORE_UNAVAILABLE");
     }
-    return updated ?? null;
   }
 
   async function createTask(principal, input = {}) {
@@ -271,32 +278,25 @@ export function createTaskCoordinator({
     if (!Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > maxTaskDurationMs) {
       throw fail("TASK_TIMEOUT_INVALID");
     }
-
-    const normalizedInput = serializeJson(rawArguments, maxInputBytes, "TASK_PAYLOAD_TOO_LARGE");
-    if (
-      !rawArguments ||
-      Array.isArray(rawArguments) ||
-      typeof rawArguments !== "object"
-    ) {
+    if (!rawArguments || Array.isArray(rawArguments) || typeof rawArguments !== "object") {
       throw fail("TASK_INPUT_INVALID");
     }
 
+    const normalizedInput = serializeJson(rawArguments, maxInputBytes, "TASK_PAYLOAD_TOO_LARGE");
     let target;
     try {
       target = await authorizeTarget(principal, { targetAgentId, toolName });
     } catch (error) {
       throw safeTargetError(error);
     }
-    if (
-      !target ||
-      typeof target.connectionId !== "string" ||
-      target.connectionId.length === 0
-    ) {
+    if (!target || typeof target.connectionId !== "string" || target.connectionId.length === 0) {
       throw fail("TARGET_NOT_AUTHORIZED");
     }
 
     const timestamp = now();
-    const idempotencyKeyHash = digest(idempotencyKey);
+    const idempotencyKeyHash = digest(
+      principal.tenantId + "\u0000" + principal.principalId + "\u0000" + idempotencyKey
+    );
     const requestFingerprint = digest(JSON.stringify({
       targetAgentId,
       toolName,
@@ -344,16 +344,10 @@ export function createTaskCoordinator({
     if (!created || typeof created.created !== "boolean" || !created.task) {
       throw fail("TASK_STORE_UNAVAILABLE");
     }
-    if (
-      !created.created &&
-      created.task.requestFingerprint !== requestFingerprint
-    ) {
+    if (!created.created && created.task.requestFingerprint !== requestFingerprint) {
       throw fail("IDEMPOTENCY_CONFLICT");
     }
-    return Object.freeze({
-      created: created.created,
-      task: cloneTask(created.task)
-    });
+    return Object.freeze({ created: created.created, task: cloneTask(created.task) });
   }
 
   async function getTask(principal, taskId) {
@@ -370,18 +364,25 @@ export function createTaskCoordinator({
   }
 
   async function cancelTask(principal, taskId) {
-    const task = await getOwnedTask(principal, taskId, "task:cancel");
-    if (!ACTIVE_STATES.has(task.state)) throw fail("TASK_NOT_CANCELLABLE");
-    const updated = await transition(task, "canceled", {
-      eventType: "task.canceled",
-      actorPrincipalId: principal.principalId
-    });
-    if (!updated) throw fail("TASK_CONFLICT");
-    const controller = activeControllers.get(taskId);
-    if (controller && !controller.signal.aborted) {
-      controller.abort(fail("TASK_CANCELED"));
+    requirePermission(principal, "task:cancel");
+    if (typeof taskId !== "string" || !IDENTIFIER_PATTERN.test(taskId)) throw fail("TASK_NOT_FOUND");
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const task = await readTask(taskId, principal.tenantId);
+      if (!task || task.callerPrincipalId !== principal.principalId) throw fail("TASK_NOT_FOUND");
+      if (!ACTIVE_STATES.has(task.state)) throw fail("TASK_NOT_CANCELLABLE");
+      const updated = await transition(task, "canceled", {
+        eventType: "task.canceled",
+        patch: { cancelRequestedAt: now(), completedAt: now() },
+        actorPrincipalId: principal.principalId
+      });
+      if (updated) {
+        const controller = activeControllers.get(taskId);
+        if (controller && !controller.signal.aborted) controller.abort(fail("TASK_CANCELED"));
+        return cloneTask(updated);
+      }
     }
-    return cloneTask(updated);
+    throw fail("TASK_CONFLICT");
   }
 
   async function completeOutbox(outbox, workerId) {
@@ -404,22 +405,13 @@ export function createTaskCoordinator({
     }
     let outbox;
     try {
-      outbox = await repository.claimNextOutbox({
-        workerId,
-        now: now(),
-        leaseMs
-      });
+      outbox = await repository.claimNextOutbox({ workerId, now: now(), leaseMs });
     } catch {
       throw fail("TASK_STORE_UNAVAILABLE");
     }
     if (!outbox) return null;
 
-    let task;
-    try {
-      task = await repository.getTask({ taskId: outbox.taskId, tenantId: outbox.tenantId });
-    } catch {
-      throw fail("TASK_STORE_UNAVAILABLE");
-    }
+    let task = await readTask(outbox.taskId, outbox.tenantId);
     if (!task) {
       await completeOutbox(outbox, workerId);
       return Object.freeze({ status: "skipped", task: null });
@@ -432,14 +424,9 @@ export function createTaskCoordinator({
           patch: { errorCode: "REMOTE_OUTCOME_UNKNOWN", completedAt: now() },
           errorCode: "REMOTE_OUTCOME_UNKNOWN"
         });
+        const current = failed ?? await readTask(task.taskId, task.tenantId);
         await completeOutbox(outbox, workerId);
-        return Object.freeze({
-          status: "failed",
-          task: cloneTask(failed ?? await repository.getTask({
-            taskId: task.taskId,
-            tenantId: task.tenantId
-          }))
-        });
+        return Object.freeze({ status: current?.state ?? "skipped", task: cloneTask(current) });
       }
       await completeOutbox(outbox, workerId);
       return Object.freeze({ status: "skipped", task: cloneTask(task) });
@@ -452,53 +439,66 @@ export function createTaskCoordinator({
         patch: { errorCode: "TASK_DEADLINE_EXCEEDED", completedAt: timestamp },
         errorCode: "TASK_DEADLINE_EXCEEDED"
       });
+      const current = expired ?? await readTask(task.taskId, task.tenantId);
       await completeOutbox(outbox, workerId);
-      return Object.freeze({
-        status: "expired",
-        task: cloneTask(expired ?? await repository.getTask({
-          taskId: task.taskId,
-          tenantId: task.tenantId
-        }))
-      });
-    }
-
-    const dispatching = await transition(task, "dispatching", {
-      eventType: "task.dispatch_started",
-      patch: { attemptCount: task.attemptCount + 1, startedAt: timestamp }
-    });
-    if (!dispatching) {
-      const current = await repository.getTask({ taskId: task.taskId, tenantId: task.tenantId });
-      await completeOutbox(outbox, workerId);
-      return Object.freeze({ status: "skipped", task: cloneTask(current) });
-    }
-
-    const working = await transition(dispatching, "working", {
-      eventType: "task.remote_work_started"
-    });
-    if (!working) {
-      const current = await repository.getTask({ taskId: task.taskId, tenantId: task.tenantId });
-      await completeOutbox(outbox, workerId);
-      return Object.freeze({ status: "skipped", task: cloneTask(current) });
+      return Object.freeze({ status: current?.state ?? "skipped", task: cloneTask(current) });
     }
 
     const controller = new AbortController();
     activeControllers.set(task.taskId, controller);
-    const remainingMs = Math.max(1, task.deadlineAt - now());
+    const remainingMs = Math.max(1, task.deadlineAt - timestamp);
     const timeoutSignal = AbortSignal.timeout(remainingMs);
     const signal = AbortSignal.any([controller.signal, timeoutSignal]);
 
     try {
-      const dispatchPromise = Promise.resolve().then(() => dispatch(cloneTask(working), { signal }));
-      const rawOutput = await awaitWithSignal(dispatchPromise, signal);
-      const normalizedOutput = serializeJson(rawOutput, maxOutputBytes, "TASK_OUTPUT_TOO_LARGE");
-      const current = await repository.getTask({ taskId: task.taskId, tenantId: task.tenantId });
-      if (!current || current.state !== "working") {
+      const dispatching = await transition(task, "dispatching", {
+        eventType: "task.dispatch_started",
+        patch: { attemptCount: task.attemptCount + 1, startedAt: timestamp }
+      });
+      if (!dispatching) {
+        const current = await readTask(task.taskId, task.tenantId);
+        await completeOutbox(outbox, workerId);
+        return Object.freeze({ status: current?.state ?? "skipped", task: cloneTask(current) });
+      }
+
+      const working = await transition(dispatching, "working", {
+        eventType: "task.remote_work_started"
+      });
+      if (!working) {
+        const current = await readTask(task.taskId, task.tenantId);
+        await completeOutbox(outbox, workerId);
+        return Object.freeze({ status: current?.state ?? "skipped", task: cloneTask(current) });
+      }
+
+      // Cancellation may commit while the working transition promise is still resolving.
+      // The controller is already registered, and the stored state is re-read before dispatch.
+      const currentBeforeDispatch = await readTask(task.taskId, task.tenantId);
+      if (signal.aborted || !currentBeforeDispatch || currentBeforeDispatch.state !== "working") {
         await completeOutbox(outbox, workerId);
         return Object.freeze({
-          status: current?.state ?? "skipped",
-          task: cloneTask(current)
+          status: currentBeforeDispatch?.state ?? "skipped",
+          task: cloneTask(currentBeforeDispatch)
         });
       }
+
+      const dispatchPromise = Promise.resolve().then(() => {
+        if (signal.aborted) throw signal.reason ?? fail("TASK_CANCELED");
+        return dispatch(cloneTask(currentBeforeDispatch), { signal });
+      });
+      const rawOutput = await awaitWithSignal(dispatchPromise, signal);
+      const normalizedOutput = serializeJson(
+        rawOutput,
+        maxOutputBytes,
+        "TASK_OUTPUT_TOO_LARGE",
+        "TASK_OUTPUT_INVALID"
+      );
+
+      const current = await readTask(task.taskId, task.tenantId);
+      if (!current || current.state !== "working") {
+        await completeOutbox(outbox, workerId);
+        return Object.freeze({ status: current?.state ?? "skipped", task: cloneTask(current) });
+      }
+
       const completedAt = now();
       if (current.deadlineAt <= completedAt) {
         const expired = await transition(current, "expired", {
@@ -506,31 +506,25 @@ export function createTaskCoordinator({
           patch: { errorCode: "TASK_DEADLINE_EXCEEDED", completedAt },
           errorCode: "TASK_DEADLINE_EXCEEDED"
         });
+        const finalTask = expired ?? await readTask(task.taskId, task.tenantId);
         await completeOutbox(outbox, workerId);
-        return Object.freeze({ status: "expired", task: cloneTask(expired ?? current) });
+        return Object.freeze({ status: finalTask?.state ?? "expired", task: cloneTask(finalTask) });
       }
+
       const completed = await transition(current, "completed", {
         eventType: "task.completed",
-        patch: {
-          output: normalizedOutput.value,
-          completedAt,
-          errorCode: null
-        }
+        patch: { output: normalizedOutput.value, completedAt, errorCode: null }
       });
+      const finalTask = completed ?? await readTask(task.taskId, task.tenantId);
       await completeOutbox(outbox, workerId);
-      return Object.freeze({
-        status: completed ? "completed" : "skipped",
-        task: cloneTask(completed ?? await repository.getTask({
-          taskId: task.taskId,
-          tenantId: task.tenantId
-        }))
-      });
+      return Object.freeze({ status: finalTask?.state ?? "skipped", task: cloneTask(finalTask) });
     } catch (error) {
-      const current = await repository.getTask({ taskId: task.taskId, tenantId: task.tenantId });
+      const current = await readTask(task.taskId, task.tenantId);
       if (!current || TERMINAL_STATES.has(current.state)) {
         await completeOutbox(outbox, workerId);
         return Object.freeze({ status: current?.state ?? "skipped", task: cloneTask(current) });
       }
+
       const errorCode = error?.code === "TASK_CANCELED"
         ? "TASK_CANCELED"
         : safeRemoteError(error, signal, current, now());
@@ -541,16 +535,13 @@ export function createTaskCoordinator({
         patch: { errorCode, completedAt: failedAt },
         errorCode
       });
+      const finalTask = updated ?? await readTask(task.taskId, task.tenantId);
       await completeOutbox(outbox, workerId);
-      return Object.freeze({
-        status: toState,
-        task: cloneTask(updated ?? await repository.getTask({
-          taskId: task.taskId,
-          tenantId: task.tenantId
-        }))
-      });
+      return Object.freeze({ status: finalTask?.state ?? "skipped", task: cloneTask(finalTask) });
     } finally {
-      activeControllers.delete(task.taskId);
+      if (activeControllers.get(task.taskId) === controller) {
+        activeControllers.delete(task.taskId);
+      }
     }
   }
 
