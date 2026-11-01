@@ -114,4 +114,11 @@ This file records accepted decisions, proposals, and open questions. Do not sile
 - **Status:** Accepted for the local security boundary only.
 - **Decision:** Require exact host allowlisting, HTTPS on port 443, validation of every DNS answer, rejection of any non-public address, and a fetch adapter that pins DNS lookups to the validated address set while retaining TLS hostname verification and refusing redirects.
 - **Reason:** A hostname allowlist alone does not prevent private-address resolution or DNS rebinding.
-- **Boundary:** The validator and fetch adapter are local primitives. They are not yet connected to the owner endpoint-registration flow, in-memory registry, or production remote MCP client bootstrap. Real TLS/socket and runtime egress tests remain required.
+- **Boundary:** The validator and pinned fetch are now used by the local `createSecureRemoteMcpClient` factory and the internal owner preview/approval service. They are not connected to persistent endpoint approval records or production egress controls. Real external TLS/socket and runtime egress tests remain required.
+
+
+### D-015: Owner-controlled remote MCP connection lifecycle
+- **Status:** Accepted for the local in-memory implementation.
+- **Decision:** Separate remote endpoint preview from registration. Bind each preview to the creating owner and tenant, expire it, present the discovered remote tool schemas and fingerprints, and require explicit selection of unique discovered tool names before registration. Derive stored approval fingerprints from the server-side preview snapshot, never from caller input. Disconnect removes the agent from the registry before credential revocation and client cleanup.
+- **Reason:** Discovery and connectivity must never imply approval. Privileged connection administration must remain separate from model-callable message tools.
+- **Boundary:** The manager is an internal service with in-memory preview/active records. It is not a public owner API, owner console, persistent registry, durable audit log, or production identity boundary. A production host must pass a principal derived from the verified authentication middleware.
