@@ -104,3 +104,17 @@ Fields: `usage_id`, `tenant_id`, `task_id`, `connection_id`, `provider_id`, `met
 Select one authoritative relational database. D1 versus Supabase remains open. Durable orchestration may own execution state, but the canonical ownership and consistency boundary must be explicit. The production schema must support atomic uniqueness for tenant/principal-scoped idempotency keys, compare-and-swap task transitions, durable outbox/queue publication, and append-only task/audit events. The current in-memory adapters are test/reference implementations only and do not satisfy durability or crash-recovery requirements.
 
 Define retention separately for connection metadata, message payloads, task state, artifacts, audit events, usage, and diagnostic logs. Default to minimal retention and provide deletion/export behavior before public launch.
+
+## Task and outbox records
+
+The provider-neutral task contract is defined in [TASK_EXECUTION.md](TASK_EXECUTION.md). A persistent implementation must store at least:
+
+| Record | Required fields / invariant |
+|---|---|
+| Task | `task_id`, `trace_id`, `tenant_id`, `caller_principal_id`, `target_agent_id`, `connection_id`, `tool_name`, bounded JSON input/output, state, deadline, attempt count, version, timestamps, sanitized error code |
+| Idempotency | Tenant + caller + hashed idempotency key is unique; a repeated key with a different request fingerprint is rejected |
+| Task event | Append-only event ID, task ID, tenant, event type, from/to state, timestamp, actor and sanitized error code |
+| Outbox | Task ID, tenant, event type, ready/leased/completed state, attempt count, worker ID, lease deadline and creation/completion timestamps |
+
+Creating the task, initial event, and outbox record must be one atomic transaction. State transitions must compare-and-swap the expected version and append the matching event in the same transaction. Outbox leases must be claimed and completed atomically. The committed in-memory adapter is reference/test code only and does not satisfy these durability guarantees.
+
