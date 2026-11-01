@@ -73,6 +73,12 @@ jobs:
         continue-on-error: true
         run: node --test tests/task-coordinator.test.mjs
 
+      - name: Run task dispatcher tests
+        id: dispatcher
+        if: always()
+        continue-on-error: true
+        run: node --test tests/task-dispatcher.test.mjs
+
       - name: Verify all focused security test gates
         if: always()
         run: |
@@ -83,6 +89,7 @@ jobs:
           test "${{ steps.remote.outcome }}" = "success"
           test "${{ steps.connection.outcome }}" = "success"
           test "${{ steps.task.outcome }}" = "success"
+          test "${{ steps.dispatcher.outcome }}" = "success"
 
       - name: Run MCP relay integration and unit suite
         run: npm test
