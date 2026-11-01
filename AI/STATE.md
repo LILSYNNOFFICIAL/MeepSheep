@@ -4,7 +4,7 @@
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
 **Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)  
-**Current branch head at this documentation update:** `790ec02463c048e46ffbe5d4d833b9d8cf6b99f0`
+**Latest complete documentation-verification checkpoint:** `7cc034314be4dc327b6b97f25356234455787d86` (run [41277279762](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41277279762)).
 
 This ledger distinguishes verified local behavior from production capabilities that remain unimplemented or unverified.
 
@@ -28,13 +28,13 @@ This ledger distinguishes verified local behavior from production capabilities t
 
 ## Open pull-request stack
 
-All three PRs were rechecked on 2026-11-01. They remain open and mergeable. No approving reviews are recorded.
+All three PRs were rechecked on 2026-11-01. They remain open and mergeable. The review API returned no submitted reviews for PRs #3, #4, or #5 at that inspection.
 
 | PR | Title | Head | Base | State |
 |---|---|---|---|---|
 | [#3](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3) | Build MCP relay laboratory | `feat/mcp-relay-lab` at `ca56cbfcb82d0c19fcbf6b904c43ae1dc1579049` | `main` | Open, ready for review |
 | [#4](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4) | Require owner-approved MCP tool schema fingerprints | `feat/mcp-tool-schema-approval` at `1d76b9708d7102bbce7e18af3c3541cbc011755d` | `feat/mcp-relay-lab` | Open, stacked on #3 |
-| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at `790ec02463c048e46ffbe5d4d833b9d8cf6b99f0` | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
+| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at the latest verified documentation checkpoint `7cc034314be4dc327b6b97f25356234455787d86` | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
 
 Required integration order is **#3 → #4 → #5**. PR #5 must not be merged directly to `main` while its base is PR #4's branch. After a parent merges, retarget/rebase its child as required, inspect the changed diff, rerun CI on the new exact head, and obtain review before proceeding. No PR was merged, retargeted, or closed in this work.
 
@@ -100,7 +100,7 @@ The latest exact-head code verification before these documentation-only changes 
 
 Earlier failing runs 41271513643, 41272917191, and 41276348993 are diagnostic runs, not current status. They exposed stale grant/timeout fixtures, nullable-reference validation, the MCP SDK v2 callTool options position, and missing task-tool wiring. Their fixes are included in the code commit above.
 
-Documentation updates after this code checkpoint have triggered a new quality run; the latest documentation commit must not be called verified until that run completes.
+A documentation synchronization checkpoint was also verified on exact head `7cc034314be4dc327b6b97f25356234455787d86` by run [41277279762](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41277279762): all focused gates, 90/90 Node tests, 10/10 Python tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML checks passed. A final documentation-ledger/log reconciliation commit follows that checkpoint and will receive its own fresh exact-head run.
 
 ## Current account and infrastructure inventory (read-only, 2026-11-01)
 
