@@ -102,3 +102,16 @@ This file records accepted decisions, proposals, and open questions. Do not sile
 - **Decision:** Use Node.js 26.13.0, `@modelcontextprotocol/client@2.4.0`, `@modelcontextprotocol/server@2.4.0`, and `zod@4.6.7` for the first executable TypeScript MCP lab.
 - **Reason:** The official TypeScript SDK v2 is the current stable line for the 2026-07-28 MCP protocol revision. The lab needs both the MCP server and client roles.
 - **Boundary:** This does not decide the production hosting runtime, identity provider, database, or client-facing authentication profile. Revalidate package versions before production release.
+
+
+### D-013: Local inbound bearer-token verification
+- **Status:** Accepted for the local security boundary only.
+- **Decision:** Verify inbound JWT access tokens with RS256 against a configured JWKS resolver. Require exact issuer and audience, `typ: at+jwt`, and validated subject, tenant, client ID, scope, JTI, issue time, expiry, bounded clock skew, and maximum token lifetime. Derive caller identity exclusively from the verified claims.
+- **Reason:** The relay must not trust tool arguments or transport context fields as a caller identity source.
+- **Boundary:** This is a resource-server verifier and middleware, not an OAuth authorization server, client registration service, token issuer, production identity-provider integration, key lifecycle, or revocation store. A deployed runtime must configure the verifier and must not expose the test principal resolver as public authentication.
+
+### D-014: Local outbound endpoint policy
+- **Status:** Accepted for the local security boundary only.
+- **Decision:** Require exact host allowlisting, HTTPS on port 443, validation of every DNS answer, rejection of any non-public address, and a fetch adapter that pins DNS lookups to the validated address set while retaining TLS hostname verification and refusing redirects.
+- **Reason:** A hostname allowlist alone does not prevent private-address resolution or DNS rebinding.
+- **Boundary:** The validator and fetch adapter are local primitives. They are not yet connected to the owner endpoint-registration flow, in-memory registry, or production remote MCP client bootstrap. Real TLS/socket and runtime egress tests remain required.
