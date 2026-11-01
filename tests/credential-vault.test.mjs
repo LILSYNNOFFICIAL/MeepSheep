@@ -257,6 +257,14 @@ test("rejects invalid keys, malformed secrets, and oversize credentials before p
     vault.put({ credentialId: "too-large", tenantId: "tenant-a", secret: "this is too long" }),
     (error) => error.code === "CREDENTIAL_TOO_LARGE"
   );
+
+  for (const credentialId of ["id/other", " id", "id ", "id?query", ""]) {
+    await assert.rejects(
+      vault.put({ credentialId, tenantId: "tenant-a", secret: "value" }),
+      (error) => error.code === "CREDENTIAL_INVALID"
+    );
+  }
+
   await assert.rejects(
     vault.put({ credentialId: "invalid-secret", tenantId: "tenant-a", secret: undefined }),
     (error) => error.code === "CREDENTIAL_INVALID"
