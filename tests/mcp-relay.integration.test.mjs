@@ -5,6 +5,7 @@ import { afterEach, test } from "node:test";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { AgentRegistry } from "../src/relay/agent-registry.mjs";
 import { createRelayHandler } from "../src/relay/mcp-handler.mjs";
+import { fingerprintToolSchema } from "../src/relay/tool-schema.mjs";
 import { createMockAgent } from "./fixtures/mock-agent.mjs";
 
 const openHandlers = [];
@@ -42,6 +43,11 @@ async function setup({ agents = [], principalValue = principal } = {}) {
     const mock = agent.mock ?? createMockAgent({ id: agent.id, toolName: agent.remoteToolName ?? "review_message" });
     remoteHandlers.push(mock.handler);
     const remoteClient = await connectClient(mock.handler, agent.id);
+    const discoveredTools = (await remoteClient.listTools()).tools;
+    const approvedToolSchemas = agent.approvedToolSchemas ?? Object.fromEntries(agent.approvedTools ?? [agent.remoteToolName ?? "review_message"].map((name) => {
+      const discovered = discoveredTools.find((tool) => tool.name === name) ?? { ...discoveredTools[0], name };
+      return [name, fingerprintToolSchema(discovered)];
+    }));
     registry.register({
       id: agent.id,
       name: agent.name ?? agent.id,
@@ -50,6 +56,7 @@ async function setup({ agents = [], principalValue = principal } = {}) {
       discoverable: agent.discoverable ?? true,
       capabilities: agent.capabilities ?? ["message-review"],
       approvedTools: agent.approvedTools ?? [agent.remoteToolName ?? "review_message"],
+      approvedToolSchemas,
       secretRef: "secret://must-never-be-exposed",
       endpoint: "https://remote.invalid/mcp",
       client: remoteClient
@@ -247,6 +254,7 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
     discoverable: true,
     capabilities: ["message-review"],
     approvedTools: ["review_message"],
+    approvedToolSchemas: { review_message: fingerprintToolSchema({ name: "review_message", description: "Process a message using this independent mock agent.", inputSchema: { type: "object", properties: { message: { type: "string" } }, required: ["message"], additionalProperties: false }, outputSchema: { type: "object", properties: { reply: { type: "string" }, agentId: { type: "string" } }, required: ["reply", "agentId"], additionalProperties: false } }) },
     client: remoteClient
   });
   const relayHandler = createRelayHandler({
