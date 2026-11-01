@@ -95,3 +95,7 @@ A host calls \`processNext({ workerId })\` to claim and process one outbox item.
 - Prove the complete flow through a live requesting MCP client and a separately operated remote agent.
 
 No production credentials, database, queue, Cloudflare resources, DNS, or deployment have been changed by this local implementation.
+
+## Verification status
+
+The coordinator, in-memory reference repository, registry-backed dispatcher, optional MCP task tools, and focused tests have been added on `feat/secure-connection-boundary`. **The exact current feature-branch head has not yet been verified by a completed green CI run in this session.** Do not treat the task subsystem as passing until the focused coordinator/dispatcher suites, MCP integration suite, existing security suites, Wellness Doctor, Repository Doctor, and workflow YAML checks pass on the same commit. The earlier 63-test CI run verified the preceding security/connection milestone only and does not cover these later task changes.
