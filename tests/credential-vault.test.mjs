@@ -232,6 +232,25 @@ test("missing historical encryption key fails closed", async () => {
   );
 });
 
+
+test("key identifier is authenticated as part of the encrypted record", async () => {
+  const { store, keyProvider, vault } = setup();
+  const sameKey = Buffer.alloc(32, 1);
+  keyProvider.keys.set("key-v2", sameKey);
+  await vault.put({
+    credentialId: "key-bound-credential",
+    tenantId: "tenant-a",
+    secret: { token: "key-id-bound" }
+  });
+  const stored = await store.get("key-bound-credential");
+  stored.keyId = "key-v2";
+  store.records.set("key-bound-credential", stored);
+  await assert.rejects(
+    vault.withCredential({ credentialId: "key-bound-credential", tenantId: "tenant-a" }, async () => "must not run"),
+    (error) => error.code === "CREDENTIAL_CORRUPT"
+  );
+});
+
 test("rejects invalid keys, malformed secrets, and oversize credentials before persistence", async () => {
   const { store, vault } = setup({ maxCredentialBytes: 8 });
   await assert.rejects(
