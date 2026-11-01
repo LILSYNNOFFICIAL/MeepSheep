@@ -91,7 +91,10 @@ test("agents are owner-only by default and can be shared only by explicit owner 
     (error) => error.code === "AGENT_NOT_FOUND"
   );
   assert.throws(
-    () => registry.grantAccess(sameTenantMember, "agent-a", "member-c"),
+    () => registry.grantAccess(sameTenantMember, "agent-a", {
+      principalId: "member-c",
+      tenantId: "tenant-a"
+    }),
     (error) => error.code === "AGENT_NOT_FOUND"
   );
   registry.grantAccess(

@@ -130,7 +130,8 @@ test("payload and task deadlines are bounded before persistence", async () => {
   await assert.rejects(
     coordinator.createTask(caller, {
       ...taskInput,
-      arguments: { message: "This payload is too large." }
+      arguments: { message: "This payload is too large." },
+      timeoutMs: 5000
     }),
     (error) => error.code === "TASK_PAYLOAD_TOO_LARGE"
   );

@@ -31,8 +31,8 @@ function setup({ discoveredTool = tool, remoteResult = { structuredContent: { ac
     async listTools() {
       return { tools: [discoveredTool] };
     },
-    async callTool(input, resultSchema, options) {
-      calls.push({ input, resultSchema, options });
+    async callTool(input, options) {
+      calls.push({ input, options });
       return remoteResult;
     }
   };

@@ -30,6 +30,7 @@ jobs:
           package-manager-cache: false
 
       - name: Install MCP relay dependencies
+        id: install
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Run authentication boundary tests
@@ -79,9 +80,43 @@ jobs:
         continue-on-error: true
         run: node --test tests/task-dispatcher.test.mjs
 
-      - name: Verify all focused security test gates
+      - name: Run MCP relay integration and unit suite
+        id: full
+        if: always()
+        continue-on-error: true
+        run: npm test
+
+      - name: Set up Python
+        id: python_setup
+        if: always()
+        continue-on-error: true
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.12"
+
+      - name: Run Wellness Doctor unit tests
+        id: wellness
+        if: always()
+        continue-on-error: true
+        run: python -m unittest discover -s tests -v
+
+      - name: Inspect repository health (read-only)
+        id: repo_doctor
+        if: always()
+        continue-on-error: true
+        run: python scripts/wellness_doctor.py
+
+      - name: Validate GitHub Actions YAML syntax
+        id: yaml
+        if: always()
+        continue-on-error: true
+        run: |
+          ruby -e 'require "yaml"; Dir.glob(".github/workflows/*.{yml,yaml}").sort.each { |file| YAML.load_file(file); puts "YAML OK: #{file}" }'
+
+      - name: Verify complete quality gate
         if: always()
         run: |
+          test "${{ steps.install.outcome }}" = "success"
           test "${{ steps.auth.outcome }}" = "success"
           test "${{ steps.endpoint.outcome }}" = "success"
           test "${{ steps.vault.outcome }}" = "success"
@@ -90,21 +125,8 @@ jobs:
           test "${{ steps.connection.outcome }}" = "success"
           test "${{ steps.task.outcome }}" = "success"
           test "${{ steps.dispatcher.outcome }}" = "success"
-
-      - name: Run MCP relay integration and unit suite
-        run: npm test
-
-      - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
-        with:
-          python-version: "3.12"
-
-      - name: Run Wellness Doctor unit tests
-        run: python -m unittest discover -s tests -v
-
-      - name: Inspect repository health (read-only)
-        run: python scripts/wellness_doctor.py
-
-      - name: Validate GitHub Actions YAML syntax
-        run: |
-          ruby -e 'require "yaml"; Dir.glob(".github/workflows/*.{yml,yaml}").sort.each { |file| YAML.load_file(file); puts "YAML OK: #{file}" }'
+          test "${{ steps.full.outcome }}" = "success"
+          test "${{ steps.python_setup.outcome }}" = "success"
+          test "${{ steps.wellness.outcome }}" = "success"
+          test "${{ steps.repo_doctor.outcome }}" = "success"
+          test "${{ steps.yaml.outcome }}" = "success"

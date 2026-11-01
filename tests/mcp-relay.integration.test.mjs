@@ -44,7 +44,7 @@ async function connectClient(handler, name, authInfo, bearerToken) {
   return client;
 }
 
-async function setup({ agents = [], principalValue = principal, authenticator, bearerToken, callerAuthInfo } = {}) {
+async function setup({ agents = [], principalValue = principal, authenticator, bearerToken, callerAuthInfo, taskCoordinator } = {}) {
   const registry = new AgentRegistry();
   const remoteHandlers = [];
   for (const agent of agents) {
@@ -75,7 +75,8 @@ async function setup({ agents = [], principalValue = principal, authenticator, b
   const relayHandler = createRelayHandler({
     registry,
     resolvePrincipal: (authInfo) => authInfo?.extra?.principal ?? null,
-    ...(authenticator ? { authenticator } : {})
+    ...(authenticator ? { authenticator } : {}),
+    ...(taskCoordinator ? { taskCoordinator } : {})
   });
   openHandlers.push(...remoteHandlers, relayHandler);
   const caller = await connectClient(
@@ -268,7 +269,7 @@ test("remote tool failures are sanitized before returning to the caller", async 
 });
 
 
-test("delegate_task, get_task, and cancel_task use the trusted MCP principal", async () => {
+test("delegate_task, get_task, wait_task, and cancel_task use the trusted MCP principal", async () => {
   const principals = [];
   const calls = [];
   const task = {
@@ -295,6 +296,11 @@ test("delegate_task, get_task, and cancel_task use the trusted MCP principal", a
     async getTask(principalValue, taskId) {
       principals.push(principalValue);
       calls.push({ operation: "get", taskId });
+      return task;
+    },
+    async waitTask(principalValue, taskId, options) {
+      principals.push(principalValue);
+      calls.push({ operation: "wait", taskId, options });
       return task;
     },
     async cancelTask(principalValue, taskId) {
@@ -329,15 +335,21 @@ test("delegate_task, get_task, and cancel_task use the trusted MCP principal", a
   });
   assert.equal(status.structuredContent.task.state, "queued");
 
+  const waited = await caller.callTool({
+    name: "wait_task",
+    arguments: { taskId: "task-1", waitMs: 0 }
+  });
+  assert.equal(waited.structuredContent.task.state, "queued");
+
   const canceled = await caller.callTool({
     name: "cancel_task",
     arguments: { taskId: "task-1" }
   });
   assert.equal(canceled.structuredContent.task.state, "canceled");
 
-  assert.equal(principals.length, 3);
+  assert.equal(principals.length, 4);
   assert.ok(principals.every((item) => item.principalId === "caller-1" && item.tenantId === "tenant-1"));
-  assert.deepEqual(calls.map((call) => call.operation), ["create", "get", "cancel"]);
+  assert.deepEqual(calls.map((call) => call.operation), ["create", "get", "wait", "cancel"]);
 });
 
 test("send_message crosses a separately spawned remote MCP server over TCP", async () => {
