@@ -138,7 +138,7 @@ A mock agent is required for deterministic tests, but a mock alone is not proof 
 
 ## Hosting direction
 
-Cloudflare is a candidate hosting platform, not yet a verified deployment. A fresh read-only inventory on 2026-11-01 found one accessible Cloudflare account and zero zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues. The inventory is account-scoped and does not rule out another account. The existing Supabase project named `meepsheep-storage` is reported as `INACTIVE` in a Free organization; its database could not be inspected because the connection timed out. Neither platform has been selected or provisioned for MeepSheep. Do not resume projects, create resources, configure DNS, or deploy until the owner confirms the intended platform and account.
+Cloudflare is a candidate hosting platform, not yet a verified deployment. A fresh read-only inventory on 2026-10-31 found one accessible Cloudflare account and zero zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues. The inventory is account-scoped and does not rule out another account. The existing Supabase project named `meepsheep-storage` is reported as `INACTIVE` in a Free organization; its database could not be inspected because the connection timed out. Neither platform has been selected or provisioned for MeepSheep. Do not resume projects, create resources, configure DNS, or deploy until the owner confirms the intended platform and account.
 
 No local GPU is required for a relay service. Connected AI providers perform inference. MeepSheep handles networking, authorization, orchestration, and storage. Hosted infrastructure and external provider usage may still incur costs.
 

@@ -87,7 +87,7 @@ This file records accepted decisions, proposals, and open questions. Do not sile
 - **O-006:** What default message/task retention and deletion policy will be published?
 - **O-007:** Which optional adapters are justified by actual target demand?
 
-## Platform inventory evidence (2026-11-01)
+## Platform inventory evidence (2026-10-31)
 
 This evidence informs O-003, O-004, and O-005 but does not resolve them:
 

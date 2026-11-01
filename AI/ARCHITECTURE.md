@@ -100,7 +100,7 @@ Use one authoritative relational data owner. D1 versus Supabase remains open unt
 
 Cloudflare Workers/Agents SDK, Workflows, Durable Objects, D1, Queues, R2, and Static Assets remain candidates, not final selections. Verify account access, pricing, runtime support, and service limits before committing. No local GPU is required; remote agents/providers perform inference.
 
-A read-only inventory on 2026-11-01 found zero zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues in the one connected Cloudflare account. The existing Supabase project `meepsheep-storage` is `INACTIVE` and its database could not be inspected. This is account-scoped evidence; neither platform has been selected or provisioned for MeepSheep. Do not resume, provision, deploy, or change DNS until the owner confirms the intended account and data owner.
+A read-only inventory on 2026-10-31 found zero zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues in the one connected Cloudflare account. The existing Supabase project `meepsheep-storage` is `INACTIVE` and its database could not be inspected. This is account-scoped evidence; neither platform has been selected or provisioned for MeepSheep. Do not resume, provision, deploy, or change DNS until the owner confirms the intended account and data owner.
 
 ## 8. Security boundaries
 

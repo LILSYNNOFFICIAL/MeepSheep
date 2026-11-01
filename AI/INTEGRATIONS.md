@@ -58,7 +58,7 @@ Recheck specifications, SDK versions, pricing, plans, and terms immediately befo
 
 ## 6. Infrastructure candidates
 
-Cloudflare Workers/Agents SDK, Workflows, Durable Objects, D1, Queues, KV, R2, and Static Assets are candidates only. The accessible Cloudflare account inspected on 2026-11-01 returned no zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues. The existing Supabase `meepsheep-storage` project in the connected Free organization is `INACTIVE`; its database was not accessible for read-only schema/migration inspection. Confirm the intended account and authoritative database before provisioning or deployment.
+Cloudflare Workers/Agents SDK, Workflows, Durable Objects, D1, Queues, KV, R2, and Static Assets are candidates only. The accessible Cloudflare account inspected on 2026-10-31 returned no zones, Worker scripts, D1 databases, Durable Object namespaces, or Queues. The existing Supabase `meepsheep-storage` project in the connected Free organization is `INACTIVE`; its database was not accessible for read-only schema/migration inspection. Confirm the intended account and authoritative database before provisioning or deployment.
 
 Supabase remains an alternative candidate for selected identity/data responsibilities. Avoid two competing authoritative databases.
 
