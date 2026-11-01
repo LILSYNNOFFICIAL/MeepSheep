@@ -102,6 +102,21 @@ test("registry dispatcher rechecks the approved schema and dispatches with the w
   assert.strictEqual(calls[0].options.signal, controller.signal);
 });
 
+
+test("task dispatcher permits task:dispatch without granting synchronous agent:message", async () => {
+  const { dispatcher, calls } = setup();
+  const taskOnlyPrincipal = {
+    ...task,
+    callerPrincipalId: "caller-a",
+    tenantId: "tenant-a"
+  };
+  const result = await dispatcher.dispatch(taskOnlyPrincipal, {
+    signal: new AbortController().signal
+  });
+  assert.deepEqual(result, { accepted: true });
+  assert.equal(calls.length, 1);
+});
+
 test("registry dispatcher rejects schema drift before remote invocation", async () => {
   const changed = {
     ...tool,
