@@ -108,16 +108,16 @@ Never infer implementation from documentation, a successful API response, or a m
 - [x] Add local MCP integration tests and run them in GitHub Actions.
 - [x] Add local lab setup and verification notes in `AI/MCP_LAB.md`.
 
-**Current evidence:** PR #5 feature head `9f8050d09e068e31b13e26ead4ef255e28fbf53b` passed exact-head CI run [41289284477](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289284477), checked out as merge revision `ec6f3e5849496b4ee7f084b4f10c28e41e5bc1e8`: all focused gates, 97/97 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with no warnings/errors/critical, and both workflow YAML files. The seven-case reusable task repository contract suite passed. The separate-process loopback TCP test proves local socket-level MCP transport, not a public deployment or live external AI connection.
+**Current evidence:** PR #5 feature head `b5904db4fdaf1d608e5264f86038a45380116fb5` passed exact-head CI run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297), checked out as merge revision `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`: all focused gates, 98/98 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with no warnings/errors/critical, and both workflow YAML files. The eight-case reusable task repository contract suite passed. The separate-process loopback TCP test proves local socket-level MCP transport, not a public deployment or live external AI connection.
 
 ## Phase 4B: Asynchronous tasks
 
 - [x] Implement local task/outbox repository contract and in-memory reference adapter, with completion fenced by worker ID, claim generation, lease snapshot and expiry.
-- [x] Extract and pass a seven-case repository contract suite that a future durable adapter can register against its own factory.
+- [x] Extract and pass an eight-case repository contract suite that a future durable adapter can register against its own factory, including tenant-and-caller idempotency scope.
 - [x] Add caller-scoped idempotent task creation, deadline enforcement, optimistic state transitions, event history, cancellation, bounded wait and task output limits.
 - [x] Revalidate target permissions and approved remote tool schema immediately before asynchronous dispatch.
 - [x] Add optional caller-bound `delegate_task`, `get_task`, `wait_task`, and `cancel_task` MCP tools.
-- [x] Verify the updated exact head with all focused task gates and the complete quality workflow (run 41289284477, feature commit `9f8050d09e068e31b13e26ead4ef255e28fbf53b`, PR merge revision `ec6f3e5849496b4ee7f084b4f10c28e41e5bc1e8`); all 7 shared repository contract tests pass.
+- [x] Verify the updated exact head with all focused task gates and the complete quality workflow (run 41289499297, feature commit `b5904db4fdaf1d608e5264f86038a45380116fb5`, PR merge revision `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`); all 8 shared repository contract tests pass.
 - [ ] Implement durable database transactions with database-authoritative lease expiry, a checked dispatch-start/lease-ownership boundary, queue/outbox consumer, worker recovery, retention and monitoring before production.
 
 No automatic retry is permitted after a potentially delivered remote invocation unless the target's end-to-end idempotency contract is established.

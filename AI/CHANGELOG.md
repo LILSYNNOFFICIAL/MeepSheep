@@ -2,6 +2,14 @@
 
 Meaningful product, architecture, security, and release changes are recorded here. Dates use YYYY-MM-DD. This log does not replace Git history.
 
+## 2026-11-01: Reusable task repository contract suite (draft PR #5)
+
+- Extracted `registerTaskRepositoryContract({ test, createRepository, name })` into `tests/support/task-repository-contract.mjs`; the in-memory adapter registers the shared contract through `tests/task-store-memory.test.mjs`.
+- Expanded the suite to eight provider-neutral behavioral checks, covering concurrent initial creation, idempotency uniqueness scoped by both tenant and caller, tenant-isolated reads, compare-and-swap transitions, exclusive/reclaimed leases, and strict stale/expired claim completion fencing.
+- Future D1/PostgreSQL repository adapters should register the same behavioral suite against their own factory and add provider-specific transaction rollback, database-clock, cross-process, and restart-recovery tests.
+- Exact PR #5 feature head `b5904db4fdaf1d608e5264f86038a45380116fb5` passed full quality run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297), checked out as merge revision `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`: 98/98 Node tests, 10/10 Python tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML validations.
+- This remains a test contract for the in-memory reference adapter. No provider, database, queue, or production worker has been selected or provisioned.
+
 ## 2026-11-01: Task outbox lease fencing (draft PR #5)
 
 - Added regression coverage proving that an expired worker claim cannot complete an outbox item and that an old claim cannot complete after the same worker ID has reclaimed it.

@@ -55,7 +55,7 @@ Mocks prove contract behavior only. They do not establish that a real provider o
 
 ## 3.1 Verified local lab coverage
 
-The current exact-head quality run [41289284477](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289284477) on PR #5 feature head `9f8050d09e068e31b13e26ead4ef255e28fbf53b` passed all focused security, connection, and task gates plus the full Node suite (CI merge revision `ec6f3e5849496b4ee7f084b4f10c28e41e5bc1e8`).
+The current exact-head quality run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297) on PR #5 feature head `b5904db4fdaf1d608e5264f86038a45380116fb5` passed all focused security, connection, and task gates plus the full Node suite (CI merge revision `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`).
 
 | Suite | Passed |
 |---|---:|
@@ -67,15 +67,14 @@ The current exact-head quality run [41289284477](https://github.com/LILSYNNOFFIC
 | Owner connection lifecycle | 10 |
 | Task coordinator | 15 |
 | Task dispatcher | 8 |
-| Reusable task repository contract suite | 7 |
-| Outbox lease-fencing regressions | Included in the 7 contract cases |
-| Full Node suite | 97 |
+| Reusable task repository contract suite | 8 |
+| Full Node suite | 98 |
 | Python Wellness Doctor | 10 |
 | Repository Doctor | 117, 0 warnings/errors/critical |
 
 Both GitHub Actions workflow YAML files parsed successfully. The read-only quality workflow installs from the lockfile, runs focused gates, executes the full Node suite, runs Python unit tests and the Repository Doctor, and fails the final gate if any required step fails or is skipped.
 
-Task tests use the reusable `registerTaskRepositoryContract({ test, createRepository, name })` harness in `tests/support/task-repository-contract.mjs`. The in-memory adapter currently runs seven shared behavioral cases: concurrent idempotent creation and atomic initial records, tenant-scoped reads, compare-and-swap transition races with one event winner, exclusive lease claims and reclaim attempts, exact-claim completion fencing, expired-lease rejection, and stale-generation rejection when worker IDs are reused. Future durable adapters should register the same contract against their own repository factory, then add provider-specific rollback, database-clock, cross-process and restart tests. Coordinator tests separately cover caller/tenant idempotency, authorization-before-persistence, input/deadline bounds, task cancellation races, remote schema drift, sanitized errors, and optional MCP task-tool identity binding. The lease-fencing regressions were observed failing before the repair and passing afterward. These checks verify the local reference implementation only; they do not establish durable SQL transactions, database-clock expiry, cross-process locking, the suspended-worker dispatch race, queue redelivery, restart recovery, or production task guarantees.
+Task tests use the reusable `registerTaskRepositoryContract({ test, createRepository, name })` harness in `tests/support/task-repository-contract.mjs`. The in-memory adapter currently runs eight shared behavioral cases: concurrent idempotent creation and atomic initial records, idempotency uniqueness scoped to both tenant and caller, tenant-scoped reads, compare-and-swap transition races with one event winner, exclusive lease claims and reclaim attempts, exact-claim completion fencing, expired-lease rejection, and stale-generation rejection when worker IDs are reused. Future durable adapters should register the same contract against their own repository factory, then add provider-specific rollback, database-clock, cross-process and restart tests. Coordinator tests separately cover caller/tenant idempotency, authorization-before-persistence, input/deadline bounds, task cancellation races, remote schema drift, sanitized errors, and optional MCP task-tool identity binding. The lease-fencing regressions were observed failing before the repair and passing afterward. These checks verify the local reference implementation only; they do not establish durable SQL transactions, database-clock expiry, cross-process locking, the suspended-worker dispatch race, queue redelivery, restart recovery, or production task guarantees.
 
 The MCP integration suite exercises SDK handler/client instances through a deterministic fetch bridge, plus a separately spawned mock agent over loopback TCP. It does not prove public network deployment, production authentication, persistent registry/vault/task state, real AI inference, OAuth issuance, deployed SSRF protections, or actual provider compatibility.
 

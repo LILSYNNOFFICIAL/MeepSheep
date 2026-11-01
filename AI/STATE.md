@@ -4,7 +4,7 @@
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
 **Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)  
-**Latest code verification before this documentation refresh:** PR #5 feature commit `9f8050d09e068e31b13e26ead4ef255e28fbf53b` passed run [41289284477](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289284477); CI checked out PR merge revision `ec6f3e5849496b4ee7f084b4f10c28e41e5bc1e8`. The reusable seven-case task repository contract suite passes. This documentation refresh receives a separate follow-up CI run.
+**Latest code verification before this documentation refresh:** PR #5 feature commit `b5904db4fdaf1d608e5264f86038a45380116fb5` passed run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297); CI checked out PR merge revision `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`. The reusable eight-case task repository contract suite passes, including tenant-and-caller-scoped idempotency. This documentation refresh receives a separate follow-up CI run.
 
 This ledger distinguishes verified local behavior from production capabilities that remain unimplemented or unverified.
 
@@ -34,7 +34,7 @@ All three PRs were rechecked on 2026-11-01. They remain open and mergeable. The 
 |---|---|---|---|---|
 | [#3](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3) | Build MCP relay laboratory | `feat/mcp-relay-lab` at `ca56cbfcb82d0c19fcbf6b904c43ae1dc1579049` | `main` | Open, ready for review |
 | [#4](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4) | Require owner-approved MCP tool schema fingerprints | `feat/mcp-tool-schema-approval` at `1d76b9708d7102bbce7e18af3c3541cbc011755d` | `feat/mcp-relay-lab` | Open, stacked on #3 |
-| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at `9f8050d09e068e31b13e26ead4ef255e28fbf53b` | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
+| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at `b5904db4fdaf1d608e5264f86038a45380116fb5` | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
 
 Required integration order is **#3 → #4 → #5**. PR #5 must not be merged directly to `main` while its base is PR #4's branch. After a parent merges, retarget/rebase its child as required, inspect the changed diff, rerun CI on the new exact head, and obtain review before proceeding. No PR was merged, retargeted, or closed in this work.
 
@@ -70,7 +70,7 @@ Required integration order is **#3 → #4 → #5**. PR #5 must not be merged dir
 
 - [x] Provider-neutral task coordinator with server-generated task/trace IDs, tenant/caller scope, request fingerprint, scoped idempotency hash, bounded JSON payload, deadlines, and optimistic-concurrency version.
 - [x] Repository contract defines atomic task + initial event + dispatch outbox creation, version-checked transition + event append, leased outbox claim, and fenced completion requiring worker ID, claim attempt, exact lease deadline, and an unexpired lease.
-- [x] Reusable seven-case repository behavioral contract is registered by the in-memory adapter test suite; future adapters can run it against their own repository factory.
+- [x] Reusable eight-case repository behavioral contract is registered by the in-memory adapter test suite; future adapters can run it against their own repository factory, including tenant-and-caller idempotency uniqueness.
 - [x] In-memory reference repository implements the contract for local tests only; it is not durable or safe for multi-process deployment.
 - [x] Registry-backed dispatcher rechecks tenant, caller grant, approved tool name, current remote schema fingerprint, and cancellation before remote call.
 - [x] Worker state transitions, expiry, task event history, bounded cancellation/wait, output-size limits, and sanitized error mapping.
@@ -83,9 +83,9 @@ Required integration order is **#3 → #4 → #5**. PR #5 must not be merged dir
 
 The current PR #5 feature branch head passed the complete GitHub Actions quality workflow:
 - **PR:** [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5)
-- **Feature branch commit:** `9f8050d09e068e31b13e26ead4ef255e28fbf53b`
-- **CI run:** [41289284477](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289284477) — completed successfully.
-- **PR merge revision checked out:** `ec6f3e5849496b4ee7f084b4f10c28e41e5bc1e8`.
+- **Feature branch commit:** `b5904db4fdaf1d608e5264f86038a45380116fb5`
+- **CI run:** [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297) — completed successfully.
+- **PR merge revision checked out:** `6ebff4161b26a4f9e18f7fa759c68b9f94f3d89f`.
 - Authentication boundary: 8/8.
 - Endpoint security: 11/11.
 - Credential vault: 11/11.
@@ -94,18 +94,18 @@ The current PR #5 feature branch head passed the complete GitHub Actions quality
 - Owner connection lifecycle: 10/10.
 - Task coordinator: 15/15.
 - Task dispatcher: 8/8.
-- Reusable task repository contract suite: 7/7.
-- Full Node suite: **97 passed, 0 failed**.
+- Reusable task repository contract suite: 8/8.
+- Full Node suite: **98 passed, 0 failed**.
 - Python Wellness Doctor unit tests: **10 passed**.
 - Repository Doctor: **117 passed, 0 warnings, 0 errors, 0 critical**.
 - Both GitHub Actions workflow YAML files parsed successfully.
 - Every focused gate and the final complete quality gate passed on the tested PR merge revision.
 
-The reusable suite in `tests/support/task-repository-contract.mjs` covers concurrent idempotent creation and initial records, tenant-scoped reads, version-checked transition races, exclusive outbox claims and reclaim, exact lease-completion predicates, expired-lease rejection, and claim-generation fencing when worker IDs are reused. The in-memory adapter is its first implementation; no durable adapter exists yet.
+The reusable suite in `tests/support/task-repository-contract.mjs` covers concurrent idempotent creation and initial records, uniqueness scoped to both tenant and caller, tenant-scoped reads, version-checked transition races, exclusive outbox claims and reclaim, exact lease-completion predicates, expired-lease rejection, and claim-generation fencing when worker IDs are reused. The in-memory adapter is its first implementation; no durable adapter exists yet.
 
-**TDD evidence:** Run [41288627434](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288627434) failed the two initial lease-fencing assertions against the pre-fix implementation. The current exact-head run above passed all seven shared repository-contract cases.
+**TDD evidence:** Run [41288627434](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288627434) failed the two initial lease-fencing assertions against the pre-fix implementation. The current exact-head run above passed all eight shared repository-contract cases.
 
-Earlier lease-fencing-only verification was run [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098) on feature commit `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4`. The documentation reconciliation checkpoint `dfda741daaeb37b23334b5c7fb09e2be85b8fc51` passed run [41289073632](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289073632). Neither historical run supersedes the current reusable-contract verification.
+Earlier reusable-contract verification was run [41289284477](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289284477) on feature commit `9f8050d09e068e31b13e26ead4ef255e28fbf53b` with seven contract cases. This current run includes the eighth idempotency-scope case.
 
 
 ## Current account and infrastructure inventory (read-only, 2026-10-31)
