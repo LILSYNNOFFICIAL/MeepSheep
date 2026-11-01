@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { AgentRegistry } from "../src/relay/agent-registry.mjs";
 import { fingerprintToolSchema } from "../src/relay/tool-schema.mjs";
-import { createRegistryTaskDispatcher } from "../src/relay/task-dispatcher.mjs";
+import { createRegistryTaskCoordinator, createRegistryTaskDispatcher } from "../src/relay/task-dispatcher.mjs";
+import { createInMemoryTaskRepository } from "../src/relay/task-store-memory.mjs";
 
 const principal = {
   principalId: "caller-a",
   tenantId: "tenant-a",
-  permissions: ["agent:message"]
+  permissions: ["agent:message", "task:dispatch", "task:read", "task:cancel"]
 };
 const tool = {
   name: "review_message",
@@ -66,6 +67,29 @@ const task = {
   toolName: "review_message",
   input: { message: "Review this." }
 };
+
+
+test("registry coordinator completes a task through the approved remote MCP client", async () => {
+  const { calls, registry } = setup();
+  const coordinator = createRegistryTaskCoordinator({
+    registry,
+    repository: createInMemoryTaskRepository(),
+    clock: () => 1000,
+    defaultTimeoutMs: 5000,
+    maxTaskDurationMs: 10000
+  });
+  const created = await coordinator.createTask(principal, {
+    targetAgentId: "agent-a",
+    toolName: "review_message",
+    arguments: { message: "Run this as a task." },
+    idempotencyKey: "dispatcher-task-0001"
+  });
+  const processed = await coordinator.processNext({ workerId: "worker-a" });
+  assert.equal(processed.task.taskId, created.task.taskId);
+  assert.equal(processed.task.state, "completed");
+  assert.deepEqual(processed.task.output, { accepted: true });
+  assert.equal(calls.length, 1);
+});
 
 test("registry dispatcher rechecks the approved schema and dispatches with the worker signal", async () => {
   const { dispatcher, calls } = setup();
