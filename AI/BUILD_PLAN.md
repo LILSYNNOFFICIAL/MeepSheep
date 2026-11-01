@@ -47,6 +47,19 @@
 - [ ] Record pricing, quotas, rate limits, and terms.
 - [ ] Do not configure DNS or deploy until the correct account/domain is confirmed.
 
+## Persistence platform review checkpoint (2026-11-01, read-only)
+
+- [x] Restore the existing `meepsheep-storage` project after owner authorization and verify `ACTIVE_HEALTHY`.
+- [x] Inspect PostgreSQL version, public schema, RLS policies, constraints, indexes, extension availability, migration history, and Supabase security/performance advisors.
+- [x] Recheck the separate BlueNote project without modifying it.
+- [x] Re-inventory the connected Cloudflare account: zero Zones, Workers, D1 databases, Queues, and Durable Object namespaces.
+- [ ] Obtain owner approval for the primary database/authentication platform and the operating-plan budget.
+- [ ] Recover the eleven exact Supabase SQL migration files or create a reviewed, reproducible baseline before repository-driven schema work.
+
+**Recommendation, not a final platform decision:** Use the existing Supabase PostgreSQL 17 project as the preferred database candidate for the next adapter design, and evaluate Supabase Queues/PGMQ as its durable queue. The project already has Vault and crypto extensions installed, plus earlier owner-scoped MCP server/tool/credential-reference tables. PGMQ version 1.5.1 is available but not installed. The existing schema is not sufficient for the current product model: it lacks tenant/principal/grant and task/event/outbox records, and its owner-based RLS needs explicit mapping to the relay's verified tenant/principal claims. The public application tables and auth users currently report zero rows.
+
+The organization is on Supabase Free. Free projects with low activity over seven days may be paused, so an always-on production service requires an explicit paid-plan and budget decision. No upgrade, extension installation, migration, schema change, or deployment was made. Cloudflare D1 + Queues + Workflows remains viable if Cloudflare is selected as the runtime, but the connected account currently has no MeepSheep infrastructure.
+
 ## Phase 3: Engineering foundation
 
 - [x] Select Node.js 26.13.0 for the local laboratory.
