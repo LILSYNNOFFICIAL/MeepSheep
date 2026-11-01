@@ -94,7 +94,7 @@ Remote errors are returned as `REMOTE_FAILED`; remote stack traces and raw error
 
 The suite includes `tests/mcp-relay.integration.test.mjs`, `tests/tool-schema.test.mjs`, and mock agent fixtures under `tests/fixtures/`.
 
-Twelve verified cases across the relay and fingerprint suites:
+Thirteen test cases are defined across the relay and fingerprint suites. Execution on this branch is pending CI:
 1. Same-tenant discovery excludes other tenants and does not expose endpoint/secret references.
 2. Authorized `send_message` reaches the mock remote MCP tool and returns structured output and provenance.
 3. Cross-tenant agents are hidden and cannot be invoked by guessed ID.
@@ -104,13 +104,15 @@ Twelve verified cases across the relay and fingerprint suites:
 7. Remote tool failure is sanitized before returning to the caller.
 8. A separate child process serves a mock MCP agent over loopback TCP; a unique caller message is received and echoed by that remote process.
 9. Requests without validated authentication context are rejected; caller/tenant identity fields supplied in tool arguments cannot override trusted auth context.
+10. A same-name remote tool whose schema changes after owner approval is rejected before invocation.
+11-13. Fingerprint unit tests verify key-order canonicalization, behavior-contract drift detection, and rejection of incomplete definitions.
 
 **Red/green evidence:**
 - Initial test-first run 41253274558 failed because the relay implementation modules did not yet exist.
 - After implementing the registry and MCP handler, run 41253320195 passed the initial six tests.
 - After adding remote failure sanitization coverage, run 41253359267 passed all seven tests.
 
-Latest CI run to be recorded after this branch's workflow completes. Previous baseline run 41253824029 passed all 9 Node MCP tests and the existing 10 Python Wellness Doctor unit tests, reported 112 repository checks with zero warnings/errors/critical findings, and parsed both GitHub Actions workflow YAML files. [Inspect the run](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253769189).
+Latest baseline CI run 41253824029 passed all 9 Node MCP tests and the existing 10 Python Wellness Doctor unit tests, reported 112 repository checks with zero warnings/errors/critical findings, and parsed both GitHub Actions workflow YAML files. [Inspect the run](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41253769189).
 
 ## Important limitations
 
@@ -119,7 +121,7 @@ This is intentionally a local lab, not production:
 - The principal resolver is injected by test setup. No production OAuth/token verification or identity provider is implemented.
 - The registry is in-memory. No database, migrations, durable task history, or message retention exists.
 - Only `discover_agents` and `send_message` are implemented. Task delegation, task retrieval, wait, cancellation, and connection management remain planned.
-- The local lab now compares a canonical SHA-256 fingerprint of the discovered remote tool contract against the owner-approved snapshot before each invocation. Production owner onboarding and reapproval UI are not implemented.
+- The local lab now compares a canonical SHA-256 fingerprint of the discovered remote tool contract against the owner-approved snapshot before each invocation. This branch's new tests have not yet been observed passing in CI. Production owner onboarding and reapproval UI are not implemented.
 - No owner console, credential onboarding, production secret store, SSRF policy, rate/budget service, or multi-tenant persistence exists.
 - No real AI provider or consumer chat UI is connected.
 - No Cloudflare resource, DNS, TLS, or production deployment has been changed.
