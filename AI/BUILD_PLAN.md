@@ -72,7 +72,7 @@
 - [ ] Implement deterministic mock MCP agent.
 - [ ] Add contract tests and local integration tests.
 
-**Current evidence:** PR #5 feature head `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4` passed exact-head quality run [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098): 92/92 Node tests, 10/10 Python tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML validations. CI checked out PR merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`. The local loopback TCP case does not prove a public network deployment or live external AI agent.
+**Current evidence:** PR #5 feature head `9f8050d09e068e31b13e26ead4ef255e28fbf53b` passed exact-head quality run [41289284477](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289284477): 97/97 Node tests, 10/10 Python tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML validations. The seven-case reusable task repository contract suite passed. CI checked out PR merge revision `ec6f3e5849496b4ee7f084b4f10c28e41e5bc1e8`. The local loopback TCP case does not prove a public network deployment or live external AI agent.
 
 ## Verified local security and connection lifecycle (PR #5, stacked on PR #4)
 
@@ -94,13 +94,14 @@
 ## Phase 4B: Asynchronous task execution (local implementation, CI verified)
 
 - [x] Define task, event, outbox, deadline, idempotency and worker lease contracts, including claim-generation fencing and expiry-checked completion.
+- [x] Extract seven provider-neutral repository contract tests that future SQL adapters can register against a repository factory.
 - [x] Add the task coordinator with tenant/caller authorization, bounded input/output, deadlines, optimistic state transitions, cancellation and bounded wait.
 - [x] Add an in-memory reference repository for deterministic local tests.
 - [x] Add registry-backed dispatch with owner-approved schema revalidation before invocation.
 - [x] Add optional MCP tools for `delegate_task`, `get_task`, `wait_task`, and `cancel_task`, bound to the trusted request principal.
 - [x] Reject stale/expired outbox completion by checking worker ID, monotonic claim attempt, exact lease deadline and expiry; prevent blind retries after a potentially delivered remote invocation with `REMOTE_OUTCOME_UNKNOWN`.
-- [x] Verify the updated feature head with all focused gates and full quality workflow: [run 41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098), code commit `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4` (CI merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`).
-- [x] CI evidence: task coordinator 15/15, task dispatcher 8/8, outbox lease-fencing regressions 2/2, full Node suite 92/92, Wellness Doctor 10/10, Repository Doctor 117 passed with zero warnings/errors/critical, and both workflow YAML validations.
+- [x] Verify the updated feature head with all focused gates and full quality workflow: [run 41289284477](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289284477), code commit `9f8050d09e068e31b13e26ead4ef255e28fbf53b` (CI merge revision `ec6f3e5849496b4ee7f084b4f10c28e41e5bc1e8`).
+- [x] CI evidence: task coordinator 15/15, task dispatcher 8/8, reusable task repository contract suite 7/7, full Node suite 97/97, Wellness Doctor 10/10, Repository Doctor 117 passed with zero warnings/errors/critical, and both workflow YAML validations.
 - [ ] Implement the production SQL repository and migrations with database-authoritative lease expiry, durable outbox/queue, worker deployment and operational recovery.
 - [ ] Test transaction rollback, cross-process contention, worker crashes at every state boundary, the suspended-worker-to-dispatch race, queue redelivery, and real remote idempotency/cancellation.
 
