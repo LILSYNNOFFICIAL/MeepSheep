@@ -44,7 +44,8 @@ async function setup({ agents = [], principalValue = principal } = {}) {
     remoteHandlers.push(mock.handler);
     const remoteClient = await connectClient(mock.handler, agent.id);
     const discoveredTools = (await remoteClient.listTools()).tools;
-    const approvedToolSchemas = agent.approvedToolSchemas ?? Object.fromEntries(agent.approvedTools ?? [agent.remoteToolName ?? "review_message"].map((name) => {
+    const approvedToolNames = agent.approvedTools ?? [agent.remoteToolName ?? "review_message"];
+    const approvedToolSchemas = agent.approvedToolSchemas ?? Object.fromEntries(approvedToolNames.map((name) => {
       const discovered = discoveredTools.find((tool) => tool.name === name) ?? { ...discoveredTools[0], name };
       return [name, fingerprintToolSchema(discovered)];
     }));
