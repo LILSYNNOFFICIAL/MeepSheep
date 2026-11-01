@@ -40,6 +40,7 @@ Primary risks:
 - Authenticate every inbound MCP client using the selected supported auth mechanism.
 - Derive principal and tenant identity from trusted credentials, never caller-supplied body fields.
 - Bind each agent connection to an owner and tenant.
+- New connections default to owner-only principal access. Require an explicit same-tenant grant from the connection owner before another principal can discover or invoke the connection. Check grants on every operation and revoke future access immediately.
 - Default each connection to owner-only access. Require explicit owner approval to grant another principal access, and check the grant on both discovery and every invocation. Revoke grants immediately for future operations.
 - Separate discovery, message-send, task-dispatch, status-read, cancellation, artifact-read, and administration scopes.
 - Check authorization server-side on every operation, not only at connection setup.
