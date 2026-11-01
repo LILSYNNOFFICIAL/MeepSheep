@@ -1,9 +1,9 @@
 # MeepSheep Project State Ledger
 
-**Last updated:** 2026-10-31  
+**Last updated:** 2026-11-01  
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
-**Active implementation branch:** `feat/mcp-relay-lab`
+**Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)
 
 This ledger distinguishes verified implementation from planned or unverified capabilities.
 
@@ -39,6 +39,22 @@ This ledger distinguishes verified implementation from planned or unverified cap
 
 **Important boundary:** The test uses the MCP SDK's Streamable HTTP transport with a custom in-process fetch bridge. It exercises MCP protocol messages between separate handler/client instances, but it does not yet prove socket-level networking, separate-process operation, production authentication, persistence, or a live external AI system.
 
+## Secure connection boundary (draft PR #5)
+
+- [x] RS256 JWT access-token verifier checks a configured JWKS resolver, exact issuer/audience, `typ: at+jwt`, subject, tenant, client ID, unique OAuth scope tokens, token ID, issue/expiry times, clock skew, and maximum lifetime.
+- [x] Bearer middleware authenticates each inbound HTTP request, replaces any caller-supplied MCP auth context, and returns fail-closed 401/503 responses.
+- [x] Relay integration test proves a forged `authInfo.extra.principal` cannot override the signed-token principal or tenant.
+- [x] Exact-host endpoint validator requires HTTPS/443, rejects URL credentials/query/fragment/IP literals, resolves all DNS answers, and rejects non-public or mixed address sets.
+- [x] Pinned HTTPS fetch adapter restricts requests to the validated origin/path and allowed methods, supplies only snapshotted addresses to DNS lookup, preserves host/SNI TLS verification, strips unsafe request headers, bounds request/response bytes, applies a timeout, and does not follow redirects.
+- [x] Focused security tests: 7 authentication tests and 9 endpoint security tests.
+- [x] Full Node suite: 30 passed, 0 failed.
+- [x] CI on exact head `05563436e7631024733bd82bd5f03c9612ce0bf4`: [run 41268297674](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41268297674).
+- [x] Python Wellness Doctor: 10 passed.
+- [x] Repository Doctor: 113 passed, 0 warnings, 0 errors, 0 critical.
+- [x] Both GitHub Actions workflow YAML files parsed successfully.
+
+**Security boundary:** The token verifier is a resource-server primitive, not a complete OAuth authorization server or production identity integration. The endpoint validator/fetch helper is implemented and unit-tested, but it is not yet wired into owner-controlled agent registration or the current registry's outbound MCP client construction. The fetch adapter's real external TLS/socket behavior and deployment egress policy remain unverified.
+
 ## Latest verification
 
 - Stacked PR #4: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4
@@ -59,11 +75,18 @@ This ledger distinguishes verified implementation from planned or unverified cap
 ## Not implemented or not verified
 
 - [ ] Persistent database, migrations, durable tasks, or message history.
-- [ ] Production authentication/OAuth and a trusted real caller identity provider.
+- [x] Local signed bearer-token resource-server verification and forged-context integration boundary.
+- [ ] Production OAuth authorization server/token issuance, registered clients/PKCE, trusted identity provider, JWKS lifecycle, and revocation.
 - [ ] Owner console for registering endpoints and approving tools.
 - [x] Local full tool-schema fingerprint drift detection and fail-closed invocation check implemented and CI-verified on PR #4.
 - [ ] Production owner onboarding/reapproval workflow for schema changes.
-- [ ] Network-separated remote MCP process and socket-level round trip.
+- [x] Local HTTPS endpoint policy and pinned-fetch primitives with deterministic tests.
+- [ ] Wire endpoint policy into owner-approved remote MCP registration/client construction and verify real socket/TLS behavior.
+- [ ] Encrypted per-connection credential vault with production key-provider integration.
+- [ ] Persistent agent/connection registry and migrations.
+- [ ] Durable asynchronous tasks, idempotency, deadlines, cancellation, and retries.
+- [x] Local separate-process mock MCP agent over loopback TCP.
+- [ ] Public network-separated endpoint and live external remote MCP agent round trip.
 - [ ] Real external AI agent and real requesting client round trip.
 - [ ] A2A/provider/webhook adapters.
 - [ ] Production Cloudflare deployment, DNS, TLS, or hosting.
@@ -79,13 +102,14 @@ A read-only inspection on 2026-10-31 returned one accessible Cloudflare account 
 
 ## Next actions
 
-1. Extend the lab to a network-separated remote MCP process and socket-level HTTP test.
-2. Generate and commit a dependency lockfile, then change CI to `npm ci`.
-3. Add full tool-schema fingerprint verification and tests.
-4. Confirm the first real requesting MCP client and target remote agent.
-5. Verify the correct Cloudflare account/domain and decide the single authoritative database/auth owner.
-6. Design production authentication, endpoint validation, persistence, async tasks, and budgets before adding live credentials.
-7. Prove a genuine independent-agent round trip before claiming provider support.
+1. Integrate the validated endpoint and pinned fetch into the remote MCP connection factory, then verify a real TLS/socket path.
+2. Select and integrate the production OAuth issuer, client registration/PKCE flow, JWKS rotation, and token revocation owner.
+3. Build the encrypted per-connection credential vault and key-provider integration.
+4. Select the authoritative database and implement persistent agent/connection records and migrations.
+5. Implement durable asynchronous tasks, idempotency, deadlines, cancellation, and bounded retries.
+6. Confirm the first real requesting MCP client and target remote agent.
+7. Verify the correct Cloudflare account/domain and selected hosting egress controls before deployment.
+8. Prove a genuine independent-agent round trip before claiming provider support.
 
 ## Session handoff
 
