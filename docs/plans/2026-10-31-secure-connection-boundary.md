@@ -4,9 +4,9 @@
 
 **Goal:** Add a server-side bearer-token authentication boundary and a DNS-validated, connect-time-pinned HTTPS transport for explicitly approved outbound MCP endpoints.
 
-**Architecture:** Keep authentication and endpoint security as small Node.js modules that are independently testable and do not depend on a production database or secret manager. The inbound MCP hosting layer authenticates the Authorization bearer token and supplies trusted MCP `authInfo`; the relay resolves the principal by verifying that signed token again, never by trusting `authInfo.extra`. Outbound endpoint onboarding resolves all DNS answers, rejects any non-public destination, and creates an HTTPS fetch adapter that pins every request to the validated address set, preserves TLS hostname verification, and never follows redirects.
+**Architecture:** Keep authentication and endpoint security as small Node.js modules that are independently testable and do not depend on a production database or secret manager. The inbound wrapper verifies an RS256 JWT access token against a trusted JWKS resolver, then places an internally branded auth context on the request; the relay resolves the principal only from that verified context. Outbound endpoint validation resolves all DNS answers, rejects any non-public destination, and creates an HTTPS fetch adapter that pins requests to the validated address set, preserves TLS hostname verification, and never follows redirects. The local helpers do not implement token issuance, production key lifecycle, endpoint onboarding persistence, or a public hosting runtime.
 
-**Tech Stack:** Node.js 26.13.0, built-in `node:test`, `node:crypto`, `node:dns/promises`, `node:https`, `node:net`, MCP TypeScript SDK 2.4.0.
+**Tech Stack:** Node.js 26.13.0, `jose@6.2.14`, built-in `node:test`, `node:dns/promises`, `node:https`, `node:net`, MCP TypeScript SDK 2.4.0.
 
 ## Global Constraints
 
@@ -27,43 +27,44 @@
 **Files:**
 - Create: `src/relay/auth.mjs`
 - Modify: `src/relay/mcp-handler.mjs` only if required to wire a verified resolver without changing the MCP tool surface.
-- Test: `tests/security-boundary.test.mjs`
+- Test: `tests/endpoint-security.test.mjs`
 - Test: `tests/mcp-relay.integration.test.mjs`
 
 **Interfaces:**
-- `signAccessToken(claims, { issuer, audience, secret }) -> string`
-- `createBearerAuthenticator({ issuer, audience, secret, clock, maxLifetimeSeconds, clockSkewSeconds }) -> { authenticate(request), resolvePrincipal(authInfo) }`
-- Claims: `sub`, `tenant_id`, `scope` (array of permission strings), `iat`, `exp`, `jti`.
-- `authenticate(request)` reads one `Authorization: Bearer <token>` header and returns MCP-compatible trusted authInfo containing the original token, client ID, scopes, and expiry.
-- `resolvePrincipal(authInfo)` verifies the signed token again and returns `{ principalId, tenantId, permissions }`; it ignores untrusted `authInfo.extra` fields.
+- `createBearerAuthenticator({ issuer, audience, jwks, clock, maxLifetimeSeconds, clockSkewSeconds }) -> { authenticate(request), resolvePrincipal(authInfo) }`
+- `jwks` is a trusted JOSE-compatible JWKS resolver. The authentication module does not issue tokens or discover a JWKS URL from an inbound request.
+- Claims: `sub`, `tenant_id`, `client_id`, `scope` (unique space-delimited OAuth scope-token string), `iat`, `exp`, and `jti`.
+- `authenticate(request)` accepts one `Authorization: Bearer <token>` credential, verifies RS256 and `typ: at+jwt`, issuer, audience, required claims, expiry, future issue time, clock skew, and maximum lifetime. It returns an internally branded MCP auth context containing the original token, client ID, scopes, and expiry.
+- `resolvePrincipal(authInfo)` accepts only the exact auth context object produced by this authenticator and returns `{ principalId, tenantId, permissions }`; copied objects or forged `authInfo.extra` fields are rejected.
+- `withBearerAuthentication(handler, authenticator)` authenticates each HTTP request, overwrites pre-existing auth context, maps missing/invalid credentials to 401 and JWKS retrieval failures to 503, and forwards `close()`.
 
-- [ ] **Step 1: Add focused failing tests**
+- [x] **Step 1: Add focused failing tests**
 
 Assert valid signature/issuer/audience/time/scope claims succeed; missing bearer token returns `AUTH_REQUIRED`; malformed token, wrong signature, wrong issuer/audience, expired token, future-issued token, excessive lifetime, malformed claims, and token/client-ID mismatch return `AUTH_INVALID`. Add an integration test proving forged `authInfo.extra.principal` cannot override the token's principal or tenant.
 
-- [ ] **Step 2: Verify the relevant failure**
+- [x] **Step 2: Verify the relevant failure**
 
-Run: `node --test tests/security-boundary.test.mjs tests/mcp-relay.integration.test.mjs`
+Run: GitHub Actions run `41267916343` on the test-first revision.
 
-Expected: tests fail because `src/relay/auth.mjs` does not exist.
+Observed: the authentication test file failed with `ERR_MODULE_NOT_FOUND` for `src/relay/auth.mjs`; the existing relay and schema tests passed. This was the expected missing-feature failure.
 
-- [ ] **Step 3: Implement the minimum behavior**
+- [x] **Step 3: Implement the minimum behavior**
 
-Use HMAC-SHA-256 with a minimum 32-byte server secret and constant-time signature comparison. Enforce exact issuer and audience, non-empty subject and tenant, a non-empty unique string scope array, valid `iat`/`exp`/JTI, maximum token lifetime, expiry, and bounded clock skew. Never log or return the token. Keep token signing server-side; no public token-issuance endpoint is added.
+Use `jose` to verify RS256 with an injected JWKS resolver and exact issuer/audience. Require `typ: at+jwt`, non-empty subject, tenant ID, client ID, JTI, valid integer `iat`/`exp`, a unique scope-token string, maximum token lifetime, expiry, and bounded clock skew. Keep the verified principal in a private WeakMap associated with the exact auth context object so copied or caller-modified context cannot be trusted. Never log or return the token. No local token-issuance endpoint is added.
 
-- [ ] **Step 4: Verify the focused pass**
+- [x] **Step 4: Verify the focused pass**
 
-Run: `node --test tests/security-boundary.test.mjs tests/mcp-relay.integration.test.mjs`
+Run: `node --test tests/security-boundary.test.mjs` and full `npm test` in CI run `41268297674`.
 
-Expected: all auth and relay integration tests pass, including the forged-extra-principal test.
+Observed: authentication boundary 7/7 passed; the MCP integration test proved that a signed caller token overrides forged `authInfo.extra.principal` values.
 
-- [ ] **Step 5: Run the affected integration check**
+- [x] **Step 5: Run the affected integration check**
 
-Run: `npm test`
+Run: the quality workflow for exact head `05563436e7631024733bd82bd5f03c9612ce0bf4`.
 
-Expected: all existing relay/schema tests and new security tests pass.
+Observed: full Node suite 30/30 passed; Python Wellness Doctor 10/10 passed; Repository Doctor 113 passed with zero warnings/errors/critical; both workflow YAML files parsed.
 
-- [ ] **Step 6: Commit the passing deliverable**
+- [x] **Step 6: Commit the passing deliverable**
 
 `feat: add signed bearer authentication boundary`
 
@@ -83,35 +84,39 @@ Expected: all existing relay/schema tests and new security tests pass.
 - `createPinnedFetch({ validatedEndpoint, requestImpl, timeoutMs }) -> fetch-compatible function`
 - The fetch adapter accepts requests only for the approved endpoint origin and path, pins DNS lookup to the validated address set, preserves original hostname TLS verification, strips hop-by-hop/cookie/proxy headers, and returns redirects without following them.
 
-- [ ] **Step 1: Add focused failing tests**
+- [x] **Step 1: Add focused failing tests**
 
 Cover HTTPS-only and port-443 policy; reject URL credentials, query/fragment, IP literals, localhost, unapproved hostnames, empty DNS results, DNS failures, IPv4 loopback/private/link-local/shared/reserved/multicast/broadcast ranges, IPv6 loopback/ULA/link-local/multicast/mapped/NAT64 and non-global ranges, and mixed public/private DNS answers. Verify all public DNS answers are pinned at request time, TLS SNI remains the original hostname, wrong origin/path is rejected before network I/O, sensitive hop-by-hop/cookie/proxy headers are removed, request timeout is bounded, and 3xx responses are not followed.
 
-- [ ] **Step 2: Verify the relevant failure**
+- [x] **Step 2: Verify the relevant failure**
 
-Run: `node --test tests/security-boundary.test.mjs`
+Run: GitHub Actions run `41267912546` on the endpoint test-first revision.
 
-Expected: tests fail because `src/relay/endpoint-security.mjs` does not exist.
+Observed: the endpoint security test file failed with `ERR_MODULE_NOT_FOUND` for `src/relay/endpoint-security.mjs`; the existing relay/schema tests passed.
 
-- [ ] **Step 3: Implement the minimum behavior**
+- [x] **Step 3: Implement the minimum behavior**
 
-Use Node's DNS resolver with all-answer mode and Node's IP parsing/block lists. Require an exact hostname allowlist. Reject an address set if any answer is non-global. Build the fetch adapter on `node:https` with a custom lookup callback that selects only the validated addresses; use the original hostname for SNI and certificate validation. Reject redirect following and any URL outside the exact approved origin/path. Do not add arbitrary URL input to MCP tools or claim that a hostname allowlist alone prevents SSRF.
+Use Node's DNS resolver with all-answer mode and explicit IPv4/IPv6 range classification. Require exact host allowlisting. Reject the endpoint if any DNS answer is non-global. Build the default fetch adapter on `node:https` with a custom lookup callback selecting only the validated addresses; preserve the original hostname for SNI and certificate validation. Reject redirect following and any URL outside the exact approved origin/path. Remove cookie, proxy, hop-by-hop, and Connection-nominated request headers. Enforce bounded time and request/response bytes. Do not add arbitrary URL input to MCP tools or claim that hostname allowlisting alone prevents SSRF.
 
-- [ ] **Step 4: Verify the focused pass**
+- [x] **Step 4: Verify the focused pass**
 
-Run: `node --test tests/security-boundary.test.mjs`
+Run: `node --test tests/endpoint-security.test.mjs` in CI run `41268297674`.
 
-Expected: all endpoint policy and pinned-fetch tests pass.
+Observed: endpoint policy/pinned-fetch suite 9/9 passed, including IPv4/IPv6 special ranges, mixed DNS answers, pinned lookup, TLS host/SNI options, header stripping, byte limits, timeout, and redirect behavior.
 
-- [ ] **Step 5: Run the affected integration check**
+- [x] **Step 5: Run the affected integration check**
 
-Run: `npm test`
+Run: full quality workflow run `41268297674` on exact head `05563436e7631024733bd82bd5f03c9612ce0bf4`.
 
-Expected: the full suite passes with no change to the existing mock relay behavior. Update security/API/lab/state docs to state exactly what is implemented and what still requires production onboarding, secret storage, and deployment.
+Observed: full Node suite 30/30 passed and all Python Doctor, Repository Doctor, and workflow syntax checks passed. Security/API/lab/state/environment/build-plan/decision/changelog documents record the implemented behavior and remaining production gates.
 
-- [ ] **Step 6: Commit the passing deliverable**
+- [x] **Step 6: Commit the passing deliverable**
 
 `feat: secure outbound MCP endpoint connections`
+
+## Verification boundary and remaining integration
+
+The current endpoint unit suite uses deterministic DNS results and an injected `requestImpl` seam to verify the fetch adapter's request policy, lookup callback, and TLS options. The default `node:https` transport is present, but no test in this plan performs a real external TLS handshake or proves deployed network egress controls. The validated endpoint helper is not yet connected to owner onboarding or the in-memory registry's outbound MCP client construction. Those are explicit follow-up tasks before the helper can be treated as the enforced production connection path.
 
 ## Unresolved production decisions
 
