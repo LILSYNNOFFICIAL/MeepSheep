@@ -4,7 +4,7 @@
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
 **Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)  
-**Latest verified PR #5 checkpoint:** Branch commit `2e192a220cc1182fa5f0bca92fd1a934eddd13f6` passed run [41289860243](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289860243); CI checked out merge revision `2e539222cc3d8c0e833148132915dcd22de1a49f`. The tested branch contains task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5`, which passed run 41289499297, and documentation checkpoint `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034`, which passed run 41289621348. All eight shared repository-contract cases pass.
+**Latest verified PR #5 code checkpoint before this documentation update:** Branch head `cc36b11208e91942288bdf69c283258db2ddc7f4` passed complete quality run [41289984859](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289984859); CI checked out merge revision `89215fc5d8e2197dfc531d2a6c9ff997c0b2b09f`. The run reported 98/98 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML files valid. The current documentation checkpoint is being recorded separately from that tested code checkpoint.
 
 This ledger distinguishes verified local behavior from production capabilities that remain unimplemented or unverified.
 
@@ -34,7 +34,7 @@ All three PRs were rechecked on 2026-11-01. They remain open and mergeable. The 
 |---|---|---|---|---|
 | [#3](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3) | Build MCP relay laboratory | `feat/mcp-relay-lab` at `ca56cbfcb82d0c19fcbf6b904c43ae1dc1579049` | `main` | Open, ready for review |
 | [#4](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4) | Require owner-approved MCP tool schema fingerprints | `feat/mcp-tool-schema-approval` at `1d76b9708d7102bbce7e18af3c3541cbc011755d` | `feat/mcp-relay-lab` | Open, stacked on #3 |
-| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at `2e192a220cc1182fa5f0bca92fd1a934eddd13f6` | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
+| [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5) | Secure MCP connections and add async task orchestration | `feat/secure-connection-boundary` at `cc36b11208e91942288bdf69c283258db2ddc7f4` (latest tested code checkpoint before docs update) | `feat/mcp-tool-schema-approval` | Open, draft, stacked on #4 |
 
 Required integration order is **#3 → #4 → #5**. PR #5 must not be merged directly to `main` while its base is PR #4's branch. After a parent merges, retarget/rebase its child as required, inspect the changed diff, rerun CI on the new exact head, and obtain review before proceeding. No PR was merged, retargeted, or closed in this work.
 
@@ -109,21 +109,30 @@ The reusable suite in `tests/support/task-repository-contract.mjs` covers concur
 The task-contract implementation commit `b5904db4fdaf1d608e5264f86038a45380116fb5` also passed run [41289499297](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289499297). Documentation checkpoint `58f6ee0c73ad1e2836d9aba472d07bdab7c2a034` passed run [41289621348](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41289621348).
 
 
-## Current account and infrastructure inventory (read-only, 2026-10-31)
+## Current account and database inspection (read-only, 2026-11-01)
 
 ### Cloudflare
 - One Cloudflare account is accessible through the current connection.
 - Read-only API inventory returned zero Zones, Worker scripts, D1 databases, Queues, and Durable Object namespaces.
-- No MeepSheep deployment, domain zone, database, queue, or Worker has been created or changed.
-- This inventory is account-scoped; it does not rule out a different Cloudflare account or domain registrar.
+- No Cloudflare resources, DNS, or deployments were created or changed.
+- This inventory is account-scoped and does not rule out another Cloudflare account or registrar.
 
 ### Supabase
-- The accessible organization is on the Free plan.
-- An existing project named `meepsheep-storage` exists in `us-west-1`, but Supabase reports status `INACTIVE`.
-- Project metadata reports PostgreSQL 17.6.1.166. Read-only table/extension inspection failed because the database was inaccessible; migration listing timed out.
-- Security/performance advisors returned no lint records, which is not proof that the inactive database is healthy.
-- A separate active project named `BlueNote` exists in the same organization and is unrelated. Do not repurpose it for MeepSheep.
-- No project was resumed, no migration was applied, and no database schema or data was changed.
+- The accessible organization `NeuroSyn DEV` is on the Free plan.
+- The owner-authorized restore was requested for `meepsheep-storage` only. The project now reports `ACTIVE_HEALTHY` in `us-west-1`, PostgreSQL 17.6.1.166.
+- The separate `BlueNote` project was rechecked and remains `ACTIVE_HEALTHY`; it was not modified.
+- Read-only catalog inspection found 45 user tables across Supabase-managed schemas and five public application tables: `mcp_servers`, `mcp_tools`, `mcp_execution_logs`, `mcp_server_credentials`, and `media_assets`. All five have RLS enabled. Each reported zero rows, and `auth.users` reported zero rows.
+- Eleven migration versions are recorded in `supabase_migrations.schema_migrations`, from `20260924232223` through `20260927014415`. The inspected PR #5 branch contains no SQL migration directory/files, so those applied migrations are not currently reproducible from this branch.
+- Installed extensions include `supabase_vault` 0.3.1, `pgcrypto` 1.3, `pg_stat_statements` 1.11, `uuid-ossp` 1.1, and `plpgsql` 1.0. `pgmq` 1.5.1, `pg_cron`, and `pg_net` are available but not installed. No extension was installed.
+- Existing public schema is owner-scoped MCP server/tool/credential/log/media groundwork. It has no task, task-event, outbox, tenant, principal, or grant tables. `mcp_tools.server_id` has no foreign-key constraint to `mcp_servers`.
+- The Supabase security advisor returned zero lints. The performance advisor returned one RLS initialization-plan warning for `mcp_server_credentials_owner_all` and five informational unused-index findings. No index or policy was changed.
+- Supabase documents that Free projects with low activity over a seven-day period may be paused; paid-plan projects are not subject to inactivity pausing. Production availability requires an explicit plan/budget decision. No plan change was made.
+- No application data was read, no credential contents were read, no SQL writes or migrations were run, and no database schema or extension was changed. The only project mutation was the authorized restore of `meepsheep-storage`.
+
+### Platform recommendation status
+- Supabase Postgres with PGMQ is the preferred candidate for the next implementation design because the existing PostgreSQL project is healthy, has Vault/crypto support and existing MCP tables, and is materially closer to the current architecture than an empty Cloudflare account.
+- This remains a **Proposed** recommendation, not an accepted production platform. The Free-plan pause policy, migration-source gap, current owner-only schema, tenant/auth mapping, and missing durable task/outbox schema must be resolved first.
+- Cloudflare D1 + Queues + Workflows remains a viable alternative if Cloudflare hosting becomes the chosen runtime and its infrastructure is intentionally provisioned.
 
 ## Not implemented or not verified
 
@@ -142,13 +151,15 @@ No production credentials, project resources, DNS, deployments, or external AI c
 
 ## Next decision gate
 
-The local asynchronous task layer is implemented and verified. The next independent implementation gate is durable persistence and worker architecture. The repository's platform and hosting decisions remain open:
+The read-only database inspection is complete. The next gate is an owner-approved platform and operating-plan decision, not an automatic migration:
 
-1. Confirm whether the existing inactive `meepsheep-storage` Supabase project is the intended authoritative database and whether it should be restored for read-only inspection.
-2. Compare that Postgres project with Cloudflare D1 under the actual hosting/account constraints. The accessible Cloudflare account currently has no configured Workers, D1, Queues, or zone.
-3. Choose one authoritative database, key-management owner, and durable execution primitive before writing provider-specific schema or provisioning resources.
+1. Review proposed decision D-016 in `AI/DECISIONS.md`: Supabase Postgres is the preferred candidate; O-004 and O-005 remain open.
+2. Decide whether the Free organization is acceptable for development/staging and what paid-plan budget is approved before an always-on production service is expected.
+3. Recover the eleven exact applied SQL migration files or establish a reviewed, reproducible baseline before repository-driven schema changes.
+4. Design tenant/principal/auth mapping, RLS, connection/grant persistence, task/event/idempotency/outbox tables, and database-clock lease fencing against the shared repository contract.
+5. Only after the platform and plan are approved, implement the Postgres repository adapter and queue integration; then run the shared contract plus provider-specific rollback, concurrency, restart, lease-expiry, and redelivery tests.
 
-Do not restore, create, migrate, deploy, or alter DNS until the owner confirms the platform and account.
+No database migrations, extension installation, infrastructure provisioning, plan upgrade, DNS change, or deployment is authorized or has been performed in this inspection step.
 
 ## Session handoff
 
