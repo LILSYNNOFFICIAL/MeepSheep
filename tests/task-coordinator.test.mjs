@@ -225,6 +225,40 @@ test("queued task cancellation prevents a later worker from dispatching it", asy
   assert.equal(calls, 0);
 });
 
+
+test("cancelTask retries a transient compare-and-swap conflict", async () => {
+  const baseRepository = createInMemoryTaskRepository();
+  let conflictsRemaining = 1;
+  const repository = {
+    createTask: (...args) => baseRepository.createTask(...args),
+    getTask: (...args) => baseRepository.getTask(...args),
+    listEvents: (...args) => baseRepository.listEvents(...args),
+    claimNextOutbox: (...args) => baseRepository.claimNextOutbox(...args),
+    completeOutbox: (...args) => baseRepository.completeOutbox(...args),
+    transitionTask: async (input) => {
+      if (input.toState === "canceled" && conflictsRemaining > 0) {
+        conflictsRemaining -= 1;
+        return null;
+      }
+      return baseRepository.transitionTask(input);
+    }
+  };
+  const coordinator = createTaskCoordinator({
+    repository,
+    authorizeTarget: async () => ({ connectionId: "connection-a" }),
+    dispatch: async () => ({ shouldNotRun: true }),
+    clock: () => 1000,
+    defaultTimeoutMs: 30000,
+    maxTaskDurationMs: 60000
+  });
+  const created = await coordinator.createTask(caller, taskInput);
+  const canceled = await coordinator.cancelTask(caller, created.task.taskId);
+  assert.equal(canceled.state, "canceled");
+  assert.equal(canceled.version, created.task.version + 1);
+  const events = await coordinator.listTaskEvents(caller, created.task.taskId);
+  assert.equal(events.filter((event) => event.eventType === "task.canceled").length, 1);
+});
+
 test("cancellation aborts an active dispatcher and prevents a late result from completing the task", async () => {
   let started;
   const startedPromise = new Promise((resolve) => { started = resolve; });
