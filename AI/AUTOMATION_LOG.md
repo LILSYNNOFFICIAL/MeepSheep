@@ -95,3 +95,14 @@ Use `AI/STATUS_ICONS.md`:
 - **Documentation scope updated:** README (excluding the generated health marker block), API specification, MCP lab, state ledger, master workflow, task contract, build plan, test strategy, security evidence, project definition, architecture, logical data model, integration strategy, decision log, changelog, GitHub Actions specification, and automation log.
 - **Limitations remain:** all task/registry/vault stores remain local in-memory adapters; no database was selected or provisioned, no Supabase project was resumed, and no Cloudflare resource, DNS, or deployment was changed.
 
+
+
+### 2026-11-01 - Task outbox lease-fencing regression and repair
+
+- **Status:** 🟢 Complete quality gate passed on PR #5 feature head `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4`.
+- **TDD red evidence:** Run [41288627434](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288627434) failed the two new regression assertions for the expected reasons: an expired lease could be completed, and a stale claim could complete after the same worker ID reclaimed the outbox item.
+- **Repair:** The reference store now rejects completion unless worker ID, monotonic attempt generation, exact claimed lease deadline, and unexpired lease all match. The coordinator forwards the lease metadata from the claim.
+- **Green quality run:** [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098); CI checked out PR merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`.
+- **Verified:** focused suites auth 8/8, endpoint 11/11, vault 11/11, registry 7/7, secure connector 5/5, owner lifecycle 10/10, task coordinator 15/15, dispatcher 8/8; full Node 92/92; Python Wellness Doctor 10/10; Repository Doctor 117 passed with 0 warnings/errors/critical; both workflow YAML files parsed.
+- **Remaining boundary:** This is still an in-memory reference adapter. Production persistence must use database-authoritative lease expiry and atomic fencing; the paused-worker-to-external-dispatch race, queue redelivery, restart recovery, and live external target behavior remain unverified.
+- **Infrastructure safety:** No provider selected, project restored, database migrated, secrets changed, Cloudflare resources provisioned, DNS altered, or deployment made.
