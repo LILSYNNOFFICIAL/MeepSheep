@@ -145,6 +145,7 @@ No local GPU is required for a relay service. Connected AI providers perform inf
 | [AI/DATA_MODEL.md](AI/DATA_MODEL.md) | Agents, connections, grants, messages, tasks, events |
 | [AI/BUILD_PLAN.md](AI/BUILD_PLAN.md) | Implementation phases and acceptance tests |
 | [AI/TEST_STRATEGY.md](AI/TEST_STRATEGY.md) | Unit, protocol, security, and live integration tests |
+| [AI/TASK_EXECUTION.md](AI/TASK_EXECUTION.md) | Task states, idempotency, outbox, worker, cancellation, and recovery contract |
 | [AI/MCP_LAB.md](AI/MCP_LAB.md) | Verified local MCP relay prototype, tests, and limitations |
 | [AI/SECURITY.md](AI/SECURITY.md) | Threat model and mandatory safeguards |
 | [AI/COST_MODEL.md](AI/COST_MODEL.md) | Budgets, usage accounting, and abuse controls |
