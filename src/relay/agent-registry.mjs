@@ -16,15 +16,21 @@ export class AgentRegistry {
   #agents = new Map();
 
   register(agent) {
-    if (!agent?.id || !agent?.tenantId || !agent?.client || !Array.isArray(agent.approvedTools)) {
-      throw new TypeError("Agent registration requires id, tenantId, client, and approvedTools.");
+    if (!agent?.id || !agent?.tenantId || !agent?.client || !Array.isArray(agent.approvedTools) || !agent.approvedToolSchemas || typeof agent.approvedToolSchemas !== "object") {
+      throw new TypeError("Agent registration requires id, tenantId, client, approvedTools, and approvedToolSchemas.");
     }
     if (this.#agents.has(agent.id)) {
       throw new RelayError("AGENT_ALREADY_REGISTERED");
     }
+    for (const toolName of agent.approvedTools) {
+      if (typeof agent.approvedToolSchemas[toolName] !== "string" || !/^[a-f0-9]{64}$/.test(agent.approvedToolSchemas[toolName])) {
+        throw new TypeError("Every approved tool requires an owner-approved SHA-256 schema fingerprint.");
+      }
+    }
     this.#agents.set(agent.id, {
       ...agent,
       approvedTools: new Set(agent.approvedTools),
+      approvedToolSchemas: new Map(Object.entries(agent.approvedToolSchemas)),
       status: agent.status ?? "active"
     });
   }
@@ -57,6 +63,6 @@ export class AgentRegistry {
     if (!agent.approvedTools.has(toolName)) {
       throw new RelayError("TOOL_NOT_ALLOWED");
     }
-    return agent;
+    return { ...agent, approvedSchemaFingerprint: agent.approvedToolSchemas.get(toolName) };
   }
 }
