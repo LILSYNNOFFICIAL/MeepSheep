@@ -53,7 +53,7 @@ function taskSummary(task) {
   };
 }
 
-export function registerTaskTools(server, taskCoordinator) {
+export function registerTaskTools(server, taskCoordinator, trustedPrincipal) {
   if (
     !server ||
     typeof server.registerTool !== "function" ||
@@ -75,11 +75,9 @@ export function registerTaskTools(server, taskCoordinator) {
       timeoutMs: z.number().int().positive().optional()
     }).strict(),
     outputSchema: delegateOutputSchema
-  }, async ({ targetAgentId, toolName, arguments: toolArguments, idempotencyKey, timeoutMs }, extra) => {
+  }, async ({ targetAgentId, toolName, arguments: toolArguments, idempotencyKey, timeoutMs }) => {
     try {
-      const result = await taskCoordinator.createTask(extra?.authInfo
-        ? extra.authInfo.extra?.principal
-        : null, {
+      const result = await taskCoordinator.createTask(trustedPrincipal ?? null, {
         targetAgentId,
         toolName,
         arguments: toolArguments,
@@ -102,10 +100,9 @@ export function registerTaskTools(server, taskCoordinator) {
     description: "Get the status and result of a task created by the authenticated caller.",
     inputSchema: z.object({ taskId: z.string().min(1) }).strict(),
     outputSchema: taskOutputSchema
-  }, async ({ taskId }, extra) => {
+  }, async ({ taskId }) => {
     try {
-      const principal = extra?.authInfo?.extra?.principal ?? null;
-      const task = await taskCoordinator.getTask(principal, taskId);
+      const task = await taskCoordinator.getTask(trustedPrincipal ?? null, taskId);
       return {
         content: [{ type: "text", text: "Task status: " + task.state }],
         structuredContent: { task: taskSummary(task) }
@@ -119,10 +116,9 @@ export function registerTaskTools(server, taskCoordinator) {
     description: "Cancel a queued or active task owned by the authenticated caller.",
     inputSchema: z.object({ taskId: z.string().min(1) }).strict(),
     outputSchema: taskOutputSchema
-  }, async ({ taskId }, extra) => {
+  }, async ({ taskId }) => {
     try {
-      const principal = extra?.authInfo?.extra?.principal ?? null;
-      const task = await taskCoordinator.cancelTask(principal, taskId);
+      const task = await taskCoordinator.cancelTask(trustedPrincipal ?? null, taskId);
       return {
         content: [{ type: "text", text: "Task state: " + task.state }],
         structuredContent: { task: taskSummary(task) }
