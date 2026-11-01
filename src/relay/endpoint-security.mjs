@@ -215,6 +215,7 @@ const REQUEST_HEADERS_TO_REMOVE = new Set([
   "upgrade",
   "host",
   "content-length",
+  "accept-encoding",
   "cookie",
   "cookie2"
 ]);
@@ -227,7 +228,9 @@ function pinnedLookup(endpoint, requestedHostname, options, callback) {
     return;
   }
 
-  const family = typeof options === "object" ? options.family : 0;
+  const family = typeof options === "number"
+    ? options
+    : (typeof options === "object" ? options.family : 0);
   const matching = family
     ? endpoint.addresses.filter((answer) => answer.family === family)
     : endpoint.addresses;
@@ -264,9 +267,32 @@ function performPinnedHttpsRequest(target, options) {
       autoSelectFamily: true,
       signal: options.signal
     }, (incoming) => {
+      const encoding = String(incoming.headers["content-encoding"] ?? "identity").toLowerCase();
+      if (encoding !== "identity") {
+        const error = new EndpointSecurityError("REMOTE_ENCODING_UNSUPPORTED");
+        incoming.destroy();
+        reject(error);
+        return;
+      }
+
       const responseHeaders = new Headers();
+      const connectionNominated = new Set(
+        String(incoming.headers.connection ?? "")
+          .split(",")
+          .map((name) => name.trim().toLowerCase())
+          .filter(Boolean)
+      );
+      const responseHopByHop = new Set([
+        "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
+        "proxy-connection", "te", "trailer", "transfer-encoding", "upgrade",
+        "set-cookie", "set-cookie2", "content-encoding"
+      ]);
       for (const [name, value] of Object.entries(incoming.headers)) {
-        if (value === undefined || name === "set-cookie" || name === "set-cookie2") continue;
+        if (
+          value === undefined ||
+          responseHopByHop.has(name) ||
+          connectionNominated.has(name)
+        ) continue;
         if (Array.isArray(value)) {
           for (const item of value) responseHeaders.append(name, item);
         } else {
@@ -275,6 +301,13 @@ function performPinnedHttpsRequest(target, options) {
       }
 
       const status = incoming.statusCode ?? 502;
+      if (status < 200 || status > 599) {
+        const error = new EndpointSecurityError("REMOTE_RESPONSE_INVALID");
+        incoming.destroy();
+        reject(error);
+        return;
+      }
+
       let receivedBytes = 0;
       let streamEnded = false;
       const body = new ReadableStream({
@@ -295,6 +328,11 @@ function performPinnedHttpsRequest(target, options) {
             if (streamEnded) return;
             streamEnded = true;
             controller.close();
+          });
+          incoming.on("aborted", () => {
+            if (streamEnded) return;
+            streamEnded = true;
+            controller.error(new EndpointSecurityError("REMOTE_RESPONSE_ABORTED"));
           });
           incoming.on("error", (error) => {
             if (streamEnded) return;
@@ -323,14 +361,22 @@ function performPinnedHttpsRequest(target, options) {
   });
 }
 
-async function readBodyLimited(request, maximumBytes) {
+async function readBodyLimited(request, maximumBytes, signal) {
   if (!request.body) return undefined;
   const reader = request.body.getReader();
   const chunks = [];
   let total = 0;
+  const abort = () => { reader.cancel().catch(() => {}); };
+  signal.addEventListener("abort", abort, { once: true });
   try {
     while (true) {
+      if (signal.aborted) {
+        throw new EndpointSecurityError(request.signal.aborted ? "REQUEST_ABORTED" : "REMOTE_TIMEOUT");
+      }
       const { value, done } = await reader.read();
+      if (signal.aborted) {
+        throw new EndpointSecurityError(request.signal.aborted ? "REQUEST_ABORTED" : "REMOTE_TIMEOUT");
+      }
       if (done) break;
       total += value.byteLength;
       if (total > maximumBytes) {
@@ -340,6 +386,7 @@ async function readBodyLimited(request, maximumBytes) {
       chunks.push(Buffer.from(value));
     }
   } finally {
+    signal.removeEventListener("abort", abort);
     reader.releaseLock();
   }
   return chunks.length ? Buffer.concat(chunks, total) : undefined;
@@ -383,7 +430,11 @@ export function createPinnedFetch({
     const method = request.method.toUpperCase();
     if (!["GET", "POST", "DELETE"].includes(method)) throw rejected();
 
-    const body = await readBodyLimited(request, maxRequestBytes);
+    const timeoutSignal = AbortSignal.timeout(timeoutMs);
+    const signal = request.signal
+      ? AbortSignal.any([request.signal, timeoutSignal])
+      : timeoutSignal;
+    const body = await readBodyLimited(request, maxRequestBytes, signal);
     const headers = new Headers(request.headers);
     const nominated = (headers.get("connection") ?? "")
       .split(",")
@@ -394,11 +445,7 @@ export function createPinnedFetch({
     for (const name of [...headers.keys()]) {
       if (name.startsWith("proxy-")) headers.delete(name);
     }
-
-    const timeoutSignal = AbortSignal.timeout(timeoutMs);
-    const signal = request.signal
-      ? AbortSignal.any([request.signal, timeoutSignal])
-      : timeoutSignal;
+    headers.set("accept-encoding", "identity");
     const lookup = (hostname, options, callback) =>
       pinnedLookup(validatedEndpoint, hostname, options, callback);
 
