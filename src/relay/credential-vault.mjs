@@ -310,7 +310,7 @@ export function createCredentialVault({
       throw fail("CREDENTIAL_INVALID");
     }
     const record = await readRecord(credentialId, tenantId);
-    validateRecord(record, credentialId, tenantId);
+    validateActiveRecord(record, credentialId, tenantId);
     const plaintext = await decryptRecord(record, credentialId, tenantId);
     try {
       const material = await currentKey();
