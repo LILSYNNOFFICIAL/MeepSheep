@@ -172,8 +172,11 @@ export async function createSecureRemoteMcpClient({
       throw new RemoteMcpConnectionError("REMOTE_TOOL_DISCOVERY_FAILED");
     }
 
-    const schemaFingerprints = {};
+    const schemaFingerprints = Object.create(null);
     for (const tool of discovery.tools) {
+      if (Object.hasOwn(schemaFingerprints, tool?.name)) {
+        throw new RemoteMcpConnectionError("REMOTE_TOOL_DISCOVERY_INVALID");
+      }
       schemaFingerprints[tool.name] = fingerprintToolSchema(tool);
     }
 
