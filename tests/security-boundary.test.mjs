@@ -152,3 +152,13 @@ test("bearer middleware overwrites caller-supplied auth context with verified id
   });
 });
 
+
+
+test("a clock failure during principal resolution fails closed", async () => {
+  let currentTime = now * 1000;
+  const auth = makeAuthenticator({ clock: () => currentTime });
+  const signed = await makeToken();
+  const info = await auth.authenticate(await requestWithToken(signed));
+  currentTime = Number.NaN;
+  assert.throws(auth.resolvePrincipal.bind(null, info), (error) => error.code === "AUTH_INVALID");
+});
