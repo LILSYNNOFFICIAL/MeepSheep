@@ -108,16 +108,16 @@ Never infer implementation from documentation, a successful API response, or a m
 - [x] Add local MCP integration tests and run them in GitHub Actions.
 - [x] Add local lab setup and verification notes in `AI/MCP_LAB.md`.
 
-**Current evidence:** Exact-head CI run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) passed on `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5`: all focused security/connection/task gates, 90/90 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with no warnings/errors/critical, and both workflow YAML files. The separate-process loopback TCP test proves local socket-level MCP transport, not a public deployment or live external AI connection.
+**Current evidence:** PR #5 feature head `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4` passed exact-head CI run [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098), checked out as merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`: all focused gates, 92/92 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with no warnings/errors/critical, and both workflow YAML files. The separate-process loopback TCP test proves local socket-level MCP transport, not a public deployment or live external AI connection.
 
 ## Phase 4B: Asynchronous tasks
 
-- [x] Implement local task/outbox repository contract and in-memory reference adapter.
+- [x] Implement local task/outbox repository contract and in-memory reference adapter, with completion fenced by worker ID, claim generation, lease snapshot and expiry.
 - [x] Add caller-scoped idempotent task creation, deadline enforcement, optimistic state transitions, event history, cancellation, bounded wait and task output limits.
 - [x] Revalidate target permissions and approved remote tool schema immediately before asynchronous dispatch.
 - [x] Add optional caller-bound `delegate_task`, `get_task`, `wait_task`, and `cancel_task` MCP tools.
-- [x] Verify the exact latest head with all focused task gates and the complete quality workflow (run 41276417903, commit `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5`).
-- [ ] Implement durable database transactions, queue/outbox consumer, worker recovery, retention and monitoring before production.
+- [x] Verify the updated exact head with all focused task gates and the complete quality workflow (run 41288727098, feature commit `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4`, PR merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`); the 2 new lease-fencing regressions pass.
+- [ ] Implement durable database transactions with database-authoritative lease expiry, a checked dispatch-start/lease-ownership boundary, queue/outbox consumer, worker recovery, retention and monitoring before production.
 
 No automatic retry is permitted after a potentially delivered remote invocation unless the target's end-to-end idempotency contract is established.
 
