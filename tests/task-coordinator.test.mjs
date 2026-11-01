@@ -246,8 +246,7 @@ test("cancellation aborts an active dispatcher and prevents a late result from c
 });
 
 test("outbox claims are leased and may be reclaimed after an abandoned worker lease expires", async () => {
-  const repository = createInMemoryTaskRepository();
-  const { coordinator } = setup();
+  const { repository, coordinator } = setup();
   const created = await coordinator.createTask(caller, taskInput);
   const first = await repository.claimNextOutbox({
     workerId: "worker-a",
