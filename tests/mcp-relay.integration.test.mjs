@@ -193,6 +193,7 @@ test("remote tools removed from the server are rejected as a schema mismatch", a
 
 test("same-name remote tool schema changes are rejected before invocation", async () => {
   const approvedMock = createMockAgent({ id: "agent-alpha" });
+  openHandlers.push(approvedMock.handler);
   const approvedClient = await connectClient(approvedMock.handler, "approval-baseline");
   const approvedTool = (await approvedClient.listTools()).tools.find((tool) => tool.name === "review_message");
   assert.ok(approvedTool);
