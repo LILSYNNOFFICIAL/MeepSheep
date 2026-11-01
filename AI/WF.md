@@ -110,6 +110,17 @@ Never infer implementation from documentation, a successful API response, or a m
 
 **Current evidence:** Nine local MCP integration tests pass. Seven use an in-process fetch bridge; one connects over loopback TCP to a mock MCP agent running in a separate Node process. This proves local socket-level MCP transport, not a public deployment or live external AI connection.
 
+## Phase 4B: Asynchronous tasks
+
+- [x] Implement local task/outbox repository contract and in-memory reference adapter.
+- [x] Add caller-scoped idempotent task creation, deadline enforcement, optimistic state transitions, event history, cancellation, bounded wait and task output limits.
+- [x] Revalidate target permissions and approved remote tool schema immediately before asynchronous dispatch.
+- [x] Add optional caller-bound `delegate_task`, `get_task`, `wait_task`, and `cancel_task` MCP tools.
+- [ ] Verify the exact latest head with all focused task gates and the complete quality workflow.
+- [ ] Implement durable database transactions, queue/outbox consumer, worker recovery, retention and monitoring before production.
+
+No automatic retry is permitted after a potentially delivered remote invocation unless the target's end-to-end idempotency contract is established.
+
 ## Phase 5: First real AI-to-AI round trip
 
 - [ ] Configure one separately operated remote agent with owner-authorized credentials.
