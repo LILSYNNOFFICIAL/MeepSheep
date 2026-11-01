@@ -1,6 +1,6 @@
 # MeepSheep MCP API and Relay Contract
 
-**Status:** CI-verified local MCP relay, signed-token resource-server middleware, endpoint-pinned remote MCP connector, encrypted credential-vault abstraction, registry secret isolation, internal owner connection lifecycle manager, provider-neutral task coordinator, registry-backed task dispatcher, and optional task tools. Exact-head quality run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) passed on `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5`: 90/90 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML validations. Not deployed; the task repository, registry, connection previews, and credential store still use in-memory reference adapters. Production identity issuance, persistent database/key-provider adapters, public owner API/console, durable queue/worker, and live external agent connections remain unimplemented.  
+**Status:** CI-verified local MCP relay, signed-token resource-server middleware, endpoint-pinned remote MCP connector, encrypted credential-vault abstraction, registry secret isolation, internal owner connection lifecycle manager, provider-neutral task coordinator, registry-backed task dispatcher, optional task tools, and stale-outbox lease fencing. Exact-head quality run [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098) passed on PR #5 feature commit `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4` (CI merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`): 92/92 Node tests, 10/10 Python Wellness Doctor tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML validations. Not deployed; the task repository, registry, connection previews, and credential store still use in-memory reference adapters. Production identity issuance, persistent database/key-provider adapters, public owner API/console, durable queue/worker, and live external agent connections remain unimplemented.  
 **Primary interface:** Remote MCP server.  
 **Core behavior:** Route authorized messages and tasks between independently connected agents.
 
@@ -139,7 +139,7 @@ When the host injects a compatible task coordinator, the inbound relay may addit
 - `wait_task`: requires `task:read`; waits for at most 30 seconds and returns the latest task state.
 - `cancel_task`: requires `task:cancel`; cancels only the caller's own queued or active task.
 
-The principal is captured from the relay's trusted per-request principal resolver. These tool schemas do not accept caller/tenant identity fields. Owner connection operations remain separate.
+The principal is captured from the relay's trusted per-request principal resolver. These tool schemas do not accept caller/tenant identity fields. Owner connection operations remain separate. Outbox completion is fenced by the claimed worker ID, monotonically increasing claim attempt, exact lease deadline, and expiry; stale or expired workers cannot mark a reclaimed item complete. A persistent adapter must enforce expiry using database time. This completion fence does not by itself eliminate a suspended-worker race immediately before an external call.
 
 ### Internal owner connection lifecycle (not an inbound MCP tool)
 
