@@ -87,6 +87,18 @@ This file records accepted decisions, proposals, and open questions. Do not sile
 - **O-006:** What default message/task retention and deletion policy will be published?
 - **O-007:** Which optional adapters are justified by actual target demand?
 
+## Platform inventory evidence (2026-11-01)
+
+This evidence informs O-003, O-004, and O-005 but does not resolve them:
+
+- The one accessible Cloudflare account returned zero zones, Worker scripts, D1 databases, Queues, and Durable Object namespaces.
+- The existing Supabase project `meepsheep-storage` is in an accessible Free organization, in `us-west-1`, with project metadata reporting PostgreSQL 17.6.1.166. The project status is `INACTIVE`.
+- Attempts to inspect Supabase tables and extensions failed because the database was not accessible; listing migrations timed out. Security/performance advisor calls returned no lint records, but this is not a database-health verification.
+- The separate active `BlueNote` Supabase project is unrelated and is not a candidate to repurpose.
+- No project was resumed, no database or queue was created, no migration was applied, and no DNS or deployment changed.
+
+A durable store is the next implementation gate because the existing task repository, registry, connection manager, and vault adapters are in-memory. Cloudflare D1 remains attractive if Cloudflare Workers is the selected host because D1 batches provide transactional execution of statements. Supabase Postgres remains an option if the existing MeepSheep project is intentionally restored and inspected. The decision must also identify the production key-management owner and durable execution primitive. No provider-specific schema or infrastructure should be committed until this decision is made.
+
 ## Decision change procedure
 
 1. Identify the affected decision.
