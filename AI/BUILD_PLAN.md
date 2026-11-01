@@ -74,17 +74,22 @@
 
 **Current evidence:** Eight contract cases exercise separate SDK handler/client instances through an in-process fetch bridge. A ninth test starts a separate mock-agent Node process and verifies an outbound MCP call over loopback TCP. This proves local socket-level transport and relay behavior. A public network deployment and live external AI agent are still required for the full phase exit.
 
-## Verified local security boundary (PR #5, stacked on PR #4)
+## Verified local security and connection lifecycle (PR #5, stacked on PR #4)
 
 - [x] Add RS256 JWT access-token resource-server verification using an injected trusted JWKS resolver.
 - [x] Validate issuer, audience, token type, subject, tenant, client ID, OAuth scope-token grammar, JTI, issue/expiry times, clock skew, and maximum lifetime.
 - [x] Replace inbound MCP auth context after token verification and prove forged `authInfo.extra` cannot change caller identity.
 - [x] Add exact-host HTTPS/443 endpoint validation and validate every IPv4/IPv6 DNS answer.
 - [x] Reject any endpoint that resolves to a non-public address or a mixed public/non-public address set.
-- [x] Add a pinned-fetch adapter with strict origin/path/method checks, pinned lookup set, preserved TLS hostname/SNI, unsafe request-header stripping, request/response byte bounds, timeout, and redirect non-following.
-- [x] Verify 7 authentication tests, 9 endpoint security tests, 30 total Node tests, 10 Python Wellness Doctor tests, 113 Repository Doctor checks, and both workflow YAML files in CI run [41268297674](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41268297674) on head `05563436e7631024733bd82bd5f03c9612ce0bf4`.
+- [x] Add a pinned-fetch adapter with strict origin/path/method checks, pinned lookup set, preserved TLS hostname/SNI, request/response header filtering, identity encoding, upload/response byte bounds, deadlines, cancellation, and redirect non-following.
+- [x] Add AES-256-GCM credential-vault logic with tenant/credential/key/version-bound authenticated data, callback-scoped decryption, key rotation, revocation, tamper detection, and optimistic concurrency.
+- [x] Restrict registry records to an explicit allowlist, require canonical opaque credential/endpoint references, and reject raw credentials or endpoint URLs.
+- [x] Add `createSecureRemoteMcpClient` to combine endpoint validation, pinned fetch, per-request vault-backed bearer credentials, MCP tool discovery, and schema fingerprint snapshots.
+- [x] Add an internal owner connection manager for short-lived endpoint previews, owner/tenant binding, explicit discovered-tool approval, registration, disconnect, credential revocation, and client cleanup after failures.
+- [x] Require both credential retrieval and revocation operations for any credential-backed connection.
+- [x] CI run [41269980816](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41269980816) on exact head `59b38b6e3b3329c983b696bd01da7ded667bb2e2`: focused suites passed (auth 8, endpoint 11, vault 11, registry 4, secure connector 5, owner lifecycle 10); full Node suite 63/63; Python Wellness Doctor 10/10; Repository Doctor 113 passed, zero warnings/errors/critical; both workflow YAML files parsed.
 
-**Still open:** This is not an OAuth authorization server or production identity integration. Endpoint validation is not yet wired into owner-controlled endpoint onboarding or registry client construction. The actual outbound TLS/socket path, DNS-rebinding behavior under the selected host runtime, and egress network policy need integration tests before production. No secrets, production endpoints, Cloudflare resources, DNS, or deployment were changed.
+**Still open:** This is not an OAuth authorization server or production identity integration. Registry, connection previews and active connection state remain in memory. There is no persistent DB/KMS adapter, public owner API/console, durable audit log, schema reapproval workflow, durable task system, or live external agent. The actual external TLS handshake and deployed egress policy remain unverified. No secrets, production endpoints, Cloudflare resources, DNS, or deployment were changed.
 
 ## Phase 5: First real AI-to-AI proof
 
