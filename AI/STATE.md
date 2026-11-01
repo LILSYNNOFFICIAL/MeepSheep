@@ -1,10 +1,10 @@
 # MeepSheep Project State Ledger
 
-**Last updated:** 2026-10-31  
+**Last updated:** 2026-11-01  
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
 **Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)  
-**Latest completed docs verification before this ledger refresh:** `23247775de5f9eb4e0796b238278590385440aba` (run [41277347573](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41277347573)).
+**Latest code verification before this documentation refresh:** PR #5 feature commit `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4` passed run [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098); CI checked out PR merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`. This documentation reconciliation receives a separate follow-up CI run.
 
 This ledger distinguishes verified local behavior from production capabilities that remain unimplemented or unverified.
 
@@ -28,7 +28,7 @@ This ledger distinguishes verified local behavior from production capabilities t
 
 ## Open pull-request stack
 
-All three PRs were rechecked on 2026-10-31. They remain open and mergeable. The review API returned no submitted reviews for PRs #3, #4, or #5 at that inspection.
+All three PRs were rechecked on 2026-11-01. They remain open and mergeable. The review API returned no submitted reviews for PRs #3, #4, or #5 at that inspection.
 
 | PR | Title | Head | Base | State |
 |---|---|---|---|---|
@@ -69,21 +69,22 @@ Required integration order is **#3 → #4 → #5**. PR #5 must not be merged dir
 ## Verified local asynchronous task orchestration
 
 - [x] Provider-neutral task coordinator with server-generated task/trace IDs, tenant/caller scope, request fingerprint, scoped idempotency hash, bounded JSON payload, deadlines, and optimistic-concurrency version.
-- [x] Repository contract defines atomic task + initial event + dispatch outbox creation, version-checked transition + event append, leased outbox claim, and lease-owned completion.
+- [x] Repository contract defines atomic task + initial event + dispatch outbox creation, version-checked transition + event append, leased outbox claim, and fenced completion requiring worker ID, claim attempt, exact lease deadline, and an unexpired lease.
 - [x] In-memory reference repository implements the contract for local tests only; it is not durable or safe for multi-process deployment.
 - [x] Registry-backed dispatcher rechecks tenant, caller grant, approved tool name, current remote schema fingerprint, and cancellation before remote call.
 - [x] Worker state transitions, expiry, task event history, bounded cancellation/wait, output-size limits, and sanitized error mapping.
 - [x] Ambiguous post-dispatch lease expiry becomes `REMOTE_OUTCOME_UNKNOWN`; the worker does not blindly repeat a potentially delivered non-idempotent remote call.
 - [x] Optional inbound `delegate_task`, `get_task`, `wait_task`, and `cancel_task` tools register only when the host injects a compatible coordinator and bind to the trusted request principal.
 
-**Still unimplemented:** Production SQL adapter/migrations, durable queue/outbox, worker service and restart recovery, retention/deletion policy, dead-letter/reconciliation controls, cross-process transaction/CAS tests, and live remote idempotency/cancellation.
+**Still unimplemented:** Production SQL adapter/migrations, durable queue/outbox, worker service and restart recovery, retention/deletion policy, dead-letter/reconciliation controls, cross-process transaction/CAS tests, the suspended-worker-to-dispatch boundary, and live remote idempotency/cancellation.
 
 ## Latest exact-head quality verification
 
-The latest exact-head code verification before these documentation-only changes is:
+The current PR #5 feature branch head was verified by the complete quality workflow:
 - **PR:** [#5](https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/5)
-- **Code commit:** `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5`
-- **Run:** [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) — completed successfully.
+- **Feature branch implementation commit:** `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4`
+- **CI run:** [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098) — completed successfully.
+- **PR merge revision checked out:** `4266663f338dbf292c6081db3f3b00f044359b5e`.
 - Authentication boundary: 8/8.
 - Endpoint security: 11/11.
 - Credential vault: 11/11.
@@ -92,15 +93,17 @@ The latest exact-head code verification before these documentation-only changes 
 - Owner connection lifecycle: 10/10.
 - Task coordinator: 15/15.
 - Task dispatcher: 8/8.
-- Full Node suite: **90 passed, 0 failed**.
+- New outbox lease-fencing regressions: 2/2.
+- Full Node suite: **92 passed, 0 failed**.
 - Python Wellness Doctor unit tests: **10 passed**.
 - Repository Doctor: **117 passed, 0 warnings, 0 errors, 0 critical**.
 - Both GitHub Actions workflow YAML files parsed successfully.
-- Every focused gate and the final complete quality gate passed on the same exact commit.
+- Every focused gate and the final complete quality gate passed on the tested PR merge revision.
 
-Earlier failing runs 41271513643, 41272917191, and 41276348993 are diagnostic runs, not current status. They exposed stale grant/timeout fixtures, nullable-reference validation, the MCP SDK v2 callTool options position, and missing task-tool wiring. Their fixes are included in the code commit above.
+**TDD evidence:** Run [41288627434](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288627434) failed only the two newly added lease-fencing assertions against the pre-fix implementation: an expired worker claim could complete, and a stale claim could complete after the same worker ID reclaimed the item. The final run above passed both tests.
 
-The final documentation-ledger/log reconciliation commit was verified on exact head `23247775de5f9eb4e0796b238278590385440aba` by run [41277347573](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41277347573): all focused gates, 90/90 Node tests, 10/10 Python tests, 117 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML checks passed. The ledger refresh itself is a docs-only change and receives a fresh exact-head run.
+The earlier code run [41277525558](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41277525558) on `0c28633ac9f48f7910959a5cf523a31adaa7d1a3` passed the then-current 90-test suite. Historical documentation checkpoint `23247775de5f9eb4e0796b238278590385440aba` was checked by run [41277347573](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41277347573). Neither historical run supersedes the current lease-fencing verification.
+
 
 ## Current account and infrastructure inventory (read-only, 2026-10-31)
 
