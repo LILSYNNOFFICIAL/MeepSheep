@@ -246,6 +246,46 @@ test("cancellation aborts an active dispatcher and prevents a late result from c
   assert.equal(result.task.output, null);
 });
 
+
+test("cancellation after the working-state commit aborts before remote dispatch begins", async () => {
+  const repository = createInMemoryTaskRepository();
+  let announceWorking;
+  let releaseWorking;
+  const workingCommitted = new Promise((resolve) => { announceWorking = resolve; });
+  const holdTransition = new Promise((resolve) => { releaseWorking = resolve; });
+  const originalTransition = repository.transitionTask.bind(repository);
+  repository.transitionTask = async (input) => {
+    const updated = await originalTransition(input);
+    if (input.toState === "working") {
+      announceWorking();
+      await holdTransition;
+    }
+    return updated;
+  };
+  let dispatchCalls = 0;
+  const { coordinator } = setup({
+    dispatch: async () => { dispatchCalls += 1; return { shouldNotRun: true }; },
+  });
+  // Replace the coordinator's store with the controlled repository by building a matching instance.
+  const controlledCoordinator = createTaskCoordinator({
+    repository,
+    authorizeTarget: async () => ({ connectionId: "connection-a" }),
+    dispatch: async () => { dispatchCalls += 1; return { shouldNotRun: true }; },
+    clock: () => 1000,
+    defaultTimeoutMs: 30000,
+    maxTaskDurationMs: 60000
+  });
+  const created = await controlledCoordinator.createTask(caller, taskInput);
+  const processing = controlledCoordinator.processNext({ workerId: "worker-a" });
+  await workingCommitted;
+  const canceled = await controlledCoordinator.cancelTask(caller, created.task.taskId);
+  assert.equal(canceled.state, "canceled");
+  releaseWorking();
+  const result = await processing;
+  assert.equal(result.task.state, "canceled");
+  assert.equal(dispatchCalls, 0);
+});
+
 test("outbox claims are leased and may be reclaimed after an abandoned worker lease expires", async () => {
   const { repository, coordinator } = setup();
   const created = await coordinator.createTask(caller, taskInput);
