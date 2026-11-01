@@ -123,7 +123,8 @@ test("target authorization happens before task or outbox creation", async () => 
 test("payload and task deadlines are bounded before persistence", async () => {
   const { coordinator, repository } = setup({
     maxInputBytes: 16,
-    maxTaskDurationMs: 5000
+    maxTaskDurationMs: 5000,
+    defaultTimeoutMs: 5000
   });
   await assert.rejects(
     coordinator.createTask(caller, {
@@ -248,19 +249,25 @@ test("cancellation aborts an active dispatcher and prevents a late result from c
 
 
 test("cancellation after the working-state commit aborts before remote dispatch begins", async () => {
-  const repository = createInMemoryTaskRepository();
+  const baseRepository = createInMemoryTaskRepository();
   let announceWorking;
   let releaseWorking;
   const workingCommitted = new Promise((resolve) => { announceWorking = resolve; });
   const holdTransition = new Promise((resolve) => { releaseWorking = resolve; });
-  const originalTransition = repository.transitionTask.bind(repository);
-  repository.transitionTask = async (input) => {
-    const updated = await originalTransition(input);
-    if (input.toState === "working") {
-      announceWorking();
-      await holdTransition;
+  const repository = {
+    createTask: (...args) => baseRepository.createTask(...args),
+    getTask: (...args) => baseRepository.getTask(...args),
+    listEvents: (...args) => baseRepository.listEvents(...args),
+    claimNextOutbox: (...args) => baseRepository.claimNextOutbox(...args),
+    completeOutbox: (...args) => baseRepository.completeOutbox(...args),
+    transitionTask: async (input) => {
+      const updated = await baseRepository.transitionTask(input);
+      if (input.toState === "working") {
+        announceWorking();
+        await holdTransition;
+      }
+      return updated;
     }
-    return updated;
   };
   let dispatchCalls = 0;
   const controlledCoordinator = createTaskCoordinator({
