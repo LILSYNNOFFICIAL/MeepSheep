@@ -91,6 +91,41 @@ export function registerTaskRepositoryContract({ test, createRepository, name = 
     }), null);
   });
 
+  test(named("idempotency uniqueness is scoped to both tenant and caller"), async () => {
+    const repository = await createRepository();
+    const tenantA = records("scope-tenant-a", {
+      tenantId: "tenant-a",
+      callerPrincipalId: "caller-a",
+      idempotencyKeyHash: "shared-hash"
+    });
+    const tenantB = records("scope-tenant-b", {
+      tenantId: "tenant-b",
+      callerPrincipalId: "caller-a",
+      idempotencyKeyHash: "shared-hash"
+    });
+    const callerB = records("scope-caller-b", {
+      tenantId: "tenant-a",
+      callerPrincipalId: "caller-b",
+      idempotencyKeyHash: "shared-hash"
+    });
+
+    const results = await Promise.all([
+      repository.createTask(tenantA),
+      repository.createTask(tenantB),
+      repository.createTask(callerB)
+    ]);
+
+    assert.deepEqual(results.map((result) => result.created), [true, true, true]);
+    assert.equal(new Set(results.map((result) => result.task.taskId)).size, 3);
+    for (const fixture of [tenantA, tenantB, callerB]) {
+      const stored = await repository.getTask({
+        taskId: fixture.task.taskId,
+        tenantId: fixture.task.tenantId
+      });
+      assert.deepEqual(stored, fixture.task);
+    }
+  });
+
   test(named("task and event reads never cross tenant boundaries"), async () => {
     const repository = await createRepository();
     const { task, event } = await seed(repository, "tenant-scope");
