@@ -4,7 +4,7 @@
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
 **Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)
-**Current branch head:** `59b38b6e3b3329c983b696bd01da7ded667bb2e2`
+**Current branch head:** `a1805121144507beb27438a1647f264486d0b76a`
 
 This ledger distinguishes verified implementation from planned or unverified capabilities.
 
@@ -116,6 +116,15 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [ ] Branch protection/rulesets verified.
 
 No production credentials, Cloudflare resources, DNS, or deployment have been changed.
+
+## Per-principal agent access hardening (verification pending)
+
+- [x] Registry requires an immutable owner principal for each connection.
+- [x] New connections default to owner-only discovery and invocation.
+- [x] Registry exposes internal owner-scoped grant and revoke operations.
+- [x] Grant creation requires a target principal identity whose tenant matches the connection tenant.
+- [x] Synchronous invocation and asynchronous task dispatch use their own permission scopes while both enforce the principal grant.
+- [ ] Exact-head CI verification for owner-only defaults, explicit grant/revoke, cross-tenant grant rejection, task permission separation and all existing tests.
 
 ## Asynchronous task orchestration (feature branch, verification pending)
 
