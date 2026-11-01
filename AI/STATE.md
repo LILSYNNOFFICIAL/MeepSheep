@@ -4,6 +4,7 @@
 **Repository:** `LILSYNNOFFICIAL/MeepSheep`  
 **Default branch:** `main`  
 **Active implementation branch:** `feat/secure-connection-boundary` (draft PR #5, stacked on PR #4)
+**Current branch head:** `d1aa272bfc98e2f767aa389ea7f6b00859e6a71d`
 
 This ledger distinguishes verified implementation from planned or unverified capabilities.
 
@@ -37,23 +38,26 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [x] Remote tool errors are sanitized before returning to the caller.
 - [x] Nine MCP integration tests pass in CI, including a separate-process loopback TCP test and trusted-auth boundary checks.
 
-**Important boundary:** The test uses the MCP SDK's Streamable HTTP transport with a custom in-process fetch bridge. It exercises MCP protocol messages between separate handler/client instances, but it does not yet prove socket-level networking, separate-process operation, production authentication, persistence, or a live external AI system.
+**Important boundary:** Most in-process handler tests use the MCP SDK's Streamable HTTP transport with a custom fetch bridge for deterministic tests. A separate integration test starts the remote mock MCP server in a child Node process and sends the outbound MCP request over loopback TCP. This proves local separate-process/socket-level outbound transport, but not a public network connection, independently operated external agent, production authentication, or persistence.
 
 ## Secure connection boundary (draft PR #5)
 
-- [x] RS256 JWT access-token verifier checks a configured JWKS resolver, exact issuer/audience, `typ: at+jwt`, subject, tenant, client ID, unique OAuth scope tokens, token ID, issue/expiry times, clock skew, and maximum lifetime.
-- [x] Bearer middleware authenticates each inbound HTTP request, replaces any caller-supplied MCP auth context, and returns fail-closed 401/503 responses.
-- [x] Relay integration test proves a forged `authInfo.extra.principal` cannot override the signed-token principal or tenant.
-- [x] Exact-host endpoint validator requires HTTPS/443, rejects URL credentials/query/fragment/IP literals, resolves all DNS answers, and rejects non-public or mixed address sets.
-- [x] Pinned HTTPS fetch adapter restricts requests to the validated origin/path and allowed methods, supplies only snapshotted addresses to DNS lookup, preserves host/SNI TLS verification, strips unsafe request headers, bounds request/response bytes, applies a timeout, and does not follow redirects.
-- [x] Focused security tests: 7 authentication tests and 9 endpoint security tests.
-- [x] Full Node suite: 30 passed, 0 failed.
-- [x] CI on exact head `05563436e7631024733bd82bd5f03c9612ce0bf4`: [run 41268297674](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41268297674).
+- [x] RS256 JWT access-token verifier validates a configured JWKS resolver, exact issuer/audience, `typ: at+jwt`, subject, tenant, client ID, unique OAuth scope tokens, JTI, issue/expiry times, clock skew, and maximum lifetime.
+- [x] Bearer middleware authenticates each inbound HTTP request, overwrites any caller-supplied MCP auth context, and fails closed on missing/invalid credentials or JWKS retrieval failure.
+- [x] Relay integration test proves a forged `authInfo.extra.principal` cannot override signed-token caller identity or tenant.
+- [x] Endpoint policy requires exact host allowlisting, HTTPS/443, validates every DNS result, and rejects IP literals, non-public/mixed DNS sets, credentials, query strings, and fragments.
+- [x] Pinned HTTPS adapter restricts origin/path/method, pins DNS lookup to the approved snapshot, preserves host/SNI TLS checks, strips unsafe request headers, forces identity encoding, strips unsafe response headers, bounds upload and response bytes, applies request deadlines/cancellation, and does not follow redirects.
+- [x] `createSecureRemoteMcpClient` combines endpoint validation, pinned transport, per-request vault-backed bearer injection, caller Authorization replacement, remote tool discovery, and schema fingerprint snapshots for owner review.
+- [x] Credential vault encrypts with AES-256-GCM. Authenticated data binds tenant, credential ID, key ID, schema version, and record version. Supports scoped callbacks, key rotation, revocation/ciphertext destruction, size limits, and optimistic concurrency.
+- [x] Agent registry stores an explicit safe field set, accepts only canonical opaque credential/endpoint references, rejects raw credentials/authorization headers and raw endpoint URLs, and does not expose references through discovery.
+- [x] Focused CI suites: authentication 8/8, endpoint 11/11, credential vault 11/11, registry isolation 4/4, secure remote MCP connection 5/5.
+- [x] Full Node suite: **53 passed, 0 failed**.
+- [x] CI exact head `d1aa272bfc98e2f767aa389ea7f6b00859e6a71d`: [run 41269374223](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41269374223).
 - [x] Python Wellness Doctor: 10 passed.
 - [x] Repository Doctor: 113 passed, 0 warnings, 0 errors, 0 critical.
 - [x] Both GitHub Actions workflow YAML files parsed successfully.
 
-**Security boundary:** The token verifier is a resource-server primitive, not a complete OAuth authorization server or production identity integration. The endpoint validator/fetch helper is implemented and unit-tested, but it is not yet wired into owner-controlled agent registration or the current registry's outbound MCP client construction. The fetch adapter's real external TLS/socket behavior and deployment egress policy remain unverified.
+**Still not production-ready:** The token verifier does not issue tokens or supply production OAuth client registration, PKCE, signing-key rotation, or revocation. The vault uses injected store/key-provider interfaces and has no persistent DB/KMS adapter. The outbound connector now uses the endpoint validator, pinned fetch, and vault, but there is no owner-facing endpoint/tool approval manager or persistent connection lifecycle. Tests use deterministic DNS/request/client/transport seams, so a real external TLS handshake and production egress enforcement remain unverified. No production credentials, Cloudflare resources, DNS, or deployment were changed.
 
 ## Latest verification
 
@@ -74,19 +78,20 @@ This ledger distinguishes verified implementation from planned or unverified cap
 
 ## Not implemented or not verified
 
-- [ ] Persistent database, migrations, durable tasks, or message history.
+- [ ] Persistent database adapter, migrations, durable tasks, message history, and retention/deletion behavior.
 - [x] Local signed bearer-token resource-server verification and forged-context integration boundary.
-- [ ] Production OAuth authorization server/token issuance, registered clients/PKCE, trusted identity provider, JWKS lifecycle, and revocation.
-- [ ] Owner console for registering endpoints and approving tools.
-- [x] Local full tool-schema fingerprint drift detection and fail-closed invocation check implemented and CI-verified on PR #4.
-- [ ] Production owner onboarding/reapproval workflow for schema changes.
-- [x] Local HTTPS endpoint policy and pinned-fetch primitives with deterministic tests.
-- [ ] Wire endpoint policy into owner-approved remote MCP registration/client construction and verify real socket/TLS behavior.
-- [ ] Encrypted per-connection credential vault with production key-provider integration.
+- [ ] Production OAuth issuer/token issuance, client registration/PKCE, trusted identity-provider configuration, JWKS rotation, and token revocation.
+- [x] Local encrypted AES-256-GCM credential-vault logic with rotation, revocation, tamper detection, and concurrency tests.
+- [ ] Production credential-vault store and KMS/platform secret-manager key-provider adapters.
+- [x] Local HTTPS endpoint policy, all-answer DNS validation, pinned fetch adapter, and request/response limits.
+- [x] Local secure outbound MCP connection factory now combines endpoint validation, pinned fetch, and per-request vault-backed bearer auth.
+- [x] Remote tool discovery returns schema fingerprints for owner review; the registry enforces explicit approved tool/schema snapshots.
+- [ ] Owner-facing endpoint onboarding, explicit per-tool approval/reapproval, connection management, disconnect, and audit UI/API.
+- [x] Registry rejects raw credentials/authorization/endpoint fields and retains canonical opaque references.
 - [ ] Persistent agent/connection registry and migrations.
-- [ ] Durable asynchronous tasks, idempotency, deadlines, cancellation, and retries.
+- [ ] Durable asynchronous tasks, idempotency, deadlines, bounded retries, cancellation, task events, and recovery after restart.
 - [x] Local separate-process mock MCP agent over loopback TCP.
-- [ ] Public network-separated endpoint and live external remote MCP agent round trip.
+- [ ] Real external TLS/socket integration against an independently operated remote MCP endpoint and deployed egress control.
 - [ ] Real external AI agent and real requesting client round trip.
 - [ ] A2A/provider/webhook adapters.
 - [ ] Production Cloudflare deployment, DNS, TLS, or hosting.
@@ -102,14 +107,13 @@ A read-only inspection on 2026-10-31 returned one accessible Cloudflare account 
 
 ## Next actions
 
-1. Integrate the validated endpoint and pinned fetch into the remote MCP connection factory, then verify a real TLS/socket path.
-2. Select and integrate the production OAuth issuer, client registration/PKCE flow, JWKS rotation, and token revocation owner.
-3. Build the encrypted per-connection credential vault and key-provider integration.
-4. Select the authoritative database and implement persistent agent/connection records and migrations.
-5. Implement durable asynchronous tasks, idempotency, deadlines, cancellation, and bounded retries.
-6. Confirm the first real requesting MCP client and target remote agent.
-7. Verify the correct Cloudflare account/domain and selected hosting egress controls before deployment.
-8. Prove a genuine independent-agent round trip before claiming provider support.
+1. Build an owner-controlled connection manager: endpoint preview, explicit per-tool approval, immutable schema approval snapshots, register/disconnect, revoke, and audit.
+2. Select the authoritative relational database and production key-management provider, then implement persistent registry/vault adapters and migrations.
+3. Select the production OAuth issuer/client registration/PKCE flow, trusted JWKS source, signing-key rotation, and revocation owner.
+4. Build durable asynchronous task records/events, idempotency, deadlines, bounded retries, and cancellation semantics.
+5. Verify real external TLS/socket behavior and runtime egress policy against the selected hosting platform.
+6. Confirm the first requesting MCP client and independently operated target agent.
+7. Prove an actual public-network AI-to-AI round trip before claiming provider support or deploying.
 
 ## Session handoff
 
