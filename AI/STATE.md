@@ -32,7 +32,7 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [x] Inbound MCP handler exposes `discover_agents` and `send_message`.
 - [x] Outbound MCP client initializes against a separately instantiated mock MCP handler.
 - [x] In-memory registry enforces same-tenant discovery and message permission.
-- [x] Remote tool invocation requires an approved tool name and verifies that the tool is still listed.
+- [x] Remote tool invocation requires an owner-approved tool name and matching canonical SHA-256 fingerprint of name, description, input schema, and output schema.
 - [x] Successful responses include message ID, trace ID, caller principal, target agent, output, and MCP provenance.
 - [x] Remote tool errors are sanitized before returning to the caller.
 - [x] Nine MCP integration tests pass in CI, including a separate-process loopback TCP test and trusted-auth boundary checks.
@@ -40,6 +40,11 @@ This ledger distinguishes verified implementation from planned or unverified cap
 **Important boundary:** The test uses the MCP SDK's Streamable HTTP transport with a custom in-process fetch bridge. It exercises MCP protocol messages between separate handler/client instances, but it does not yet prove socket-level networking, separate-process operation, production authentication, persistence, or a live external AI system.
 
 ## Latest verification
+
+- Stacked PR #4: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4
+- Branch: `feat/mcp-tool-schema-approval`
+- CI-verified head: `2718da1a49404fcf270db09276bc96d94ed2354f`
+- PR #4 targets `feat/mcp-relay-lab` and depends on PR #3. CI run 41263501830 passed: 13 Node tests, 10 Python Wellness Doctor tests, 112 Repository Doctor checks, zero warnings/errors/critical, and both workflow YAML files parsed.
 
 - PR #3: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3
 - Active branch: `feat/mcp-relay-lab`
@@ -56,7 +61,8 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [ ] Persistent database, migrations, durable tasks, or message history.
 - [ ] Production authentication/OAuth and a trusted real caller identity provider.
 - [ ] Owner console for registering endpoints and approving tools.
-- [ ] Full tool-schema fingerprint/version drift detection.
+- [x] Local full tool-schema fingerprint drift detection and fail-closed invocation check implemented and CI-verified on PR #4.
+- [ ] Production owner onboarding/reapproval workflow for schema changes.
 - [ ] Network-separated remote MCP process and socket-level round trip.
 - [ ] Real external AI agent and real requesting client round trip.
 - [ ] A2A/provider/webhook adapters.

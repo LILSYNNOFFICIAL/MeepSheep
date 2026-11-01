@@ -3,8 +3,10 @@ import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { afterEach, test } from "node:test";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import * as z from "zod/v4";
 import { AgentRegistry } from "../src/relay/agent-registry.mjs";
 import { createRelayHandler } from "../src/relay/mcp-handler.mjs";
+import { fingerprintToolSchema } from "../src/relay/tool-schema.mjs";
 import { createMockAgent } from "./fixtures/mock-agent.mjs";
 
 const openHandlers = [];
@@ -42,6 +44,12 @@ async function setup({ agents = [], principalValue = principal } = {}) {
     const mock = agent.mock ?? createMockAgent({ id: agent.id, toolName: agent.remoteToolName ?? "review_message" });
     remoteHandlers.push(mock.handler);
     const remoteClient = await connectClient(mock.handler, agent.id);
+    const discoveredTools = (await remoteClient.listTools()).tools;
+    const approvedToolNames = agent.approvedTools ?? [agent.remoteToolName ?? "review_message"];
+    const approvedToolSchemas = agent.approvedToolSchemas ?? Object.fromEntries(approvedToolNames.map((name) => {
+      const discovered = discoveredTools.find((tool) => tool.name === name) ?? { ...discoveredTools[0], name };
+      return [name, fingerprintToolSchema(discovered)];
+    }));
     registry.register({
       id: agent.id,
       name: agent.name ?? agent.id,
@@ -50,6 +58,7 @@ async function setup({ agents = [], principalValue = principal } = {}) {
       discoverable: agent.discoverable ?? true,
       capabilities: agent.capabilities ?? ["message-review"],
       approvedTools: agent.approvedTools ?? [agent.remoteToolName ?? "review_message"],
+      approvedToolSchemas,
       secretRef: "secret://must-never-be-exposed",
       endpoint: "https://remote.invalid/mcp",
       client: remoteClient
@@ -182,6 +191,37 @@ test("remote tools removed from the server are rejected as a schema mismatch", a
   assert.equal(mock.calls, 0);
 });
 
+test("same-name remote tool schema changes are rejected before invocation", async () => {
+  const approvedMock = createMockAgent({ id: "agent-alpha" });
+  openHandlers.push(approvedMock.handler);
+  const approvedClient = await connectClient(approvedMock.handler, "approval-baseline");
+  const approvedTool = (await approvedClient.listTools()).tools.find((tool) => tool.name === "review_message");
+  assert.ok(approvedTool);
+  const approvedFingerprint = fingerprintToolSchema(approvedTool);
+
+  const changedMock = createMockAgent({
+    id: "agent-alpha",
+    inputSchema: z.object({ message: z.string(), priority: z.string() })
+  });
+  const { caller } = await setup({
+    agents: [{
+      id: "agent-alpha",
+      mock: changedMock,
+      approvedToolSchemas: { review_message: approvedFingerprint }
+    }]
+  });
+  const result = await caller.callTool({
+    name: "send_message",
+    arguments: {
+      targetAgentId: "agent-alpha",
+      toolName: "review_message",
+      arguments: { message: "Must not call." }
+    }
+  });
+  assert.match(errorText(result), /SCHEMA_CHANGED/);
+  assert.equal(changedMock.calls, 0);
+});
+
 test("callers without agent:message permission cannot dispatch", async () => {
   const restricted = { ...principal, permissions: ["agent:discover"] };
   const { caller } = await setup({ agents: [{ id: "agent-alpha" }], principalValue: restricted });
@@ -240,6 +280,8 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
   openClients.push(remoteClient);
 
   const registry = new AgentRegistry();
+  const processTool = (await remoteClient.listTools()).tools.find((tool) => tool.name === "review_message");
+  assert.ok(processTool, "separate process must expose the approved tool before registration");
   registry.register({
     id: "agent-process",
     name: "Separate process agent",
@@ -247,6 +289,7 @@ test("send_message crosses a separately spawned remote MCP server over TCP", asy
     discoverable: true,
     capabilities: ["message-review"],
     approvedTools: ["review_message"],
+    approvedToolSchemas: { review_message: fingerprintToolSchema(processTool) },
     client: remoteClient
   });
   const relayHandler = createRelayHandler({
