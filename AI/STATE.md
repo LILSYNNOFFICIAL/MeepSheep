@@ -117,6 +117,21 @@ This ledger distinguishes verified implementation from planned or unverified cap
 
 No production credentials, Cloudflare resources, DNS, or deployment have been changed.
 
+## Asynchronous task orchestration (feature branch, verification pending)
+
+- [x] Provider-neutral task coordinator with server-generated task/trace IDs, caller/tenant scope, request fingerprint, scoped idempotency hash, bounded JSON payload, deadline and optimistic-concurrency version.
+- [x] Repository contract requires atomic task + initial event + dispatch outbox creation, version-checked state transition + event append, worker lease claim and lease-owned completion.
+- [x] In-memory reference repository exists for deterministic tests only. It is not durable or safe for multi-process deployment.
+- [x] Registry-backed dispatcher checks tenant, caller and owner-approved tool access, re-discovers remote MCP schema and checks its approved fingerprint before every queued dispatch.
+- [x] Worker state lifecycle, deadline expiry, bounded cancellation, caller-scoped task reads, bounded wait, output limits and sanitized errors are implemented.
+- [x] Expired outbox lease after dispatch has started becomes `REMOTE_OUTCOME_UNKNOWN`; the worker does not blindly repeat a possibly non-idempotent remote invocation.
+- [x] Optional inbound MCP tools: `delegate_task`, `get_task`, `wait_task`, `cancel_task`. They are registered only when a compatible coordinator is injected and bind to the trusted request principal.
+- [ ] Exact current-head CI verification for the coordinator, dispatcher, MCP task tools, full regression suite and repository health.
+- [ ] Production database/migrations, durable queue/outbox, worker process, retention/deletion policy, monitoring and dead-letter/reconciliation controls.
+- [ ] Live external MCP target verification, including real cancellation/idempotency behavior.
+
+**Current branch head:** `d186ea430076f51d0aa5ff5d3dcbd461048d42f4`. Do not treat the task layer as production-ready or fully verified until a completed green CI run tests this exact head. The preceding CI run 41269980816 verifies the security/connection milestone only, not the subsequent task implementation.
+
 ## Infrastructure
 
 A read-only inspection on 2026-10-31 returned one accessible Cloudflare account with zero zones, Worker scripts, D1 databases, Durable Object namespaces, and Queues. This is account-scoped and does not rule out another account or registrar. Do not deploy or change DNS until the correct account and domain zone are confirmed.
