@@ -302,7 +302,13 @@ test("delegate_task, get_task, and cancel_task use the trusted MCP principal", a
       return { ...task, state: "canceled" };
     }
   };
-  const { caller } = await setup({ taskCoordinator });
+  const { caller } = await setup({
+    taskCoordinator,
+    principalValue: {
+      ...principal,
+      permissions: [...principal.permissions, "task:dispatch", "task:read", "task:cancel"]
+    }
+  });
   const created = await caller.callTool({
     name: "delegate_task",
     arguments: {
