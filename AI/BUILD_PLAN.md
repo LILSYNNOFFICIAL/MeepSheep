@@ -91,6 +91,20 @@
 
 **Still open:** This is not an OAuth authorization server or production identity integration. Registry, connection previews and active connection state remain in memory. There is no persistent DB/KMS adapter, public owner API/console, durable audit log, schema reapproval workflow, durable task system, or live external agent. The actual external TLS handshake and deployed egress policy remain unverified. No secrets, production endpoints, Cloudflare resources, DNS, or deployment were changed.
 
+## Phase 4B: Asynchronous task execution (local implementation, CI verification pending)
+
+- [x] Define task, event, outbox, deadline, idempotency and worker lease contracts.
+- [x] Add the task coordinator with tenant/caller authorization, bounded input/output, deadlines, optimistic state transitions, cancellation and bounded wait.
+- [x] Add an in-memory reference repository for deterministic local tests.
+- [x] Add registry-backed dispatch with owner-approved schema revalidation before invocation.
+- [x] Add optional MCP tools for `delegate_task`, `get_task`, `wait_task`, and `cancel_task`, bound to the trusted request principal.
+- [x] Avoid blind retries after a lease expires once remote dispatch may have begun; mark `REMOTE_OUTCOME_UNKNOWN`.
+- [ ] Verify the task and dispatcher suites, MCP integration suite, full Node suite, Wellness Doctor and Repository Doctor on the same exact head.
+- [ ] Implement the production SQL repository and migrations, durable outbox/queue, worker deployment and operational recovery.
+- [ ] Test lost responses, transaction rollback, cross-process contention, worker crashes at every state boundary and real remote idempotency/cancellation.
+
+**Boundary:** The committed in-memory store is a test/reference adapter. It does not provide durability, distributed locking or restart recovery.
+
 ## Phase 5: First real AI-to-AI proof
 
 - [ ] Configure a real remote agent endpoint and credential.
