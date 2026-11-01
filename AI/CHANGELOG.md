@@ -2,15 +2,17 @@
 
 Meaningful product, architecture, security, and release changes are recorded here. Dates use YYYY-MM-DD. This log does not replace Git history.
 
-## 2026-11-01: Secure connection boundary primitives (draft PR #5)
+## 2026-11-01: Secure connection and owner lifecycle (draft PR #5)
 
-- Added a resource-server authentication module for RS256 JWT access tokens verified against a configured JWKS resolver.
-- Added an inbound bearer middleware that replaces caller-provided MCP auth context and derives principal/tenant only from verified claims.
-- Added tests proving invalid issuer/audience/algorithm/time/claims are rejected and forged auth context cannot override signed identity.
-- Added strict HTTPS/443 exact-host endpoint validation, complete IPv4/IPv6 DNS answer checks, and a pinned HTTPS fetch adapter with request restrictions, TLS hostname preservation, header stripping, byte limits, timeouts, and redirect non-following.
-- Added focused security CI steps and a new draft PR #5 stacked on PR #4.
-- CI run 41268297674 on head `05563436e7631024733bd82bd5f03c9612ce0bf4` passed 7 auth tests, 9 endpoint tests, 30 Node tests, 10 Python Wellness Doctor tests, 113 Repository Doctor checks, and both workflow YAML validations.
-- Production OAuth issuance, JWKS/key lifecycle, endpoint onboarding wiring, credential vault, persistent registry, durable tasks, real external TLS/egress verification, and live AI integrations remain unimplemented.
+- Added an RS256 JWT access-token resource-server verifier with trusted JWKS validation and an inbound bearer middleware that overwrites caller-controlled authentication context.
+- Added strict HTTPS/443 endpoint validation, complete DNS answer checks, and a pinned Node HTTPS fetch adapter with TLS hostname preservation, redirect refusal, request/response restrictions, byte limits, timeouts, and cancellation.
+- Added an encrypted AES-256-GCM credential vault with tenant/credential/key/version authenticated data, scoped reads, key rotation, revocation, tamper detection, and optimistic concurrency.
+- Hardened the in-memory agent registry to retain only explicit safe fields and opaque credential/endpoint references.
+- Added a secure outbound MCP connection factory that combines endpoint validation, pinned transport, per-request vault-backed bearer injection, and remote tool schema discovery.
+- Added an internal owner connection manager for preview, explicit per-tool schema approval, owner/tenant isolation, expiry, registration, disconnect, credential revocation, and cleanup on failure. Privileged lifecycle methods are not exposed as ordinary inbound MCP tools.
+- Added focused CI gates for each security subsystem and owner connection lifecycle.
+- CI run 41269980816 on head `59b38b6e3b3329c983b696bd01da7ded667bb2e2` passed 63 Node tests, 10 Python Wellness Doctor tests, 113 Repository Doctor checks with zero warnings/errors/critical, and both workflow YAML validations.
+- The connection manager and credential vault still use in-memory test/reference adapters. Production OAuth issuance, persistent DB/KMS adapters, public owner API/console, durable audit, schema reapproval UI, task queue, live external TLS/egress verification, and real AI integrations remain unimplemented.
 
 ## 2026-10-31
 
