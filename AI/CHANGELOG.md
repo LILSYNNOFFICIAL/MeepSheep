@@ -2,6 +2,16 @@
 
 Meaningful product, architecture, security, and release changes are recorded here. Dates use YYYY-MM-DD. This log does not replace Git history.
 
+## 2026-11-01: Local asynchronous task orchestration verified (draft PR #5)
+
+- Added a provider-neutral task coordinator, in-memory reference repository, task state/event lifecycle, tenant/caller-scoped idempotency, deadlines, optimistic transitions, leased outbox processing, bounded wait/cancel, and safe `REMOTE_OUTCOME_UNKNOWN` handling.
+- Added a registry-backed dispatcher that rechecks the owner grant and approved remote tool schema immediately before dispatch.
+- Wired optional `delegate_task`, `get_task`, `wait_task`, and `cancel_task` MCP tools to the trusted request principal; tools register only when the host injects a compatible coordinator.
+- Corrected nullable optional opaque registry references and aligned outbound task dispatch with the MCP SDK v2 `callTool(params, options)` signature.
+- Updated the read-only quality workflow to run every focused suite, the full Node suite, Python tests, Repository Doctor, and workflow YAML validation before the final complete quality gate.
+- CI run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) on exact head `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5` passed: 90 Node tests, 10 Python Wellness Doctor tests, 117 Repository Doctor checks, zero warnings/errors/critical, and both workflow YAML validations.
+- This is a verified local task implementation only. The reference repository is in-memory; durable SQL storage, queue/worker, restart recovery, retention, dead-letter handling, and live third-party agent execution remain unimplemented.
+
 ## 2026-11-01: Secure connection and owner lifecycle (draft PR #5)
 
 - Added an RS256 JWT access-token resource-server verifier with trusted JWKS validation and an inbound bearer middleware that overwrites caller-controlled authentication context.
