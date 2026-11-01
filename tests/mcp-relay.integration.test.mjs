@@ -66,8 +66,8 @@ async function setup({ agents = [], principalValue = principal, authenticator, b
       capabilities: agent.capabilities ?? ["message-review"],
       approvedTools: agent.approvedTools ?? [agent.remoteToolName ?? "review_message"],
       approvedToolSchemas,
-      secretRef: "secret://must-never-be-exposed",
-      endpoint: "https://remote.invalid/mcp",
+      credentialRef: "credential://must-never-be-exposed",
+      endpointRef: "endpoint://agent-alpha",
       client: remoteClient
     });
   }
