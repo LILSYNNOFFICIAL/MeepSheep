@@ -64,6 +64,17 @@ test("registry rejects raw secrets and authorization material in registration re
   }
 });
 
+
+test("registry rejects noncanonical or path-bearing credential references", () => {
+  for (const credentialRef of ["credential://id/other", "credential:// id", "credential://", "secret://id"]) {
+    const registry = new AgentRegistry();
+    assert.throws(
+      () => registry.register(validAgent({ credentialRef })),
+      (error) => error instanceof TypeError && /opaque credential/.test(error.message)
+    );
+  }
+});
+
 test("model-facing discovery does not reveal credential or endpoint references", () => {
   const registry = new AgentRegistry();
   registry.register(validAgent());
