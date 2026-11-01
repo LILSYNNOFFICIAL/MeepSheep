@@ -152,6 +152,7 @@ export function createAgentConnectionManager({
       allowedHosts.some((host) => typeof host !== "string" || host.length === 0) ||
       (
         credentialRef &&
+        createRemoteClient === createSecureRemoteMcpClient &&
         (!credentialVault || typeof credentialVault.withCredential !== "function")
       )
     ) {
