@@ -19,12 +19,9 @@ const RAW_CREDENTIAL_FIELDS = new Set([
 ]);
 
 function isOpaqueReference(value, prefix) {
-  return typeof value === "string" &&
-    value.startsWith(prefix) &&
-    value.length > prefix.length &&
-    value.length <= 512 &&
-    value.trim() === value &&
-    !/[\u0000-\u0020\u007F]/.test(value);
+  if (typeof value !== "string" || !value.startsWith(prefix)) return false;
+  const identifier = value.slice(prefix.length);
+  return /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(identifier);
 }
 
 export class AgentRegistry {
