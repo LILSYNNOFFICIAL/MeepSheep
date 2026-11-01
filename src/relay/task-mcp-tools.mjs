@@ -60,6 +60,7 @@ export function registerTaskTools(server, taskCoordinator, trustedPrincipal) {
     !taskCoordinator ||
     typeof taskCoordinator.createTask !== "function" ||
     typeof taskCoordinator.getTask !== "function" ||
+    typeof taskCoordinator.waitTask !== "function" ||
     typeof taskCoordinator.cancelTask !== "function"
   ) {
     throw new TypeError("A compatible MCP server and task coordinator are required.");
@@ -103,6 +104,29 @@ export function registerTaskTools(server, taskCoordinator, trustedPrincipal) {
   }, async ({ taskId }) => {
     try {
       const task = await taskCoordinator.getTask(trustedPrincipal ?? null, taskId);
+      return {
+        content: [{ type: "text", text: "Task status: " + task.state }],
+        structuredContent: { task: taskSummary(task) }
+      };
+    } catch (error) {
+      return taskError(safeTaskError(error));
+    }
+  });
+
+  server.registerTool("wait_task", {
+    description: "Wait briefly for a task to finish or change state, then return its latest status.",
+    inputSchema: z.object({
+      taskId: z.string().min(1),
+      waitMs: z.number().int().min(0).max(30000).optional()
+    }).strict(),
+    outputSchema: taskOutputSchema
+  }, async ({ taskId, waitMs }) => {
+    try {
+      const task = await taskCoordinator.waitTask(
+        trustedPrincipal ?? null,
+        taskId,
+        waitMs === undefined ? {} : { waitMs }
+      );
       return {
         content: [{ type: "text", text: "Task status: " + task.state }],
         structuredContent: { task: taskSummary(task) }
