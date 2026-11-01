@@ -103,9 +103,19 @@ export function createInMemoryTaskRepository() {
       return copy(claimed);
     },
 
-    async completeOutbox({ outboxId, workerId, completedAt }) {
+    async completeOutbox({ outboxId, workerId, leaseAttempt, leaseUntil, completedAt }) {
       const record = outbox.get(outboxId);
-      if (!record || record.status !== "leased" || record.workerId !== workerId) {
+      if (
+        !record ||
+        record.status !== "leased" ||
+        record.workerId !== workerId ||
+        !Number.isSafeInteger(leaseAttempt) ||
+        record.attempts !== leaseAttempt ||
+        !Number.isFinite(leaseUntil) ||
+        record.leaseUntil !== leaseUntil ||
+        !Number.isFinite(completedAt) ||
+        completedAt >= record.leaseUntil
+      ) {
         return false;
       }
       outbox.set(outboxId, {
