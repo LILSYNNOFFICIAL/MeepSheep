@@ -61,6 +61,12 @@ jobs:
         continue-on-error: true
         run: node --test tests/remote-mcp-connection.test.mjs
 
+      - name: Run owner connection lifecycle tests
+        id: connection
+        if: always()
+        continue-on-error: true
+        run: node --test tests/agent-connection-manager.test.mjs
+
       - name: Verify all focused security test gates
         if: always()
         run: |
@@ -69,6 +75,7 @@ jobs:
           test "${{ steps.vault.outcome }}" = "success"
           test "${{ steps.registry.outcome }}" = "success"
           test "${{ steps.remote.outcome }}" = "success"
+          test "${{ steps.connection.outcome }}" = "success"
 
       - name: Run MCP relay integration and unit suite
         run: npm test
