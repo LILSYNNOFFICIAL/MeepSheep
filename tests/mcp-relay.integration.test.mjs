@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
 import { afterEach, test } from "node:test";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import * as z from "zod/v4";
 import { AgentRegistry } from "../src/relay/agent-registry.mjs";
 import { createRelayHandler } from "../src/relay/mcp-handler.mjs";
 import { fingerprintToolSchema } from "../src/relay/tool-schema.mjs";
@@ -188,6 +189,36 @@ test("remote tools removed from the server are rejected as a schema mismatch", a
   });
   assert.match(errorText(result), /SCHEMA_CHANGED/);
   assert.equal(mock.calls, 0);
+});
+
+test("same-name remote tool schema changes are rejected before invocation", async () => {
+  const approvedMock = createMockAgent({ id: "agent-alpha" });
+  const approvedClient = await connectClient(approvedMock.handler, "approval-baseline");
+  const approvedTool = (await approvedClient.listTools()).tools.find((tool) => tool.name === "review_message");
+  assert.ok(approvedTool);
+  const approvedFingerprint = fingerprintToolSchema(approvedTool);
+
+  const changedMock = createMockAgent({
+    id: "agent-alpha",
+    inputSchema: z.object({ message: z.string(), priority: z.string() })
+  });
+  const { caller } = await setup({
+    agents: [{
+      id: "agent-alpha",
+      mock: changedMock,
+      approvedToolSchemas: { review_message: approvedFingerprint }
+    }]
+  });
+  const result = await caller.callTool({
+    name: "send_message",
+    arguments: {
+      targetAgentId: "agent-alpha",
+      toolName: "review_message",
+      arguments: { message: "Must not call." }
+    }
+  });
+  assert.match(errorText(result), /SCHEMA_CHANGED/);
+  assert.equal(changedMock.calls, 0);
 });
 
 test("callers without agent:message permission cannot dispatch", async () => {
