@@ -55,7 +55,7 @@ Mocks prove contract behavior only. They do not establish that a real provider o
 
 ## 3.1 Verified local lab coverage
 
-The current exact-head quality run [41276417903](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41276417903) on `c9a94b50fd77f82b36e8454cfdc117bb90b2e8f5` passed all focused security, connection, and task gates plus the full Node suite.
+The current exact-head quality run [41288727098](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/runs/41288727098) on PR #5 feature head `95b69aeee7fab656aabd9d3e6056c3cda72ba8b4` passed all focused security, connection, and task gates plus the full Node suite (CI merge revision `4266663f338dbf292c6081db3f3b00f044359b5e`).
 
 | Suite | Passed |
 |---|---:|
@@ -67,13 +67,14 @@ The current exact-head quality run [41276417903](https://github.com/LILSYNNOFFIC
 | Owner connection lifecycle | 10 |
 | Task coordinator | 15 |
 | Task dispatcher | 8 |
-| Full Node suite | 90 |
+| Outbox lease-fencing regressions | 2 |
+| Full Node suite | 92 |
 | Python Wellness Doctor | 10 |
 | Repository Doctor | 117, 0 warnings/errors/critical |
 
 Both GitHub Actions workflow YAML files parsed successfully. The read-only quality workflow installs from the lockfile, runs focused gates, executes the full Node suite, runs Python unit tests and the Repository Doctor, and fails the final gate if any required step fails or is skipped.
 
-Task tests cover in-memory repository atomic-operation contracts, caller/tenant idempotency scoping, authorization-before-persistence, input/deadline bounds, state and event transitions, cancellation races, lease recovery, remote schema drift, sanitized errors, and optional MCP task-tool identity binding. These checks verify the local reference implementation only; they do not establish durable SQL transactions, cross-process locking, queue redelivery, restart recovery, or production task guarantees.
+Task tests cover in-memory repository atomic-operation contracts, caller/tenant idempotency scoping, authorization-before-persistence, input/deadline bounds, state and event transitions, cancellation races, lease recovery, rejection of expired claims, rejection of stale claim generations even when worker IDs are reused, remote schema drift, sanitized errors, and optional MCP task-tool identity binding. The two lease-fencing regressions were observed failing before the repair and passing in the final exact-head run. These checks verify the local reference implementation only; they do not establish durable SQL transactions, database-clock expiry, cross-process locking, the suspended-worker dispatch race, queue redelivery, restart recovery, or production task guarantees.
 
 The MCP integration suite exercises SDK handler/client instances through a deterministic fetch bridge, plus a separately spawned mock agent over loopback TCP. It does not prove public network deployment, production authentication, persistent registry/vault/task state, real AI inference, OAuth issuance, deployed SSRF protections, or actual provider compatibility.
 
