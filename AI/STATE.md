@@ -41,6 +41,11 @@ This ledger distinguishes verified implementation from planned or unverified cap
 
 ## Latest verification
 
+- Stacked PR #4: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/4
+- Branch: `feat/mcp-tool-schema-approval`
+- Current head: `f8a04d6151dc6030a14afcf5286d8983c35d8a6d`
+- PR #4 targets `feat/mcp-relay-lab` and depends on PR #3. New schema-fingerprint tests are awaiting CI evidence; no pass claim is made.
+
 - PR #3: https://github.com/LILSYNNOFFICIAL/MeepSheep/pull/3
 - Active branch: `feat/mcp-relay-lab`
 - Tested implementation head: `6a11d3aa40c8173b0dc996842d6cc0f9c615e99b`
@@ -56,7 +61,7 @@ This ledger distinguishes verified implementation from planned or unverified cap
 - [ ] Persistent database, migrations, durable tasks, or message history.
 - [ ] Production authentication/OAuth and a trusted real caller identity provider.
 - [ ] Owner console for registering endpoints and approving tools.
-- [x] Local full tool-schema fingerprint drift detection and fail-closed invocation check.
+- [x] Local full tool-schema fingerprint drift detection and fail-closed invocation check implemented on stacked PR #4; CI verification pending.
 - [ ] Production owner onboarding/reapproval workflow for schema changes.
 - [ ] Network-separated remote MCP process and socket-level round trip.
 - [ ] Real external AI agent and real requesting client round trip.
