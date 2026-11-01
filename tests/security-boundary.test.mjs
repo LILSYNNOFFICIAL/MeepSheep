@@ -114,7 +114,7 @@ test("rejects incomplete or malformed identity and scope claims", async () => {
 
 test("rejects tokens signed with an algorithm outside the configured allowlist", async () => {
   const auth = makeAuthenticator();
-  const signed = await makeToken({}, { alg: "HS256" });
+  const signed = await makeToken({}, { alg: "RS384" });
   await assert.rejects(auth.authenticate(await requestWithToken(signed)), (error) => error.code === "AUTH_INVALID");
 });
 
