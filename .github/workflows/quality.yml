@@ -33,19 +33,42 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Run authentication boundary tests
+        id: auth
+        continue-on-error: true
         run: node --test tests/security-boundary.test.mjs
 
       - name: Run endpoint security boundary tests
+        id: endpoint
+        if: always()
+        continue-on-error: true
         run: node --test tests/endpoint-security.test.mjs
 
       - name: Run credential vault boundary tests
+        id: vault
+        if: always()
+        continue-on-error: true
         run: node --test tests/credential-vault.test.mjs
 
       - name: Run agent registry isolation tests
+        id: registry
+        if: always()
+        continue-on-error: true
         run: node --test tests/agent-registry.test.mjs
 
       - name: Run secure remote MCP connection tests
+        id: remote
+        if: always()
+        continue-on-error: true
         run: node --test tests/remote-mcp-connection.test.mjs
+
+      - name: Verify all focused security test gates
+        if: always()
+        run: |
+          test "${{ steps.auth.outcome }}" = "success"
+          test "${{ steps.endpoint.outcome }}" = "success"
+          test "${{ steps.vault.outcome }}" = "success"
+          test "${{ steps.registry.outcome }}" = "success"
+          test "${{ steps.remote.outcome }}" = "success"
 
       - name: Run MCP relay integration and unit suite
         run: npm test
