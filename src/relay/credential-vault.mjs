@@ -39,9 +39,9 @@ function validateKey(key) {
   return Buffer.from(key);
 }
 
-function associatedData(credentialId, tenantId) {
+function associatedData(credentialId, tenantId, version) {
   return Buffer.from(
-    "meepsheep:credential:v" + SCHEMA_VERSION + ":" + tenantId + ":" + credentialId,
+    "meepsheep:credential:v" + SCHEMA_VERSION + ":" + tenantId + ":" + credentialId + ":" + version,
     "utf8"
   );
 }
@@ -66,8 +66,10 @@ function serializeSecret(secret, maxBytes) {
 function encrypt(plaintext, { key, keyId, credentialId, tenantId, version, createdAt, updatedAt }) {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", key, iv);
-  cipher.setAAD(associatedData(credentialId, tenantId));
+  cipher.setAAD(associatedData(credentialId, tenantId, version));
   const ciphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+  const encodedCiphertext = ciphertext.toString("base64");
+  ciphertext.fill(0);
 
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -79,14 +81,18 @@ function encrypt(plaintext, { key, keyId, credentialId, tenantId, version, creat
     status: "active",
     iv: iv.toString("base64"),
     authTag: cipher.getAuthTag().toString("base64"),
-    ciphertext: ciphertext.toString("base64"),
+    ciphertext: encodedCiphertext,
     createdAt,
     updatedAt
   };
 }
 
-function decodeBase64(value, expectedLength) {
-  if (typeof value !== "string" || value.length === 0) throw fail("CREDENTIAL_CORRUPT");
+function decodeBase64(value, expectedLength, maximumLength) {
+  if (
+    typeof value !== "string" ||
+    value.length === 0 ||
+    (maximumLength !== undefined && value.length > maximumLength)
+  ) throw fail("CREDENTIAL_CORRUPT");
   const buffer = Buffer.from(value, "base64");
   if (buffer.toString("base64") !== value || (expectedLength !== undefined && buffer.length !== expectedLength)) {
     buffer.fill(0);
@@ -95,7 +101,7 @@ function decodeBase64(value, expectedLength) {
   return buffer;
 }
 
-function validateRecord(record, credentialId, tenantId) {
+function validateRecordEnvelope(record, credentialId, tenantId) {
   if (
     !record ||
     record.schemaVersion !== SCHEMA_VERSION ||
@@ -108,8 +114,13 @@ function validateRecord(record, credentialId, tenantId) {
   ) {
     throw fail("CREDENTIAL_CORRUPT");
   }
+  if (record.status !== "active" && record.status !== "revoked") throw fail("CREDENTIAL_CORRUPT");
+  return record;
+}
+
+function validateActiveRecord(record, credentialId, tenantId) {
+  validateRecordEnvelope(record, credentialId, tenantId);
   if (record.status === "revoked") throw fail("CREDENTIAL_REVOKED");
-  if (record.status !== "active") throw fail("CREDENTIAL_CORRUPT");
   return record;
 }
 
@@ -188,21 +199,25 @@ export function createCredentialVault({
       throw fail("CREDENTIAL_STORE_UNAVAILABLE");
     }
     if (!record || record.tenantId !== tenantId) throw fail("CREDENTIAL_NOT_FOUND");
+    validateRecordEnvelope(record, credentialId, tenantId);
     return record;
   }
 
   async function decryptRecord(record, credentialId, tenantId) {
-    validateRecord(record, credentialId, tenantId);
+    validateActiveRecord(record, credentialId, tenantId);
+    if (typeof record.ciphertext !== "string" || record.ciphertext.length > Math.ceil(maxCredentialBytes / 3) * 4) {
+      throw fail("CREDENTIAL_CORRUPT");
+    }
     const key = await keyById(record.keyId);
     let iv;
     let authTag;
     let ciphertext;
     try {
-      iv = decodeBase64(record.iv, 12);
-      authTag = decodeBase64(record.authTag, 16);
-      ciphertext = decodeBase64(record.ciphertext);
+      iv = decodeBase64(record.iv, 12, 16);
+      authTag = decodeBase64(record.authTag, 16, 24);
+      ciphertext = decodeBase64(record.ciphertext, undefined, Math.ceil(maxCredentialBytes / 3) * 4);
       const decipher = createDecipheriv("aes-256-gcm", key, iv);
-      decipher.setAAD(associatedData(credentialId, tenantId));
+      decipher.setAAD(associatedData(credentialId, tenantId, record.version));
       decipher.setAuthTag(authTag);
       return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
     } catch (error) {
@@ -234,14 +249,19 @@ export function createCredentialVault({
     try {
       const material = await currentKey();
       const timestamp = now();
-      const record = encrypt(plaintext, {
-        ...material,
-        credentialId,
-        tenantId,
-        version: 1,
-        createdAt: timestamp,
-        updatedAt: timestamp
-      });
+      let record;
+      try {
+        record = encrypt(plaintext, {
+          ...material,
+          credentialId,
+          tenantId,
+          version: 1,
+          createdAt: timestamp,
+          updatedAt: timestamp
+        });
+      } finally {
+        material.key.fill(0);
+      }
       let inserted;
       try {
         inserted = await store.insert(record);
@@ -295,14 +315,19 @@ export function createCredentialVault({
     try {
       const material = await currentKey();
       const updatedAt = now();
-      const replacement = encrypt(plaintext, {
-        ...material,
-        credentialId,
-        tenantId,
-        version: record.version + 1,
-        createdAt: record.createdAt,
-        updatedAt
-      });
+      let replacement;
+      try {
+        replacement = encrypt(plaintext, {
+          ...material,
+          credentialId,
+          tenantId,
+          version: record.version + 1,
+          createdAt: record.createdAt,
+          updatedAt
+        });
+      } finally {
+        material.key.fill(0);
+      }
       await persistReplacement(credentialId, record.version, replacement);
       return safeMetadata(replacement);
     } finally {
@@ -316,7 +341,7 @@ export function createCredentialVault({
     }
     const record = await readRecord(credentialId, tenantId);
     if (record.status === "revoked") return safeMetadata(record);
-    validateRecord(record, credentialId, tenantId);
+    validateActiveRecord(record, credentialId, tenantId);
     const timestamp = now();
     const replacement = {
       ...record,
