@@ -263,10 +263,6 @@ test("cancellation after the working-state commit aborts before remote dispatch 
     return updated;
   };
   let dispatchCalls = 0;
-  const { coordinator } = setup({
-    dispatch: async () => { dispatchCalls += 1; return { shouldNotRun: true }; },
-  });
-  // Replace the coordinator's store with the controlled repository by building a matching instance.
   const controlledCoordinator = createTaskCoordinator({
     repository,
     authorizeTarget: async () => ({ connectionId: "connection-a" }),
