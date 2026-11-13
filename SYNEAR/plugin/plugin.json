@@ -1,0 +1,24 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "synear-audio-intelligence",
+  "version": "0.1.0",
+  "description": "Audio perception and music intelligence powered by multimodal audio inference. Analyze and compare music, vocals, rhythm, instrumentation families, mood, energy, and production texture.",
+  "author": { "name": "LIL SYNN" },
+  "keywords": ["audio", "music", "perception", "analysis", "vocals", "production", "MCP"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "SYNEAR",
+        "shortDescription": "Audio perception and music IQ",
+        "longDescription": "SYNEAR listens to supplied audio through a multimodal audio-perception model and returns structured evidence about music and sound. Analyze broad genre family, vocal presence and delivery, rhythm, tempo feel, instrumental families, low-end character, energy, mood, arrangement, and production texture. Compare two excerpts for perceived differences. Results are probabilistic model estimates, not definitive source separation, exact BPM, key detection, lyric transcription, or calibrated mastering measurements. Audio is fetched from public direct-download HTTPS URLs and processed through Cloudflare Workers AI.",
+        "category": "Entertainment",
+        "capabilities": [],
+        "defaultPrompt": [
+          "Listen to this audio and analyze its musical character with SYNEAR.",
+          "Compare these two audio excerpts with SYNEAR.",
+          "Analyze the vocal delivery and production texture in this recording."
+        ]
+      }
+    }
+  }
+}

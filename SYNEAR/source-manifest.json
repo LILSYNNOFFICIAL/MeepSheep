@@ -1,0 +1,22 @@
+{
+  "archive": {
+    "file": "SYNEAR-Source.zip",
+    "sha256": "28c446d835b2d6c6d73637c35371d3767d303aa93fb99cfffd64d61d6cb0708c"
+  },
+  "pluginArchive": {
+    "file": "SYNEAR-ChatGPT-Plugin.zip",
+    "sha256": "85a82460436212ea8c2071bec3f46b5bf744dffc312114151f4ed93a26804195"
+  },
+  "worker": {
+    "path": "src/worker.js",
+    "bytes": 30408,
+    "sha256": "f3a0c1900c3584507cc8c4caebdd91c4bfff6392049d218d248cbd8e9c1fef0d"
+  },
+  "verification": {
+    "deployedWorkerSourceMatchesArchive": true,
+    "unitTests": "11/11 passed",
+    "runtime": "Node.js 22.16.0",
+    "syntaxCheck": "passed"
+  },
+  "note": "Hashes are provenance records. No credentials or secret values are included."
+}

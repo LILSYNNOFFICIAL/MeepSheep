@@ -1,0 +1,11 @@
+{
+  "name": "synear-audio-intelligence",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "SYNEAR multimodal audio perception service and Streamable HTTP MCP server",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/worker.js"
+  }
+}

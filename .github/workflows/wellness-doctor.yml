@@ -35,6 +35,7 @@ jobs:
 
       - name: Run Wellness Doctor unit tests
         run: python -m unittest discover -s tests -v
+        working-directory: SYNTALK
 
       - name: Inspect and update README health region
         id: doctor
@@ -45,18 +46,19 @@ jobs:
           doctor_status=$?
           echo "exit_code=$doctor_status" >> "$GITHUB_OUTPUT"
           exit 0
+        working-directory: SYNTALK
 
       - name: Commit changed health summary only
         if: steps.doctor.outputs.exit_code != '2'
         shell: bash
         run: |
-          if git diff --quiet -- README.md; then
+          if git diff --quiet -- SYNTALK/README.md; then
             echo "Health summary unchanged; no commit created."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md
+          git add SYNTALK/README.md
           git commit -m "chore: update automated repository health"
           git push
 
