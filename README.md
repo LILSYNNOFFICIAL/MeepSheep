@@ -32,7 +32,7 @@ The products remain separate services. Shared identity is not shared authorizati
 
 ## Company website
 
-The responsive company website lives in **WEBSITE/**. It is a dependency-free static site intended for Cloudflare Pages. Production Pages and DNS cutover are configured separately after the current domain origin is verified.
+The responsive company website lives in **WEBSITE/** and is deployed on Cloudflare Pages at [meepsheep-company-site.pages.dev](https://meepsheep-company-site.pages.dev/). The Pages project builds from main with WEBSITE/ as its output directory. The custom domain meepsheep.com is not attached yet because its existing DNS origin still needs to be identified before cutover.
 
 ## Repository layout
 
@@ -55,7 +55,7 @@ Never commit credentials, API keys, private user data, or secret-bearing configu
 
 ## Project status
 
-- The company website source and automated validation are in place.
+- The company website is live on Cloudflare Pages at meepsheep-company-site.pages.dev; custom-domain cutover remains pending.
 - The original SynTalk README, AI documentation, scripts, and tests are grouped under SYNTALK/.
 - SYNEAR source is restored from the archived release and independently verified against the currently deployed Worker.
 - Shared identity provisioning and the website's production deployment remain separate release gates.
