@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   quality:
-    name: Tests, repository doctor, and workflow syntax
+    name: Tests, repository doctor, website validation, and workflow syntax
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -33,6 +33,11 @@ jobs:
 
       - name: Inspect repository health (read-only)
         run: python scripts/wellness_doctor.py
+
+      - name: Validate company website
+        run: |
+          python WEBSITE/scripts/validate_site.py
+          node --check WEBSITE/app.js
 
       - name: Validate GitHub Actions YAML syntax
         run: |
