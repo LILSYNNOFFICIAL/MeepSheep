@@ -8,16 +8,16 @@
 
 ## 🩺 MeepSheep Wellness Doctor
 
-**Overall health: 🟢 Healthy** · `OK`
+**Overall health: 🟡 Warning / Error 1** · `ERROR_1`
 
 | Inspection | Status |
 |---|---:|
 | Repository files | 🟢 |
-| Documentation and links | 🟢 |
+| Documentation and links | 🟡 |
 | GitHub workflows | 🟢 |
 | README health contract | 🟢 |
 
-**Checks:** 102 passed · 🟡 0 warnings · 🔵 0 errors · 🔴 0 critical
+**Checks:** 99 passed · 🟡 1 warnings · 🔵 0 errors · 🔴 0 critical
 
 [Latest inspection and diagnostic logs](https://github.com/LILSYNNOFFICIAL/MeepSheep/actions/workflows/wellness-doctor.yml)
 
