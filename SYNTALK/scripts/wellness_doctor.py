@@ -191,6 +191,8 @@ def inspect_repository(root: Path | str) -> dict:
             _add(findings, "QUALITY_WORKFLOW_CONTRACT", "error", "Quality workflow is missing required contract elements: " + ", ".join(missing), ".github/workflows/quality.yml")
         else:
             passed += 1
+    else:
+        _add(findings, "REQUIRED_FILE_MISSING", "error", "Required project file is missing, empty, or unreadable: .github/workflows/quality.yml", ".github/workflows/quality.yml")
     if wellness.is_file():
         text = wellness.read_text(encoding="utf-8")
         missing = [token for token in ["workflow_dispatch", "schedule", "contents: write", "wellness_doctor.py"] if token not in text]
@@ -200,6 +202,8 @@ def inspect_repository(root: Path | str) -> dict:
             _add(findings, "WELLNESS_WORKFLOW_CONTRACT", "error", "Wellness workflow contract is invalid: " + ", ".join(missing), ".github/workflows/wellness-doctor.yml")
         else:
             passed += 1
+    else:
+        _add(findings, "REQUIRED_FILE_MISSING", "error", "Required project file is missing, empty, or unreadable: .github/workflows/wellness-doctor.yml", ".github/workflows/wellness-doctor.yml")
     status = determine_status(findings)
     counts = {"passed": passed, "warning": 0, "error": 0, "critical": 0}
     for finding in findings:
