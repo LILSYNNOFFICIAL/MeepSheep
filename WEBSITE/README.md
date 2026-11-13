@@ -12,20 +12,20 @@ python -m http.server 8000
 
 Open http://localhost:8000.
 
-## Cloudflare Pages
+## Current Cloudflare Pages deployment
 
-The connected Cloudflare account currently has no Pages projects. The `meepsheep.com` zone is active and already has proxied apex and `www` A/AAAA records. Do not replace those records until their current origin and the intended cutover are confirmed.
-
-Recommended first Pages configuration after repository review:
-
-- Repository: `LILSYNNOFFICIAL/MeepSheep`
-- Production branch: `main`
-- Root directory: repository root
+- Project: meepsheep-company-site
+- Repository: LILSYNNOFFICIAL/MeepSheep
+- Production branch: main
 - Build command: none
-- Build output directory: `WEBSITE`
+- Build output directory: WEBSITE
+- Production URL: https://meepsheep-company-site.pages.dev
+- Custom domain: not attached
 
-This site is plain HTML, CSS, and JavaScript, so it has no package install or build step. Configure Pages only after confirming the GitHub integration and current DNS origin. Keep the existing `meepsheep` and `synear` Workers intact.
+The deployment API reported a successful production deployment, and the live homepage, stylesheet, and JavaScript were fetched successfully.
 
-## Content accuracy
+## Custom-domain cutover
 
-The shared account section describes the accepted architecture direction. It does not claim that cross-product account provisioning is already live. Product services remain independent.
+The meepsheep.com Cloudflare zone already contains proxied apex and www A/AAAA records pointing to an existing origin. Do not replace those records or attach the custom domain until the current origin is identified, the existing site is reviewed, and a cutover/rollback plan is agreed.
+
+The existing meepsheep and synear Workers are separate services and must remain untouched by the website deployment.
