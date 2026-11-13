@@ -24,7 +24,6 @@ REQUIRED_FILES = [
     "AI/STATE.md", "AI/CONTRIBUTING.md", "AI/GITHUB_RULES.md", "AI/ACTIONS.md",
     "AI/WELLNESS_DOCTOR.md", "AI/STATUS_ICONS.md", "AI/INCIDENTS.md",
     "AI/AUTOMATION_LOG.md", "AI/WELLNESS_IMPLEMENTATION_PLAN.md",
-    ".github/workflows/quality.yml", ".github/workflows/wellness-doctor.yml",
     "scripts/wellness_doctor.py", "tests/test_wellness_doctor.py",
 ]
 REQUIRED_README_LINKS = [f"AI/{name}.md" for name in [
@@ -112,6 +111,7 @@ def _check_markdown(root: Path, path: Path, findings: list[dict]) -> int:
 
 def inspect_repository(root: Path | str) -> dict:
     root = Path(root).resolve()
+    repo_root = root if (root / ".github").is_dir() else root.parent
     findings: list[dict] = []
     passed = 0
     for relative in REQUIRED_FILES:
@@ -182,8 +182,8 @@ def inspect_repository(root: Path | str) -> dict:
                     passed += 1
         except (OSError, UnicodeError):
             _add(findings, "README_UNREADABLE", "critical", "README cannot be read as UTF-8.", "README.md")
-    quality = root / ".github/workflows/quality.yml"
-    wellness = root / ".github/workflows/wellness-doctor.yml"
+    quality = repo_root / ".github/workflows/quality.yml"
+    wellness = repo_root / ".github/workflows/wellness-doctor.yml"
     if quality.is_file():
         text = quality.read_text(encoding="utf-8")
         missing = [token for token in ["pull_request", "contents: read", "unittest", "wellness_doctor.py"] if token not in text]
