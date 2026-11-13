@@ -70,7 +70,7 @@ def main() -> int:
                     broken.append(destination)
                 continue
             local = destination.split("?", 1)[0].split("#", 1)[0]
-            if not local:
+            if not local or local == "/":
                 continue
             relative = local.lstrip("/")
             target = ROOT / relative
